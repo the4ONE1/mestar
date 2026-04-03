@@ -71,7 +71,8 @@ const ProductDetail = () => {
     reader.readAsDataURL(file);
   };
 
-  const isFormValid = childName.trim().length > 0 && childAge && theme && photoPreview;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
+  const isFormValid = childName.trim().length > 0 && childAge && theme && photoPreview && isEmailValid;
 
   if (loading) {
     return (
