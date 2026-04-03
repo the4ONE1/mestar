@@ -1,4 +1,4 @@
-import { Star, Heart, BookOpen, Sparkles } from "lucide-react";
+import { Star, Heart, BookOpen, Sparkles, Download } from "lucide-react";
 
 const About = () => {
   return (
@@ -29,7 +29,7 @@ const About = () => {
               and showing kids that they can overcome any challenge?
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              Our personalized storybooks place your child at the center of a magical adventure. 
+              Our personalized digital storybooks place your child at the center of a magical adventure. 
               Each story is carefully crafted to be age-appropriate, non-violent, and empowering — 
               portraying your little one as the brave problem-solver who saves the day.
             </p>
@@ -37,7 +37,7 @@ const About = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { icon: Star, title: "Personalized", desc: "Your child's name woven throughout the story" },
+              { icon: Star, title: "Personalized", desc: "Your child's name & photo in the story" },
               { icon: Sparkles, title: "Empowering", desc: "Kids are the heroes & problem-solvers" },
               { icon: Heart, title: "Age-Appropriate", desc: "Non-violent, positive stories for all ages" },
             ].map(({ icon: Icon, title, desc }) => (
@@ -50,12 +50,12 @@ const About = () => {
           </div>
 
           <div className="bg-card rounded-2xl p-8 border border-border">
-            <Sparkles className="h-8 w-8 text-primary mb-4" />
-            <h2 className="font-display text-2xl font-bold mb-4">More Than Just a Book</h2>
+            <Download className="h-8 w-8 text-primary mb-4" />
+            <h2 className="font-display text-2xl font-bold mb-4">Instant Digital Download</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Each Star Stories set includes a beautifully illustrated personalized storybook 
-              plus 5 bonus coloring pages featuring scenes from the adventure. It's the perfect 
-              gift for birthdays, holidays, or just because every night deserves a little magic. ✨
+              Each Star Stories set includes a beautifully illustrated personalized PDF storybook 
+              plus 5 bonus coloring pages featuring scenes from the adventure. Download instantly 
+              after purchase and start reading tonight! ✨
             </p>
             <p className="text-muted-foreground leading-relaxed">
               We believe that reading together creates lifelong memories. With Star Stories, 

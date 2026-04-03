@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Star, Sparkles, BookOpen, Loader2, Shield, Truck, Gift, Clock, CheckCircle2 } from "lucide-react";
+import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, CheckCircle2 } from "lucide-react";
 import { fetchProducts, ShopifyProduct } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
@@ -79,7 +79,7 @@ const Index = () => {
       {/* Announcement Bar */}
       <div className="bg-primary text-primary-foreground text-center py-2 px-4">
         <p className="text-sm font-display font-bold animate-pulse">
-          🎁 FREE Shipping on All Orders — Limited Time Only!
+          ⚡ Instant Digital Download — Get Your Story in Minutes!
         </p>
       </div>
 
@@ -104,7 +104,7 @@ const Index = () => {
             <span className="text-primary drop-shadow-[0_0_20px_hsl(43_90%_55%/0.5)]">the Star</span> ⭐
           </h1>
           <p className="text-lg text-foreground/90 max-w-lg mx-auto mb-8 leading-relaxed drop-shadow-md">
-            A one-of-a-kind storybook where your little one is the hero. The perfect bedtime gift they'll treasure forever.
+            A one-of-a-kind digital storybook where your little one is the hero. Instantly download and start the magic tonight.
           </p>
           <Button
             asChild
@@ -130,8 +130,8 @@ const Index = () => {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               { icon: Shield, text: "Secure Checkout" },
-              { icon: Truck, text: "Free Shipping" },
-              { icon: Gift, text: "Gift Ready" },
+              { icon: Download, text: "Instant Download" },
+              { icon: FileText, text: "Digital PDF" },
               { icon: CheckCircle2, text: "Satisfaction Guaranteed" },
             ].map(({ icon: Icon, text }) => (
               <div key={text} className="flex flex-col items-center gap-2 text-center py-3">
@@ -173,8 +173,8 @@ const Index = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[
               { step: "1", icon: BookOpen, title: "Choose Your Story", desc: "Pick from magical adventure themes" },
-              { step: "2", icon: Sparkles, title: "Personalize It", desc: "Add your child's name & photo" },
-              { step: "3", icon: Gift, title: "Gift the Magic", desc: "A keepsake they'll treasure forever" },
+              { step: "2", icon: Sparkles, title: "Personalize It", desc: "Add your child's name, age & photo" },
+              { step: "3", icon: Download, title: "Download & Enjoy", desc: "Get your PDF instantly after purchase" },
             ].map(({ step, icon: Icon, title, desc }) => (
               <div key={step} className="text-center">
                 <div className="w-14 h-14 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center mx-auto mb-4">
@@ -223,14 +223,14 @@ const Index = () => {
           <Clock className="h-10 w-10 text-primary mx-auto mb-4" />
           <h2 className="font-display text-3xl font-bold mb-3">Don't Miss Out!</h2>
           <p className="text-muted-foreground max-w-md mx-auto mb-6">
-            Orders placed today ship within 24 hours. Give your child a gift they'll never forget.
+            Download instantly after purchase. Give your child a gift they'll never forget.
           </p>
           <Button
             asChild
             size="lg"
             className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:scale-105 transition-all"
           >
-            <a href="#products">Order Now — Free Shipping ⭐</a>
+            <a href="#products">Create Your Story Now ⭐</a>
           </Button>
         </div>
       </section>

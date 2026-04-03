@@ -4,7 +4,7 @@ import { HelpCircle } from "lucide-react";
 const faqs = [
   {
     q: "How does the personalization work?",
-    a: "When you order, you'll provide your child's name during checkout. We weave their name throughout the story, making them the hero of their very own adventure!",
+    a: "When you order, you'll provide your child's name, age, a photo, and choose a story theme. We use these details to create a one-of-a-kind story where your child is the hero!",
   },
   {
     q: "What age group are the stories designed for?",
@@ -16,23 +16,23 @@ const faqs = [
   },
   {
     q: "What's included in my order?",
-    a: "Each Star Stories set includes a personalized bedtime storybook plus 5 bonus coloring pages featuring scenes from the adventure. Everything is delivered digitally so you can start the magic right away!",
+    a: "Each Star Stories set includes a personalized digital PDF storybook plus 5 bonus coloring pages featuring scenes from the adventure. Everything is delivered as an instant download!",
   },
   {
-    q: "How is the product delivered?",
-    a: "Star Stories are delivered digitally. After purchase, you'll receive your personalized storybook and coloring pages that you can print at home or read on any device.",
+    q: "How do I receive my story?",
+    a: "Star Stories are delivered as an instant digital download. After purchase, you'll receive your personalized PDF storybook and coloring pages that you can print at home or read on any device.",
+  },
+  {
+    q: "What is the Supporting Character add-on?",
+    a: "For a small additional charge, you can upload a second photo to include a friend, sibling, or pet as a supporting character in your child's story. It's a great way to make the adventure even more special!",
   },
   {
     q: "Can I order stories for multiple children?",
-    a: "Yes! You can order separate personalized stories for each child. Each story will be uniquely crafted with their name and details.",
+    a: "Yes! You can order separate personalized stories for each child. Each story will be uniquely crafted with their name, photo, and chosen theme.",
   },
   {
     q: "What if I need to make changes after ordering?",
-    a: "Please reach out to us as soon as possible after placing your order. We'll do our best to accommodate any name changes or corrections before your story is finalized.",
-  },
-  {
-    q: "Do you offer gift options?",
-    a: "Star Stories make wonderful gifts! The personalized nature of each book makes it a truly unique and thoughtful present for any child. Simply order with the recipient child's name.",
+    a: "Please reach out to us as soon as possible after placing your order. We'll do our best to accommodate any changes before your story is generated.",
   },
 ];
 
