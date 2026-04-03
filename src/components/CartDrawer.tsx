@@ -110,7 +110,7 @@ export const CartDrawer = () => {
                           <h4 className="font-semibold text-sm truncate">{item.product.node.title}</h4>
                           {item.personalization && (
                             <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                              <p>👤 {item.personalization.childName}, age {item.personalization.childAge}</p>
+                              <p>👤 {item.personalization.childName}, ages {item.personalization.childAge}</p>
                               <p>📖 {item.personalization.theme}</p>
                               {item.personalization.strength && <p>💪 {item.personalization.strength}</p>}
                             </div>

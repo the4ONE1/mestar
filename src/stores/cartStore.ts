@@ -15,7 +15,7 @@ export type { ShopifyProduct };
 
 export interface Personalization {
   childName: string;
-  childAge: number;
+  childAge: string; // age group: "1-3", "4-7", "8-10", "11+"
   theme: string;
   photoUrl: string;
   strength?: string;
