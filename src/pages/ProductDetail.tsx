@@ -106,6 +106,7 @@ const ProductDetail = () => {
       theme,
       strength,
       photoUrl: photoPreview!,
+      customerEmail: customerEmail.trim(),
     };
     localStorage.setItem("mestar-pending-story", JSON.stringify(personalizationData));
 
