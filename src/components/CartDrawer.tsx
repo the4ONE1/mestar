@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -7,6 +8,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 
 export const CartDrawer = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const { items, isLoading, isSyncing, updateQuantity, removeItem, getCheckoutUrl, syncCart, updatePersonalization } = useCartStore();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -19,8 +21,15 @@ export const CartDrawer = () => {
   const handleCheckout = () => {
     const checkoutUrl = getCheckoutUrl();
     if (checkoutUrl) {
+      // Save personalization data for story generation
+      const personalized = items.find(i => i.personalization);
+      if (personalized?.personalization) {
+        localStorage.setItem("mestar-pending-story", JSON.stringify(personalized.personalization));
+      }
       window.open(checkoutUrl, '_blank');
       setIsOpen(false);
+      // Navigate to order complete page for story generation
+      navigate("/order-complete");
     }
   };
 
@@ -103,6 +112,7 @@ export const CartDrawer = () => {
                             <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
                               <p>👤 {item.personalization.childName}, age {item.personalization.childAge}</p>
                               <p>📖 {item.personalization.theme}</p>
+                              {item.personalization.strength && <p>💪 {item.personalization.strength}</p>}
                             </div>
                           )}
                           <p className="font-bold text-primary text-sm mt-1">${parseFloat(item.price.amount).toFixed(2)}</p>

@@ -11,6 +11,7 @@ import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
+import OrderComplete from "./pages/OrderComplete";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const AppContent = () => {
           <Route path="/product/:handle" element={<ProductDetail />} />
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/order-complete" element={<OrderComplete />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

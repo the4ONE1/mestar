@@ -20,6 +20,17 @@ const STORY_THEMES = [
   "Superhero Mission",
 ];
 
+const STRENGTHS = [
+  "Kindness",
+  "Bravery",
+  "Curiosity",
+  "Patience",
+  "Creativity",
+  "Generosity",
+  "Determination",
+  "Empathy",
+];
+
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
   const [product, setProduct] = useState<ShopifyProduct | null>(null);
@@ -32,6 +43,7 @@ const ProductDetail = () => {
   const [childName, setChildName] = useState("");
   const [childAge, setChildAge] = useState("");
   const [theme, setTheme] = useState("");
+  const [strength, setStrength] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,6 +96,17 @@ const ProductDetail = () => {
 
   const handleAddToCart = async () => {
     if (!variant || !isFormValid) return;
+
+    // Save personalization for story generation after checkout
+    const personalizationData = {
+      childName: childName.trim(),
+      childAge: parseInt(childAge),
+      theme,
+      strength,
+      photoUrl: photoPreview!,
+    };
+    localStorage.setItem("mestar-pending-story", JSON.stringify(personalizationData));
+
     await addItem({
       product,
       variantId: variant.id,
@@ -91,12 +114,7 @@ const ProductDetail = () => {
       price: variant.price,
       quantity: 1,
       selectedOptions: variant.selectedOptions || [],
-      personalization: {
-        childName: childName.trim(),
-        childAge: parseInt(childAge),
-        theme,
-        photoUrl: photoPreview!,
-      },
+      personalization: personalizationData,
     });
     toast.success("Added to cart! ⭐", { position: "top-center" });
   };
@@ -193,6 +211,21 @@ const ProductDetail = () => {
                   <SelectContent>
                     {STORY_THEMES.map(t => (
                       <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="strength" className="font-medium">Strength to Nurture</Label>
+                <p className="text-xs text-muted-foreground">Optional — choose a positive trait your child will demonstrate in the story</p>
+                <Select value={strength} onValueChange={setStrength}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a strength (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STRENGTHS.map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
