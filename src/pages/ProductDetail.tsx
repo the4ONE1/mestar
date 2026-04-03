@@ -43,6 +43,7 @@ const ProductDetail = () => {
   const [childName, setChildName] = useState("");
   const [childAge, setChildAge] = useState("");
   const [theme, setTheme] = useState("");
+  const [strength, setStrength] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
