@@ -35,6 +35,7 @@ const OrderComplete = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [storyTitle, setStoryTitle] = useState<string>("");
+  const [customerEmail, setCustomerEmail] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -50,6 +51,7 @@ const OrderComplete = () => {
       supportingCharacterName?: string;
       customerEmail?: string;
     };
+    setCustomerEmail(personalization.customerEmail || "");
     runFullPipeline(personalization);
   }, []);
 
@@ -243,10 +245,17 @@ const OrderComplete = () => {
         <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 mb-6">
           <div className="flex items-start gap-3">
             <Mail className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-            <p className="text-sm text-muted-foreground">
-              A copy of your PDF storybook will also be emailed to you shortly.
-              Check your inbox (and spam folder) within the next few minutes.
-            </p>
+            <div>
+              <p className="text-sm text-muted-foreground">
+                A copy of your PDF storybook will also be emailed to{" "}
+                {customerEmail ? (
+                  <span className="font-semibold text-foreground">{customerEmail}</span>
+                ) : (
+                  "you"
+                )}{" "}
+                shortly. Check your inbox (and spam folder) within the next few minutes.
+              </p>
+            </div>
           </div>
         </div>
 
