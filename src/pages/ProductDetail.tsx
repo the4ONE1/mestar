@@ -42,6 +42,7 @@ const ProductDetail = () => {
   // Personalization form state
   const [childName, setChildName] = useState("");
   const [childAge, setChildAge] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [theme, setTheme] = useState("");
   const [strength, setStrength] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
