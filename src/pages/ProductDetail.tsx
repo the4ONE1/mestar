@@ -41,7 +41,7 @@ const ProductDetail = () => {
 
   // Personalization form state
   const [childName, setChildName] = useState("");
-  const [childAge, setChildAge] = useState("");
+  const [childAge, setChildAge] = useState(""); // stores age group like "1-3", "4-7", "8-10", "11+"
   const [customerEmail, setCustomerEmail] = useState("");
   const [theme, setTheme] = useState("");
   const [strength, setStrength] = useState("");
