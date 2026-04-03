@@ -112,6 +112,7 @@ export const CartDrawer = () => {
                             <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
                               <p>👤 {item.personalization.childName}, age {item.personalization.childAge}</p>
                               <p>📖 {item.personalization.theme}</p>
+                              {item.personalization.strength && <p>💪 {item.personalization.strength}</p>}
                             </div>
                           )}
                           <p className="font-bold text-primary text-sm mt-1">${parseFloat(item.price.amount).toFixed(2)}</p>
