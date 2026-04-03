@@ -51,6 +51,7 @@ const OrderComplete = () => {
       supportingCharacterName?: string;
       customerEmail?: string;
     };
+    setCustomerEmail(personalization.customerEmail || "");
     runFullPipeline(personalization);
   }, []);
 
