@@ -96,6 +96,17 @@ const ProductDetail = () => {
 
   const handleAddToCart = async () => {
     if (!variant || !isFormValid) return;
+
+    // Save personalization for story generation after checkout
+    const personalizationData = {
+      childName: childName.trim(),
+      childAge: parseInt(childAge),
+      theme,
+      strength,
+      photoUrl: photoPreview!,
+    };
+    localStorage.setItem("mestar-pending-story", JSON.stringify(personalizationData));
+
     await addItem({
       product,
       variantId: variant.id,
@@ -103,12 +114,7 @@ const ProductDetail = () => {
       price: variant.price,
       quantity: 1,
       selectedOptions: variant.selectedOptions || [],
-      personalization: {
-        childName: childName.trim(),
-        childAge: parseInt(childAge),
-        theme,
-        photoUrl: photoPreview!,
-      },
+      personalization: personalizationData,
     });
     toast.success("Added to cart! ⭐", { position: "top-center" });
   };
