@@ -13,18 +13,31 @@ import {
 export type { CartItem };
 export type { ShopifyProduct };
 
+export interface Personalization {
+  childName: string;
+  childAge: number;
+  theme: string;
+  photoUrl: string;
+  supportingCharacterPhotoUrl?: string;
+}
+
+export interface CartItemWithPersonalization extends CartItem {
+  personalization?: Personalization;
+}
+
 interface CartStore {
-  items: CartItem[];
+  items: CartItemWithPersonalization[];
   cartId: string | null;
   checkoutUrl: string | null;
   isLoading: boolean;
   isSyncing: boolean;
-  addItem: (item: Omit<CartItem, 'lineId'>) => Promise<void>;
+  addItem: (item: Omit<CartItemWithPersonalization, 'lineId'>) => Promise<void>;
   updateQuantity: (variantId: string, quantity: number) => Promise<void>;
   removeItem: (variantId: string) => Promise<void>;
   clearCart: () => void;
   syncCart: () => Promise<void>;
   getCheckoutUrl: () => string | null;
+  updatePersonalization: (variantId: string, personalization: Partial<Personalization>) => void;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -104,6 +117,16 @@ export const useCartStore = create<CartStore>()(
 
       clearCart: () => set({ items: [], cartId: null, checkoutUrl: null }),
       getCheckoutUrl: () => get().checkoutUrl,
+
+      updatePersonalization: (variantId, updates) => {
+        set({
+          items: get().items.map(i =>
+            i.variantId === variantId
+              ? { ...i, personalization: { ...i.personalization!, ...updates } }
+              : i
+          ),
+        });
+      },
 
       syncCart: async () => {
         const { cartId, isSyncing, clearCart } = get();

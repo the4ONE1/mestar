@@ -1,10 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { fetchProductByHandle, ShopifyProduct } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Star } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Loader2, Star, Upload, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+
+const STORY_THEMES = [
+  "Space Adventure",
+  "Enchanted Forest",
+  "Under the Sea",
+  "Dinosaur Quest",
+  "Pirate Treasure",
+  "Fairy Tale Kingdom",
+  "Safari Expedition",
+  "Superhero Mission",
+];
 
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
@@ -14,6 +28,14 @@ const ProductDetail = () => {
   const addItem = useCartStore(state => state.addItem);
   const isLoading = useCartStore(state => state.isLoading);
 
+  // Personalization form state
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState("");
+  const [theme, setTheme] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!handle) return;
     setLoading(true);
@@ -22,6 +44,21 @@ const ProductDetail = () => {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [handle]);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Photo must be under 5MB");
+      return;
+    }
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setPhotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const isFormValid = childName.trim().length > 0 && childAge && theme && photoPreview;
 
   if (loading) {
     return (
@@ -46,7 +83,7 @@ const ProductDetail = () => {
   const price = node.priceRange.minVariantPrice;
 
   const handleAddToCart = async () => {
-    if (!variant) return;
+    if (!variant || !isFormValid) return;
     await addItem({
       product,
       variantId: variant.id,
@@ -54,6 +91,12 @@ const ProductDetail = () => {
       price: variant.price,
       quantity: 1,
       selectedOptions: variant.selectedOptions || [],
+      personalization: {
+        childName: childName.trim(),
+        childAge: parseInt(childAge),
+        theme,
+        photoUrl: photoPreview!,
+      },
     });
     toast.success("Added to cart! ⭐", { position: "top-center" });
   };
@@ -98,11 +141,11 @@ const ProductDetail = () => {
           {/* Info */}
           <div className="flex flex-col">
             <h1 className="font-display text-3xl font-bold mb-4">{node.title}</h1>
-            <div className="flex items-center gap-2 mb-6">
+            <div className="flex items-center gap-2 mb-4">
               <span className="text-3xl font-bold text-primary">${parseFloat(price.amount).toFixed(2)}</span>
               <span className="text-sm text-muted-foreground">{price.currencyCode}</span>
             </div>
-            <p className="text-muted-foreground leading-relaxed mb-8 whitespace-pre-line">{node.description}</p>
+            <p className="text-muted-foreground leading-relaxed mb-6 whitespace-pre-line">{node.description}</p>
 
             <div className="flex items-center gap-2 mb-6">
               {[1, 2, 3, 4, 5].map(i => (
@@ -110,27 +153,119 @@ const ProductDetail = () => {
               ))}
             </div>
 
+            {/* Personalization Form */}
+            <div className="bg-card rounded-2xl border border-border p-6 mb-6 space-y-5">
+              <h3 className="font-display text-lg font-bold flex items-center gap-2">
+                ✨ Personalize Your Story
+              </h3>
+
+              <div className="space-y-2">
+                <Label htmlFor="childName" className="font-medium">Child's Name *</Label>
+                <Input
+                  id="childName"
+                  placeholder="Enter your child's name"
+                  value={childName}
+                  onChange={(e) => setChildName(e.target.value)}
+                  maxLength={50}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="childAge" className="font-medium">Child's Age *</Label>
+                <Select value={childAge} onValueChange={setChildAge}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select age" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 9 }, (_, i) => i + 2).map(age => (
+                      <SelectItem key={age} value={String(age)}>{age} years old</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="theme" className="font-medium">Story Theme *</Label>
+                <Select value={theme} onValueChange={setTheme}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a theme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STORY_THEMES.map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="font-medium">Child's Photo *</Label>
+                <p className="text-xs text-muted-foreground">Upload a clear photo of your child to be featured in the story</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                />
+                {photoPreview ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-16 rounded-lg overflow-hidden border border-border">
+                      <img src={photoPreview} alt="Child's photo" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium flex items-center gap-1">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        Photo uploaded
+                      </p>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Change photo
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full border-dashed border-2"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Photo
+                  </Button>
+                )}
+              </div>
+            </div>
+
             <Button
               onClick={handleAddToCart}
-              disabled={isLoading || !variant?.availableForSale}
+              disabled={isLoading || !variant?.availableForSale || !isFormValid}
               size="lg"
               className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full shadow-lg shadow-primary/25"
             >
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Add to Cart ⭐"}
             </Button>
 
+            {!isFormValid && childName.length === 0 && (
+              <p className="text-xs text-muted-foreground mt-2 text-center">Fill in all personalization details to add to cart</p>
+            )}
+
             {!variant?.availableForSale && (
-              <p className="text-destructive text-sm mt-3">Currently out of stock</p>
+              <p className="text-destructive text-sm mt-3">Currently unavailable</p>
             )}
 
             {/* Features */}
             <div className="mt-10 space-y-4 border-t border-border pt-8">
               {[
-                "✨ Personalized with your child's name",
-                "📖 Beautifully illustrated bedtime story",
+                "✨ Personalized with your child's name & photo",
+                "📖 Beautifully illustrated digital PDF storybook",
                 "🎨 Includes 5 bonus coloring pages",
                 "🌟 Your child is the hero!",
                 "💝 Age-appropriate & non-violent",
+                "⚡ Instant download after purchase",
               ].map((feature) => (
                 <div key={feature} className="text-sm text-muted-foreground">{feature}</div>
               ))}
