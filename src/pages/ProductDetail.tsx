@@ -217,6 +217,21 @@ const ProductDetail = () => {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="strength" className="font-medium">Strength to Nurture</Label>
+                <p className="text-xs text-muted-foreground">Optional — choose a positive trait your child will demonstrate in the story</p>
+                <Select value={strength} onValueChange={setStrength}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a strength (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STRENGTHS.map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label className="font-medium">Child's Photo *</Label>
                 <p className="text-xs text-muted-foreground">Upload a clear photo of your child to be featured in the story</p>
                 <input
