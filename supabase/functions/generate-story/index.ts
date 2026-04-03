@@ -22,33 +22,38 @@ This story must:
 - Feel personal, grounded, and keepsake-worthy
 
 ----------------------------------------
-AGE STRUCTURE RULES
+AGE GROUP STRUCTURE RULES
 ----------------------------------------
 
-Age 0–2:
+Age Group 1–3 (Base complexity):
 - 350–500 words
 - Gentle rhythm
 - Simple sensory imagery
 - Minimal conflict
 - One small but meaningful action moment
+- Short simple sentences
+- Very basic vocabulary
 
-Age 3–5:
-- 500–750 words
+Age Group 4–7 (15% more complex and longer than 1–3):
+- 400–575 words
 - Clear beginning → challenge → resolution
 - One decision moment
 - Light dialogue allowed
+- Slightly richer vocabulary and sentence structure
 
-Age 6–8:
-- 800–1100 words
-- Clear problem
-- Cause-and-effect progression
+Age Group 8–10 (15% more complex and longer than 4–7):
+- 460–660 words
+- Clear problem with cause-and-effect progression
 - Emotional growth moment
+- More descriptive language and varied sentence structure
+- Can include mild tension
 
-Age 9–12:
-- 1100–1500 words
+Age Group 11+ (15% more complex and longer than 8–10):
+- 530–760 words
 - Multi-step challenge
-- Clear internal decision
-- Reflective growth resolution
+- Clear internal decision and reflective growth
+- Sophisticated vocabulary and narrative depth
+- Nuanced character motivations
 
 ----------------------------------------
 MANDATORY STORY STRUCTURE
