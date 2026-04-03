@@ -293,9 +293,16 @@ serve(async (req) => {
       throw new Error(`PDF upload failed: ${uploadError.message}`);
     }
 
-    const { data: urlData } = supabase.storage
+    // Generate a signed URL (7-day expiry)
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from("storybooks")
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
+
+    if (signedUrlError || !signedUrlData?.signedUrl) {
+      throw new Error(`Failed to create signed URL: ${signedUrlError?.message}`);
+    }
+
+    const pdfUrl = signedUrlData.signedUrl;
 
     // Update order as complete
     if (orderId) {
@@ -309,7 +316,7 @@ serve(async (req) => {
         .eq("id", orderId);
     }
 
-    console.log("Storybook complete!", urlData.publicUrl);
+    console.log("Storybook complete!", pdfUrl);
 
     // Send email notification to mestar.orders@gmail.com
     try {
@@ -328,7 +335,7 @@ serve(async (req) => {
             strength,
             customerEmail,
             supportingCharacterName,
-            pdfUrl: urlData.publicUrl,
+            pdfUrl,
             orderId,
           }),
         }
@@ -345,7 +352,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        pdfUrl: urlData.publicUrl,
+        pdfUrl,
         orderId,
         imagesGenerated: successCount,
       }),
