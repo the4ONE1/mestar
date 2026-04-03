@@ -16,7 +16,7 @@ export type Database = {
     Tables: {
       storybook_orders: {
         Row: {
-          child_age: number
+          child_age: string
           child_name: string
           coloring_prompts: Json | null
           completed_at: string | null
@@ -34,7 +34,7 @@ export type Database = {
           theme: string
         }
         Insert: {
-          child_age: number
+          child_age: string
           child_name: string
           coloring_prompts?: Json | null
           completed_at?: string | null
@@ -52,7 +52,7 @@ export type Database = {
           theme: string
         }
         Update: {
-          child_age?: number
+          child_age?: string
           child_name?: string
           coloring_prompts?: Json | null
           completed_at?: string | null
