@@ -149,7 +149,7 @@ export const CartDrawer = () => {
 
                       {/* Show supporting character if uploaded */}
                       {item.personalization?.supportingCharacterPhotoUrl && (
-                        <div className="mx-3 mb-3 p-3 rounded-lg border border-green-500/20 bg-green-500/5">
+                        <div className="mx-3 mb-3 p-3 rounded-lg border border-primary/20 bg-primary/5">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg overflow-hidden border border-border">
                               <img src={item.personalization.supportingCharacterPhotoUrl} alt="Supporting character" className="w-full h-full object-cover" />
