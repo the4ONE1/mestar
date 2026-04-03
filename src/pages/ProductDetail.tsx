@@ -20,6 +20,17 @@ const STORY_THEMES = [
   "Superhero Mission",
 ];
 
+const STRENGTHS = [
+  "Kindness",
+  "Bravery",
+  "Curiosity",
+  "Patience",
+  "Creativity",
+  "Generosity",
+  "Determination",
+  "Empathy",
+];
+
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
   const [product, setProduct] = useState<ShopifyProduct | null>(null);
