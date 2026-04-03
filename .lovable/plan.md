@@ -1,69 +1,41 @@
 
 
-# Plan: Digital Product Overhaul + Personalization Form + Upsell
+# Plan: Email PDF to mestar.orders@gmail.com After Generation
 
 ## What We're Doing
 
-1. **Remove all shipping/physical product references** — this is a downloadable PDF, not a shipped item
-2. **Add a personalization form** on the product detail page where customers enter their child's name, age, theme, and upload a photo — all before adding to cart
-3. **Add an in-cart upsell** for a second photo (supporting character) at an additional charge
-4. **Prepare for story generation ruleset** — you'll upload that next, and we'll wire it in
+After the storybook PDF is generated and uploaded to storage, we'll send an email notification to **mestar.orders@gmail.com** containing the PDF download link plus customer/order details. This way you can manually forward the PDF to the customer until your email domain DNS is verified.
 
-## Changes by File
+## How It Works
 
-### 1. `src/pages/Index.tsx`
-- Remove "FREE Shipping" announcement bar
-- Remove "Free Shipping" and "Gift Ready" trust badges; replace with "Instant Download" and "Digital PDF"
-- Update urgency CTA: remove shipping language, use "Download instantly after purchase"
-- Update "How It Works" step 3 from "Gift the Magic" to "Download & Enjoy"
+We'll add a simple email-sending step to the `create-storybook` edge function using the Lovable AI gateway (no external email service needed — we'll use a lightweight approach via a new small edge function that sends via SMTP/Gmail, or more practically, we'll use **Lovable's built-in email infrastructure**).
 
-### 2. `src/pages/ProductDetail.tsx` — Major Changes
-- Add a **personalization form** above the "Add to Cart" button with:
-  - Child's name (text input, required)
-  - Child's age (dropdown: 2-10)
-  - Story theme (dropdown: e.g. "Space Adventure", "Enchanted Forest", "Under the Sea", "Dinosaur Quest")
-  - Photo upload (file input for child's photo, required)
-- Photo stored as base64 or object URL in cart item (client-side only for now)
-- Form validation: all fields required before "Add to Cart" enables
-- Update feature bullets to reflect digital product (remove physical references)
-- Store personalization data alongside the cart item
+**However**, since DNS isn't verified yet, Lovable's email system won't send. The simplest interim approach:
 
-### 3. `src/stores/cartStore.ts`
-- Extend `CartItem` type with optional `personalization` field:
-  ```
-  { childName, childAge, theme, photoUrl, supportingCharacterPhotoUrl? }
-  ```
-- Personalization data persists in localStorage with the cart
+### Approach: Store order details so you can see them + use a Gmail SMTP relay
 
-### 4. `src/components/CartDrawer.tsx`
-- Show personalization details (name, age, theme) under each cart item
-- Add **upsell section**: after cart items, show a callout card:
-  - "Add a Supporting Character! Upload a second photo to include a friend, sibling, or pet as a supporting character in the story"
-  - Upload button + small additional price indicator
-  - When uploaded, the photo attaches to the cart item's personalization data
-- Remove any shipping-related language
+Since we can't use Lovable email yet, the most reliable interim solution is:
 
-### 5. `src/pages/FAQ.tsx`
-- Update FAQ answers to consistently say "digital PDF" / "instant download"
-- Already mostly correct, minor wording tweaks
+1. **Add a `send-order-notification` edge function** that sends an email to `mestar.orders@gmail.com` via Gmail SMTP (using a Gmail App Password)
+2. The email includes: customer name, child's name, age, theme, and the **PDF download link**
+3. This gets called automatically after the PDF is uploaded in `create-storybook`
 
-### 6. `src/pages/About.tsx`
-- Minor copy update: mention it's a digital product/instant download
+### What's Needed From You
 
-### 7. Upsell Pricing
-- The upsell (second photo/supporting character) needs a price. Since this is a Shopify cart, we have two options:
-  - **Option A**: Create a second Shopify product/variant for the upsell and add it as a separate cart line
-  - **Option B**: Handle it client-side as metadata (no extra charge through Shopify, just data)
-  - We'll use **Option A** — create a second product variant or product in Shopify for the supporting character add-on so it flows through checkout properly
+To send emails from the edge function to your Gmail, you'll need to create a **Gmail App Password** (a special password just for this, not your regular Gmail password). I'll walk you through it step by step.
 
-### 8. Story Generation (Future Step)
-- After you upload your story generation ruleset, we'll create a processing pipeline that takes the personalization inputs + ruleset and generates the PDF
-- For now, the form captures all inputs and stores them with the order
+### Files Changed
 
-## Technical Details
+1. **`supabase/functions/send-order-notification/index.ts`** (new) — Small edge function that sends an email to `mestar.orders@gmail.com` with order details + PDF link
+2. **`supabase/functions/create-storybook/index.ts`** — Add a call to `send-order-notification` after the PDF is uploaded, passing order details and the PDF URL
 
-- Personalization data stored in Zustand cart store, persisted to localStorage
-- Photo handled as base64 data URL (kept client-side; actual story generation will happen server-side later)
-- Upsell implemented as a Shopify product added via Storefront API `cartLinesAdd`
-- All "shipping" references across 5 files will be replaced with digital delivery language
+### What the Email Will Include
+
+- Subject: "New MESTAR Order — [Child's Name]'s Storybook Ready"
+- Body: Customer email, child's name, age, theme, strength, PDF download link
+- Sent to: mestar.orders@gmail.com
+
+### Secret Needed
+
+- `GMAIL_APP_PASSWORD` — A Gmail App Password you'll generate from your Google account settings
 
