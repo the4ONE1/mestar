@@ -156,7 +156,7 @@ export const CartDrawer = () => {
                             </div>
                             <div className="flex-1">
                               <p className="text-xs font-medium flex items-center gap-1">
-                                <CheckCircle2 className="h-3 w-3 text-green-500" />
+                                <CheckCircle2 className="h-3 w-3 text-primary" />
                                 Supporting character added!
                               </p>
                             </div>

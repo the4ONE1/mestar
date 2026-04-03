@@ -215,7 +215,7 @@ const ProductDetail = () => {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium flex items-center gap-1">
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
                         Photo uploaded
                       </p>
                       <button
