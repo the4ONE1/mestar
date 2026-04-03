@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Star, Sparkles, BookOpen, Loader2 } from "lucide-react";
+import { Star, Sparkles, BookOpen, Loader2, Shield, Truck, Gift, Clock, CheckCircle2 } from "lucide-react";
 import { fetchProducts, ShopifyProduct } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
@@ -76,40 +76,113 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero */}
-      <section className="relative py-20 px-4 stars-bg overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
-        <div className="container relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 mb-6">
+      {/* Announcement Bar */}
+      <div className="bg-primary text-primary-foreground text-center py-2 px-4">
+        <p className="text-sm font-display font-bold animate-pulse">
+          🎁 FREE Shipping on All Orders — Limited Time Only!
+        </p>
+      </div>
+
+      {/* Hero — Full-width magical image */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="/images/hero-bg.png"
+            alt="Magical storybook adventure"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        </div>
+        <div className="relative z-10 container text-center pt-12 pb-24 sm:pt-20 sm:pb-32">
+          <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm border border-primary/30 rounded-full px-4 py-2 mb-6">
             <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Personalized Bedtime Magic</span>
+            <span className="text-sm font-bold text-primary">Personalized Bedtime Magic</span>
           </div>
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-lg">
             Your Child Is
             <br />
-            <span className="text-primary">the Star</span> ⭐
+            <span className="text-primary drop-shadow-[0_0_20px_hsl(43_90%_55%/0.5)]">the Star</span> ⭐
           </h1>
-          <p className="text-lg text-muted-foreground max-w-lg mx-auto mb-8 leading-relaxed">
-            Create a magical bedtime adventure where your little one is the hero of their very own storybook.
+          <p className="text-lg text-foreground/90 max-w-lg mx-auto mb-8 leading-relaxed drop-shadow-md">
+            A one-of-a-kind storybook where your little one is the hero. The perfect bedtime gift they'll treasure forever.
           </p>
           <Button
             asChild
             size="lg"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-8 py-6 shadow-lg shadow-primary/25"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all duration-300"
           >
-            <a href="#products">Shop Now ⭐</a>
+            <a href="#products">Start Your Magical Journey ⭐</a>
           </Button>
 
-          {/* Feature pills */}
-          <div className="flex flex-wrap justify-center gap-3 mt-12">
+          {/* Social proof */}
+          <div className="mt-8 flex items-center justify-center gap-1">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="h-5 w-5 text-primary fill-primary" />
+            ))}
+            <span className="ml-2 text-sm text-foreground/80 font-medium">Loved by 2,000+ families</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Badges */}
+      <section className="py-8 border-b border-border bg-card/50">
+        <div className="container">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { icon: BookOpen, text: "Personalized Story" },
-              { icon: Star, text: "5 Coloring Pages" },
-              { icon: Sparkles, text: "Your Child as Hero" },
+              { icon: Shield, text: "Secure Checkout" },
+              { icon: Truck, text: "Free Shipping" },
+              { icon: Gift, text: "Gift Ready" },
+              { icon: CheckCircle2, text: "Satisfaction Guaranteed" },
             ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-2 bg-card/60 backdrop-blur border border-border rounded-full px-4 py-2">
-                <Icon className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">{text}</span>
+              <div key={text} className="flex flex-col items-center gap-2 text-center py-3">
+                <Icon className="h-6 w-6 text-primary" />
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Video Section */}
+      <section className="py-16 bg-card/30">
+        <div className="container">
+          <div className="text-center mb-8">
+            <h2 className="font-display text-3xl font-bold mb-3">See the Magic Come Alive ✨</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">Watch how your child becomes the hero of their very own adventure</p>
+          </div>
+          <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-border shadow-2xl shadow-primary/10">
+            <video
+              className="w-full"
+              controls
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster="/images/hero-bg.png"
+            >
+              <source src="/videos/product-demo.mp4" type="video/mp4" />
+            </video>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-16">
+        <div className="container">
+          <h2 className="font-display text-3xl font-bold text-center mb-10">How It Works</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {[
+              { step: "1", icon: BookOpen, title: "Choose Your Story", desc: "Pick from magical adventure themes" },
+              { step: "2", icon: Sparkles, title: "Personalize It", desc: "Add your child's name & photo" },
+              { step: "3", icon: Gift, title: "Gift the Magic", desc: "A keepsake they'll treasure forever" },
+            ].map(({ step, icon: Icon, title, desc }) => (
+              <div key={step} className="text-center">
+                <div className="w-14 h-14 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center mx-auto mb-4">
+                  <span className="font-display text-xl font-extrabold text-primary">{step}</span>
+                </div>
+                <Icon className="h-8 w-8 text-primary mx-auto mb-3" />
+                <h3 className="font-display text-lg font-bold mb-1">{title}</h3>
+                <p className="text-sm text-muted-foreground">{desc}</p>
               </div>
             ))}
           </div>
@@ -117,11 +190,11 @@ const Index = () => {
       </section>
 
       {/* Products */}
-      <section id="products" className="py-16">
+      <section id="products" className="py-16 bg-card/30">
         <div className="container">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl font-bold mb-3">Our Stories</h2>
-            <p className="text-muted-foreground">Every story is a new adventure ✨</p>
+          <div className="text-center mb-10">
+            <h2 className="font-display text-3xl font-bold mb-3">Shop Our Stories</h2>
+            <p className="text-muted-foreground">Every story is a new adventure — pick your child's today ✨</p>
           </div>
           {loading ? (
             <div className="flex justify-center py-20">
@@ -140,6 +213,25 @@ const Index = () => {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Urgency / Final CTA */}
+      <section className="py-16 stars-bg relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
+        <div className="container relative z-10 text-center">
+          <Clock className="h-10 w-10 text-primary mx-auto mb-4" />
+          <h2 className="font-display text-3xl font-bold mb-3">Don't Miss Out!</h2>
+          <p className="text-muted-foreground max-w-md mx-auto mb-6">
+            Orders placed today ship within 24 hours. Give your child a gift they'll never forget.
+          </p>
+          <Button
+            asChild
+            size="lg"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:scale-105 transition-all"
+          >
+            <a href="#products">Order Now — Free Shipping ⭐</a>
+          </Button>
         </div>
       </section>
     </div>
