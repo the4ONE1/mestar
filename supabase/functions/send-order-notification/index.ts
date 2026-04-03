@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
+import nodemailer from "npm:nodemailer@6.9.12";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,12 +32,14 @@ serve(async (req) => {
       orderId,
     } = await req.json();
 
-    const client = new SmtpClient();
-    await client.connectTLS({
-      hostname: "smtp.gmail.com",
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
       port: 465,
-      username: "mestar.orders@gmail.com",
-      password: GMAIL_APP_PASSWORD,
+      secure: true,
+      auth: {
+        user: "mestar.orders@gmail.com",
+        pass: GMAIL_APP_PASSWORD,
+      },
     });
 
     const subject = `New MESTAR Order — ${childName}'s Storybook Ready`;
@@ -62,14 +64,12 @@ ${pdfUrl}
 This is an automated notification from MESTAR.
 `;
 
-    await client.send({
+    await transporter.sendMail({
       from: "mestar.orders@gmail.com",
       to: "mestar.orders@gmail.com",
       subject,
-      content: body,
+      text: body,
     });
-
-    await client.close();
 
     console.log("Order notification sent to mestar.orders@gmail.com");
 
