@@ -8,6 +8,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 
 export const CartDrawer = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const { items, isLoading, isSyncing, updateQuantity, removeItem, getCheckoutUrl, syncCart, updatePersonalization } = useCartStore();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
