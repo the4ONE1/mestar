@@ -226,14 +226,37 @@ The goal is:
 SCENE SIMPLIFICATION RULE (CRITICAL)
 ----------------------------------------
 
-Each SCENE summary must be simplified into:
-- One clear action moment
-- One primary subject (loved one)
-- Maximum one supporting character (if included)
-- A background scene that directly depicts the story moment
-- Large open spaces for coloring
+Adapt complexity based on the Age Group provided in the story:
 
-Remove:
+Age Group 1–3 (Base simplicity):
+- Maximum 2-3 large simple shapes per page
+- One clear action moment with minimal detail
+- Very large open spaces for coloring
+- Thick chunky outlines only
+- No small details or intricate patterns
+- Background: 1-2 simple environmental elements only
+
+Age Group 4–7 (15% more detail than 1–3):
+- 3-4 shapes per page allowed
+- One primary subject with slightly more defined features
+- Large open spaces but with a few more background elements
+- Background: 2-3 recognizable environmental details
+
+Age Group 8–10 (15% more detail than 4–7):
+- 4-5 elements per page allowed
+- More defined character features and poses
+- Moderate detail in background scenes
+- Can include patterns in clothing or environment
+- Background: 3-4 environmental details with some texture
+
+Age Group 11+ (15% more detail than 8–10):
+- 5-6 elements per page allowed
+- Most detailed character expressions and poses
+- Richer background scenes with layered elements
+- Can include finer patterns and environmental texture
+- Background: 4-5 detailed environmental elements
+
+General rules for ALL age groups:
 - Background crowds
 - Excess objects
 - Small intricate details
