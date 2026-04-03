@@ -21,8 +21,15 @@ export const CartDrawer = () => {
   const handleCheckout = () => {
     const checkoutUrl = getCheckoutUrl();
     if (checkoutUrl) {
+      // Save personalization data for story generation
+      const personalized = items.find(i => i.personalization);
+      if (personalized?.personalization) {
+        localStorage.setItem("mestar-pending-story", JSON.stringify(personalized.personalization));
+      }
       window.open(checkoutUrl, '_blank');
       setIsOpen(false);
+      // Navigate to order complete page for story generation
+      navigate("/order-complete");
     }
   };
 
