@@ -18,7 +18,9 @@ export interface Personalization {
   childAge: number;
   theme: string;
   photoUrl: string;
+  strength?: string;
   supportingCharacterPhotoUrl?: string;
+  supportingCharacterName?: string;
 }
 
 export interface CartItemWithPersonalization extends CartItem {

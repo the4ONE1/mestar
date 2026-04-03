@@ -26,6 +26,7 @@ const AppContent = () => {
           <Route path="/product/:handle" element={<ProductDetail />} />
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/order-complete" element={<OrderComplete />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
