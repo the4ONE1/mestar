@@ -181,6 +181,19 @@ const ProductDetail = () => {
               </h3>
 
               <div className="space-y-2">
+                <Label htmlFor="customerEmail" className="font-medium">Your Email *</Label>
+                <Input
+                  id="customerEmail"
+                  type="email"
+                  placeholder="Where we'll send your finished PDF"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  maxLength={255}
+                />
+                <p className="text-xs text-muted-foreground">We'll email your storybook PDF to this address</p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="childName" className="font-medium">Child's Name *</Label>
                 <Input
                   id="childName"
