@@ -35,6 +35,7 @@ const OrderComplete = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [storyTitle, setStoryTitle] = useState<string>("");
+  const [customerEmail, setCustomerEmail] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
