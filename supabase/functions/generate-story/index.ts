@@ -212,9 +212,9 @@ These prompts will be sent to an image generation model.
 The goal is:
 - Clean printable line art
 - Bold outlines
-- Minimal background clutter
+- Story-accurate scene backgrounds
 - Clear central action
-- Consistent character design
+- ABSOLUTE character consistency across all 5 pages
 - 8.5x11 portrait layout
 
 ----------------------------------------
@@ -225,11 +225,10 @@ Each SCENE summary must be simplified into:
 - One clear action moment
 - One primary subject (loved one)
 - Maximum one supporting character (if included)
-- Minimal environmental detail
+- A background scene that directly depicts the story moment
 - Large open spaces for coloring
 
 Remove:
-- Complex scenery
 - Background crowds
 - Excess objects
 - Small intricate details
@@ -239,21 +238,66 @@ Focus on:
 - The hero
 - The action
 - The emotional moment
+- The story setting/environment
 
 ----------------------------------------
-CHARACTER CONSISTENCY RULE
+BACKGROUND SCENE RULES (CRITICAL)
 ----------------------------------------
 
-The loved one must appear visually consistent across all 5 pages.
+Each coloring page MUST include a background that depicts
+the story scene described in that scene summary.
 
-Maintain:
-- Same hairstyle
-- Same outfit style
-- Same facial proportions
-- Same body scale
+Background requirements:
+- Must visually match the story moment (e.g., forest clearing, spaceship cockpit, ocean floor)
+- Use simple, clean line art for environmental elements
+- Include 3-5 recognizable environmental details per scene
+- Keep background elements larger and simpler than foreground
+- Background should frame and complement the character action
+- Leave sufficient white space for coloring
 
-If supporting character included:
-- Must remain visually consistent across scenes.
+Theme-specific background guidance:
+- Space Adventure: stars, planets, rocket panels, control consoles
+- Enchanted Forest: trees, mushrooms, flowers, woodland path
+- Under the Sea: coral, seaweed, bubbles, fish, ocean floor
+- Dinosaur Quest: ferns, volcanoes, rocks, prehistoric plants
+- Pirate Treasure: ship deck, treasure chest, island, palm trees
+- Fairy Tale Kingdom: castle towers, garden, stone path, banners
+- Safari Expedition: tall grass, acacia trees, watering hole, sun
+- Superhero Mission: city buildings, rooftops, clouds, skyline
+
+----------------------------------------
+CHARACTER CONSISTENCY RULE (HIGHEST PRIORITY)
+----------------------------------------
+
+THIS IS THE MOST IMPORTANT RULE IN THE ENTIRE ENGINE.
+
+The loved one MUST be recognizably the SAME PERSON across
+ALL 5 coloring pages. Not similar — IDENTICAL in design.
+
+MANDATORY — define once, repeat verbatim in every prompt:
+
+1. CHARACTER DESIGN SHEET (include in EVERY prompt):
+   - Exact hairstyle description (e.g., "short curly hair with a side part")
+   - Exact outfit description (e.g., "wearing a t-shirt with a star on the chest and shorts")
+   - Exact body proportions (e.g., "small child, round face, large eyes")
+   - Exact height relative to objects
+
+2. CONSISTENCY ENFORCEMENT:
+   - Copy the EXACT same character description word-for-word into each prompt
+   - Never vary hairstyle, clothing, or proportions between pages
+   - Use identical phrasing for the character in every single prompt
+   - The character description must appear as a distinct block in each prompt
+
+3. SUPPORTING CHARACTER (if included):
+   - Define their appearance once with the same specificity
+   - Copy their EXACT description into every prompt where they appear
+   - Must be visually distinct from the main character
+   - Must also remain identical across all pages
+
+FAILURE MODE TO AVOID:
+- Do NOT use vague descriptions like "a young child" or "the hero"
+- Do NOT change any detail of appearance between pages
+- Do NOT rely on the image model to "remember" — each prompt is independent
 
 ----------------------------------------
 STYLE RULES (NON-NEGOTIABLE)
@@ -269,26 +313,34 @@ STYLE RULES (NON-NEGOTIABLE)
 - No speech bubbles
 - No color
 - No background blur
-- No heavy background texture
 
 Style must resemble:
-Printable children's coloring book page.
+Printable children's coloring book page with illustrated backgrounds.
 
 ----------------------------------------
 COMPOSITION RULES
 ----------------------------------------
 
 - Portrait orientation (8.5x11 ratio)
-- Large central subject
-- Clear white space areas
-- No overcrowding
-- Clear foreground separation
+- Character takes up 40-60% of the page (large and central)
+- Background scene fills remaining space
+- Clear foreground/background separation using line weight
+  (thicker lines for character, slightly thinner for background)
+- No overcrowding — balance detail with coloring space
 
 ----------------------------------------
 PROMPT STRUCTURE OUTPUT
 ----------------------------------------
 
-For each scene output:
+FIRST, output a CHARACTER REFERENCE block:
+
+CHARACTER_REFERENCE:
+<exact character appearance description that will be copied into every prompt>
+
+SUPPORTING_CHARACTER_REFERENCE (if applicable):
+<exact supporting character appearance description>
+
+Then for each scene output:
 
 COLOR_PAGE_1_PROMPT:
 <clean detailed image prompt>
@@ -303,24 +355,30 @@ Each prompt must:
 1. Begin with:
 "Black and white coloring page line art, thick bold outlines, printable, no shading."
 
-2. Then describe:
-- The simplified action moment
-- Character positioning
-- Minimal setting
+2. Then include the EXACT character reference description (copied verbatim)
 
-3. End with:
-"Clean white background, no grayscale, no color."
+3. Then describe:
+- The specific action moment from the story
+- Character positioning and pose
+- Background scene elements matching the story moment
+
+4. End with:
+"Clean white background behind the scene elements, no grayscale, no color."
 
 ----------------------------------------
 QUALITY CONTROL RULE
 ----------------------------------------
 
 Before finalizing prompts, verify:
-- Each page centers the loved one.
-- Each page depicts a distinct action moment.
-- No page is visually identical.
-- Prompts are concise but descriptive.
-- Background details are minimal.
+
+- The CHARACTER_REFERENCE block is defined
+- The EXACT same character description appears in ALL 5 prompts
+- Each page has a distinct background scene from the story
+- Each page depicts a different action moment
+- No page is visually identical
+- Background elements match the story theme
+- Character proportions and outfit are unchanged across pages
+- Prompts are concise but descriptive
 
 ========================================
 END OF COLORING ENGINE LAYER 2
