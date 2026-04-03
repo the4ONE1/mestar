@@ -14,7 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      storybook_orders: {
+        Row: {
+          child_age: number
+          child_name: string
+          coloring_prompts: Json | null
+          completed_at: string | null
+          created_at: string
+          customer_email: string | null
+          error_message: string | null
+          has_supporting_character: boolean | null
+          id: string
+          pdf_storage_path: string | null
+          status: string
+          story_text: string | null
+          story_title: string | null
+          strength: string | null
+          supporting_character_name: string | null
+          theme: string
+        }
+        Insert: {
+          child_age: number
+          child_name: string
+          coloring_prompts?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          customer_email?: string | null
+          error_message?: string | null
+          has_supporting_character?: boolean | null
+          id?: string
+          pdf_storage_path?: string | null
+          status?: string
+          story_text?: string | null
+          story_title?: string | null
+          strength?: string | null
+          supporting_character_name?: string | null
+          theme: string
+        }
+        Update: {
+          child_age?: number
+          child_name?: string
+          coloring_prompts?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          customer_email?: string | null
+          error_message?: string | null
+          has_supporting_character?: boolean | null
+          id?: string
+          pdf_storage_path?: string | null
+          status?: string
+          story_text?: string | null
+          story_title?: string | null
+          strength?: string | null
+          supporting_character_name?: string | null
+          theme?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
