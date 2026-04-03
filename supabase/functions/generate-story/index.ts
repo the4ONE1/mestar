@@ -412,7 +412,7 @@ serve(async (req) => {
 
     // Build Layer 1 input
     const layer1Input = `Loved One Name: ${childName}
-Age: ${childAge}
+Age Group: ${childAge}
 Theme: ${theme}
 Supporting Character Included: ${hasSupportingCharacter ? "Yes" : "No"}
 Supporting Character Name: ${hasSupportingCharacter && supportingCharacterName ? supportingCharacterName : "N/A"}
