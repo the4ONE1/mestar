@@ -159,7 +159,7 @@ async function buildStorybookPDF(
   // ── Coloring Pages ──
   // Add a divider page
   const dividerPage = pdfDoc.addPage([PAGE_W, PAGE_H]);
-  const dividerText = "✏️ Bonus Coloring Pages ✏️";
+  const dividerText = "Bonus Coloring Pages";
   const dividerSize = 28;
   const dividerWidth = helveticaBold.widthOfTextAtSize(dividerText, dividerSize);
   dividerPage.drawText(dividerText, {
