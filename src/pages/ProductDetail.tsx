@@ -42,6 +42,7 @@ const ProductDetail = () => {
   // Personalization form state
   const [childName, setChildName] = useState("");
   const [childAge, setChildAge] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [theme, setTheme] = useState("");
   const [strength, setStrength] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -70,7 +71,8 @@ const ProductDetail = () => {
     reader.readAsDataURL(file);
   };
 
-  const isFormValid = childName.trim().length > 0 && childAge && theme && photoPreview;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
+  const isFormValid = childName.trim().length > 0 && childAge && theme && photoPreview && isEmailValid;
 
   if (loading) {
     return (
@@ -104,6 +106,7 @@ const ProductDetail = () => {
       theme,
       strength,
       photoUrl: photoPreview!,
+      customerEmail: customerEmail.trim(),
     };
     localStorage.setItem("mestar-pending-story", JSON.stringify(personalizationData));
 
@@ -176,6 +179,19 @@ const ProductDetail = () => {
               <h3 className="font-display text-lg font-bold flex items-center gap-2">
                 ✨ Personalize Your Story
               </h3>
+
+              <div className="space-y-2">
+                <Label htmlFor="customerEmail" className="font-medium">Your Email *</Label>
+                <Input
+                  id="customerEmail"
+                  type="email"
+                  placeholder="Where we'll send your finished PDF"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  maxLength={255}
+                />
+                <p className="text-xs text-muted-foreground">We'll email your storybook PDF to this address</p>
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="childName" className="font-medium">Child's Name *</Label>

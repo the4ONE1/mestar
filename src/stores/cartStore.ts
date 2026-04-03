@@ -19,6 +19,7 @@ export interface Personalization {
   theme: string;
   photoUrl: string;
   strength?: string;
+  customerEmail?: string;
   supportingCharacterPhotoUrl?: string;
   supportingCharacterName?: string;
 }
