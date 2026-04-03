@@ -205,15 +205,16 @@ const ProductDetail = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="childAge" className="font-medium">Child's Age *</Label>
+                <Label htmlFor="childAge" className="font-medium">Age Group *</Label>
                 <Select value={childAge} onValueChange={setChildAge}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select age" />
+                    <SelectValue placeholder="Select age group" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: 9 }, (_, i) => i + 2).map(age => (
-                      <SelectItem key={age} value={String(age)}>{age} years old</SelectItem>
-                    ))}
+                    <SelectItem value="1-3">1–3 years old</SelectItem>
+                    <SelectItem value="4-7">4–7 years old</SelectItem>
+                    <SelectItem value="8-10">8–10 years old</SelectItem>
+                    <SelectItem value="11+">11+ years old</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
