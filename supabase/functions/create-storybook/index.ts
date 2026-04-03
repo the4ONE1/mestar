@@ -311,6 +311,37 @@ serve(async (req) => {
 
     console.log("Storybook complete!", urlData.publicUrl);
 
+    // Send email notification to mestar.orders@gmail.com
+    try {
+      const notifyRes = await fetch(
+        `${SUPABASE_URL}/functions/v1/send-order-notification`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          },
+          body: JSON.stringify({
+            childName,
+            childAge,
+            theme,
+            strength,
+            customerEmail,
+            supportingCharacterName,
+            pdfUrl: urlData.publicUrl,
+            orderId,
+          }),
+        }
+      );
+      if (!notifyRes.ok) {
+        console.error("Notification email failed:", await notifyRes.text());
+      } else {
+        console.log("Notification email sent successfully");
+      }
+    } catch (notifyErr) {
+      console.error("Failed to send notification:", notifyErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
