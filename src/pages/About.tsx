@@ -38,8 +38,8 @@ const About = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { icon: Star, title: "Personalized", desc: "Your child's name & photo creates the story" },
-              { icon: Sparkles, title: "Empowering", desc: "Kids are the heroes & problem-solvers" },
-              { icon: Heart, title: "Age-Appropriate", desc: "Non-violent, positive stories for all ages" },
+              { icon: Sparkles, title: "Empowering", desc: "your child is the problem solving star" },
+              { icon: Heart, title: "Age-Appropriate", desc: "Non-violent, positive one of a kind stories for all ages" },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="bg-card rounded-2xl p-6 border border-border text-center">
                 <Icon className="h-6 w-6 text-primary mx-auto mb-3" />
