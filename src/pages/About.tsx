@@ -37,7 +37,7 @@ const About = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { icon: Star, title: "Personalized", desc: "Your child's name & photo in the story" },
+              { icon: Star, title: "Personalized", desc: "Your child's name & photo creates the story" },
               { icon: Sparkles, title: "Empowering", desc: "Kids are the heroes & problem-solvers" },
               { icon: Heart, title: "Age-Appropriate", desc: "Non-violent, positive stories for all ages" },
             ].map(({ icon: Icon, title, desc }) => (
