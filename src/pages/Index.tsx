@@ -92,7 +92,7 @@ const Index = () => {
             className="w-full h-full object-cover object-top"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/40" />
-          <div className="absolute bottom-0 left-0 right-0 h-24 bg-background" />
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-background z-[5]" />
         </div>
         <div className="relative z-10 container text-center pt-12 pb-16 sm:pt-20 sm:pb-24">
           <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm border border-primary/30 rounded-full px-4 py-2 mb-6">
