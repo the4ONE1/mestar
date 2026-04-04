@@ -182,7 +182,7 @@ const ProductDetail = () => {
               {/* 1. Photo Upload */}
               <div className="space-y-2">
                 <Label className="font-medium">Child's Photo *</Label>
-                <p className="text-xs text-muted-foreground">Upload a clear photo of your child to be featured in the story</p>
+                <p className="text-xs text-muted-foreground">Upload a clear, well-lit photo with only your child in the picture — this helps us match their appearance in the story!</p>
                 <input
                   ref={fileInputRef}
                   type="file"
