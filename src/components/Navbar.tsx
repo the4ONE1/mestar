@@ -20,6 +20,9 @@ export const Navbar = () => {
           <Link to="/reviews" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Reviews
           </Link>
+          <Link to="/why-read-together" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            Why Read
+          </Link>
           <CartDrawer />
         </div>
       </div>
