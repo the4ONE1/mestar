@@ -11,7 +11,7 @@ const About = () => {
             <span className="text-sm font-medium text-primary">Our Story</span>
           </div>
           <h1 className="font-display text-4xl font-extrabold mb-4">
-            About <span className="text-primary">Star Stories</span>
+            About <span className="text-primary">My Star Stories</span>
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
             Where every child becomes the hero of their own adventure.
