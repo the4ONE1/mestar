@@ -1,41 +1,70 @@
 
 
-# Plan: Email PDF to mestar.orders@gmail.com After Generation
+# Plan: Coloring Page Distribution for Second Character
 
-## What We're Doing
+## What This Changes
 
-After the storybook PDF is generated and uploaded to storage, we'll send an email notification to **mestar.orders@gmail.com** containing the PDF download link plus customer/order details. This way you can manually forward the PDF to the customer until your email domain DNS is verified.
+When a customer uploads a second character (supporting character), the 5 coloring pages will follow a specific distribution:
+- **3 pages**: Main character only (Pages 1, 3, 5)
+- **1 page**: Both characters together (Page 2)
+- **1 page**: Second character only (Page 4)
 
-## How It Works
+Both characters maintain absolute appearance consistency throughout all pages.
 
-We'll add a simple email-sending step to the `create-storybook` edge function using the Lovable AI gateway (no external email service needed — we'll use a lightweight approach via a new small edge function that sends via SMTP/Gmail, or more practically, we'll use **Lovable's built-in email infrastructure**).
+## Technical Details
 
-**However**, since DNS isn't verified yet, Lovable's email system won't send. The simplest interim approach:
+**File to change:** `supabase/functions/generate-story/index.ts`
 
-### Approach: Store order details so you can see them + use a Gmail SMTP relay
+**Change 1 — Layer 2 System Prompt (Coloring Engine)**
 
-Since we can't use Lovable email yet, the most reliable interim solution is:
+Update the `SUPPORTING CHARACTER` section within the `CHARACTER CONSISTENCY RULE` block (~lines 319-324) to add explicit page distribution rules:
 
-1. **Add a `send-order-notification` edge function** that sends an email to `mestar.orders@gmail.com` via Gmail SMTP (using a Gmail App Password)
-2. The email includes: customer name, child's name, age, theme, and the **PDF download link**
-3. This gets called automatically after the PDF is uploaded in `create-storybook`
+```
+3. SUPPORTING CHARACTER (if included):
+   - Define their appearance once with the same specificity
+   - Copy their EXACT description into every prompt where they appear
+   - Must be visually distinct from the main character
+   - Must also remain identical across all pages
 
-### What's Needed From You
+   PAGE DISTRIBUTION (when supporting character is included):
+   - COLOR_PAGE_1: Main character ONLY
+   - COLOR_PAGE_2: BOTH characters together in the scene
+   - COLOR_PAGE_3: Main character ONLY
+   - COLOR_PAGE_4: Supporting character ONLY (solo scene)
+   - COLOR_PAGE_5: Main character ONLY
 
-To send emails from the edge function to your Gmail, you'll need to create a **Gmail App Password** (a special password just for this, not your regular Gmail password). I'll walk you through it step by step.
+   For the BOTH page:
+   - Both characters share the scene interacting together
+   - Main character remains the focal point (slightly larger or foreground)
+   - Include BOTH character reference blocks verbatim
 
-### Files Changed
+   For the SOLO supporting character page:
+   - Supporting character is the central figure
+   - Use their EXACT reference description
+   - Show them in an action moment from the story
+```
 
-1. **`supabase/functions/send-order-notification/index.ts`** (new) — Small edge function that sends an email to `mestar.orders@gmail.com` with order details + PDF link
-2. **`supabase/functions/create-storybook/index.ts`** — Add a call to `send-order-notification` after the PDF is uploaded, passing order details and the PDF URL
+**Change 2 — Layer 2 Prompt Structure Output section (~lines 360-394)**
 
-### What the Email Will Include
+Add a note to the prompt structure reminding the model to follow page distribution:
 
-- Subject: "New MESTAR Order — [Child's Name]'s Storybook Ready"
-- Body: Customer email, child's name, age, theme, strength, PDF download link
-- Sent to: mestar.orders@gmail.com
+```
+If a supporting character is included, follow the PAGE DISTRIBUTION rules:
+Pages 1, 3, 5 = main character only.
+Page 2 = both characters together.
+Page 4 = supporting character only.
+Include the appropriate CHARACTER_REFERENCE and/or SUPPORTING_CHARACTER_REFERENCE in each prompt accordingly.
+```
 
-### Secret Needed
+**Change 3 — Layer 2 Quality Control Rule (~lines 397-410)**
 
-- `GMAIL_APP_PASSWORD` — A Gmail App Password you'll generate from your Google account settings
+Add verification step:
+```
+- If supporting character is included, verify page distribution:
+  Pages 1, 3, 5 show main character only
+  Page 2 shows both characters together
+  Page 4 shows supporting character only
+```
+
+No functionality changes — same API, same inputs, same outputs. Only the AI prompts are updated to specify how the second character appears across the coloring pages.
 
