@@ -11,6 +11,7 @@ import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import FAQ from "./pages/FAQ";
 import Reviews from "./pages/Reviews";
+import WhyReadTogether from "./pages/WhyReadTogether";
 import NotFound from "./pages/NotFound";
 import OrderComplete from "./pages/OrderComplete";
 
