@@ -216,6 +216,7 @@ const ProductDetail = () => {
                 </Select>
               </div>
 
+              <div className="space-y-2">
                 <Label htmlFor="childAge" className="font-medium">Age Group *</Label>
                 <Select value={childAge} onValueChange={setChildAge}>
                   <SelectTrigger>
