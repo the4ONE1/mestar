@@ -14,6 +14,7 @@ import Reviews from "./pages/Reviews";
 import WhyReadTogether from "./pages/WhyReadTogether";
 import NotFound from "./pages/NotFound";
 import OrderComplete from "./pages/OrderComplete";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const AppContent = () => {
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/why-read-together" element={<WhyReadTogether />} />
           <Route path="/order-complete" element={<OrderComplete />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
