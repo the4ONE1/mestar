@@ -25,7 +25,7 @@ This story must:
 AGE GROUP STRUCTURE RULES
 ----------------------------------------
 
-Age Group 1–3 (Base complexity):
+Age Group 1–3:
 - 350–500 words
 - Gentle rhythm
 - Simple sensory imagery
@@ -34,22 +34,22 @@ Age Group 1–3 (Base complexity):
 - Short simple sentences
 - Very basic vocabulary
 
-Age Group 4–7 (15% more complex and longer than 1–3):
-- 400–575 words
+Age Group 4–7:
+- 500–635 words
 - Clear beginning → challenge → resolution
 - One decision moment
 - Light dialogue allowed
 - Slightly richer vocabulary and sentence structure
 
-Age Group 8–10 (15% more complex and longer than 4–7):
-- 460–660 words
+Age Group 8–10:
+- 650–770 words
 - Clear problem with cause-and-effect progression
 - Emotional growth moment
 - More descriptive language and varied sentence structure
 - Can include mild tension
 
-Age Group 11+ (15% more complex and longer than 8–10):
-- 530–760 words
+Age Group 11+:
+- 800–900 words
 - Multi-step challenge
 - Clear internal decision and reflective growth
 - Sophisticated vocabulary and narrative depth
