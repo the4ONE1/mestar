@@ -53,7 +53,7 @@ const About = () => {
             <Download className="h-8 w-8 text-primary mb-4" />
             <h2 className="font-display text-2xl font-bold mb-4">Instant Digital Download</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Each Star Stories set includes a personalized PDF storybook 
+              Each My Star Stories set includes a personalized PDF storybook 
               plus 5 bonus coloring pages featuring scenes from the adventure. Download instantly 
               after purchase and start reading tonight! ✨
             </p>
