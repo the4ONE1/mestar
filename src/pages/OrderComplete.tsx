@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, BookOpen, Download, ArrowLeft, Sparkles, CheckCircle2, Mail } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, BookOpen, Download, ArrowLeft, Sparkles, CheckCircle2, Mail, Upload, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import type { Personalization } from "@/stores/cartStore";
 
@@ -39,6 +41,17 @@ const OrderComplete = () => {
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Supporting character state
+  const [showSupportingStep, setShowSupportingStep] = useState(true);
+  const [supportingPhotoPreview, setSupportingPhotoPreview] = useState<string | null>(null);
+  const [supportingCharacterName, setSupportingCharacterName] = useState("");
+  const supportingFileRef = useRef<HTMLInputElement>(null);
+  const [personalizationData, setPersonalizationData] = useState<(Personalization & {
+    strength?: string;
+    supportingCharacterName?: string;
+    customerEmail?: string;
+  }) | null>(null);
+
   useEffect(() => {
     const savedData = localStorage.getItem("mestar-pending-story");
     if (!savedData) {
@@ -52,8 +65,33 @@ const OrderComplete = () => {
       customerEmail?: string;
     };
     setCustomerEmail(personalization.customerEmail || "");
-    runFullPipeline(personalization);
+    setPersonalizationData(personalization);
   }, []);
+
+  const handleSupportingPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Photo must be under 5MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => setSupportingPhotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleStartGeneration = (withSupportingCharacter: boolean) => {
+    if (!personalizationData) return;
+
+    const finalData = { ...personalizationData };
+    if (withSupportingCharacter && supportingPhotoPreview) {
+      finalData.supportingCharacterPhotoUrl = supportingPhotoPreview;
+      finalData.supportingCharacterName = supportingCharacterName.trim() || undefined;
+    }
+
+    setShowSupportingStep(false);
+    runFullPipeline(finalData);
+  };
 
   const runFullPipeline = async (
     personalization: Personalization & {
@@ -133,8 +171,8 @@ const OrderComplete = () => {
     if (!isGenerating || currentStep >= 4) return;
     const interval = setInterval(() => {
       setCurrentStep((prev) => {
-        if (prev === 1) return 1; // Wait on story until it finishes
-        if (prev === 2) return 3; // Move to assembling after images
+        if (prev === 1) return 1;
+        if (prev === 2) return 3;
         return prev;
       });
     }, 12000);
@@ -153,6 +191,109 @@ const OrderComplete = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Shop
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Supporting Character Step ──
+  if (showSupportingStep && personalizationData && !isGenerating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="max-w-md w-full">
+          {/* Order Confirmed Banner */}
+          <div className="bg-primary/10 border border-primary/20 rounded-2xl p-6 mb-6 text-center">
+            <CheckCircle2 className="h-10 w-10 text-primary mx-auto mb-3" />
+            <h2 className="font-display text-2xl font-bold mb-1">Order Confirmed!</h2>
+            <p className="text-sm text-muted-foreground">
+              One more optional step before we create your storybook...
+            </p>
+          </div>
+
+          {/* Supporting Character Upload */}
+          <div className="bg-card rounded-2xl border border-border p-6 mb-6 space-y-5">
+            <div className="text-center">
+              <UserPlus className="h-8 w-8 text-primary mx-auto mb-3" />
+              <h3 className="font-display text-lg font-bold mb-2">
+                Add a Supporting Character
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Want a sibling, friend, or even a pet to join the adventure? Upload their photo and they'll appear alongside the main character in the story and coloring pages!
+              </p>
+            </div>
+
+            <input
+              ref={supportingFileRef}
+              type="file"
+              accept="image/*"
+              onChange={handleSupportingPhotoChange}
+              className="hidden"
+            />
+
+            {supportingPhotoPreview ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden border border-border">
+                    <img src={supportingPhotoPreview} alt="Supporting character" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium flex items-center gap-1">
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                      Photo uploaded
+                    </p>
+                    <button
+                      onClick={() => supportingFileRef.current?.click()}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Change photo
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="supportingName" className="font-medium">Character's Name (optional)</Label>
+                  <Input
+                    id="supportingName"
+                    placeholder="e.g. Max, Luna, Buddy..."
+                    value={supportingCharacterName}
+                    onChange={(e) => setSupportingCharacterName(e.target.value)}
+                    maxLength={50}
+                  />
+                </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => supportingFileRef.current?.click()}
+                className="w-full border-dashed border-2"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Photo
+              </Button>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            {supportingPhotoPreview && (
+              <Button
+                onClick={() => handleStartGeneration(true)}
+                size="lg"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full shadow-lg shadow-primary/25"
+              >
+                Create Story with Both Characters ⭐
+              </Button>
+            )}
+            <Button
+              onClick={() => handleStartGeneration(false)}
+              variant={supportingPhotoPreview ? "outline" : "default"}
+              size="lg"
+              className={`w-full rounded-full ${!supportingPhotoPreview ? "bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg shadow-lg shadow-primary/25" : ""}`}
+            >
+              {supportingPhotoPreview ? "Skip — Just the Main Character" : "No Thanks — Start Creating My Story ⭐"}
+            </Button>
+          </div>
         </div>
       </div>
     );
