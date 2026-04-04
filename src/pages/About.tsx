@@ -11,7 +11,7 @@ const About = () => {
             <span className="text-sm font-medium text-primary">Our Story</span>
           </div>
           <h1 className="font-display text-4xl font-extrabold mb-4">
-            About <span className="text-primary">Star Stories</span>
+            About <span className="text-primary">My Star Stories</span>
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
             Where every child becomes the hero of their own adventure.
@@ -22,9 +22,9 @@ const About = () => {
         <div className="space-y-8">
           <div className="bg-card rounded-2xl p-8 border border-border">
             <BookOpen className="h-8 w-8 text-primary mb-4" />
-            <h2 className="font-display text-2xl font-bold mb-4">Why We Created Star Stories</h2>
+            <h2 className="font-display text-2xl font-bold mb-4">Why We Created My Star Stories</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Every child deserves to see themselves as the hero. Star Stories was born from a simple idea: 
+              Every child deserves to see themselves as the hero. My Star Stories was born from a simple idea: 
               what if bedtime wasn't just about winding down, but about building confidence, sparking imagination, 
               and showing kids that they can overcome any challenge?
             </p>
@@ -53,13 +53,13 @@ const About = () => {
             <Download className="h-8 w-8 text-primary mb-4" />
             <h2 className="font-display text-2xl font-bold mb-4">Instant Digital Download</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Each Star Stories set includes a personalized PDF storybook 
+              Each My Star Stories set includes a personalized PDF storybook 
               plus 5 bonus coloring pages featuring scenes from the adventure. Download instantly 
               after purchase and start reading tonight! ✨
             </p>
             <p className="text-xs text-muted-foreground/60 italic">Paperback books coming soon!</p>
             <p className="text-muted-foreground leading-relaxed">
-              We believe that reading together creates lifelong memories. With Star Stories, 
+              We believe that reading together creates lifelong memories. With My Star Stories, 
               bedtime becomes the most magical part of the day.
             </p>
           </div>

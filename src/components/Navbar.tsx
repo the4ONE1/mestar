@@ -8,7 +8,7 @@ export const Navbar = () => {
       <div className="container flex items-center justify-between h-16">
         <Link to="/" className="flex items-center gap-2 group">
           <Star className="h-6 w-6 text-primary fill-primary group-hover:animate-twinkle" />
-          <span className="font-display text-xl font-bold text-foreground">Star Stories</span>
+          <span className="font-display text-xl font-bold text-foreground">My Star Stories</span>
         </Link>
         <div className="flex items-center gap-4">
           <Link to="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
