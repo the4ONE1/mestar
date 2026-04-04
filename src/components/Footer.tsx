@@ -18,6 +18,7 @@ export const Footer = () => {
             <Link to="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
             <Link to="/reviews" className="hover:text-foreground transition-colors">Reviews</Link>
             <Link to="/why-read-together" className="hover:text-foreground transition-colors">Why Read</Link>
+            <Link to="/privacy-policy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
           </div>
           <p className="text-xs text-muted-foreground mt-4">
             © {new Date().getFullYear()} My Star Stories. All rights reserved.
