@@ -89,7 +89,7 @@ const Index = () => {
           <img
             src="/images/hero-bg.png"
             alt="Magical storybook adventure"
-            className="w-full h-[70%] object-cover object-top"
+            className="w-full h-[50%] object-cover object-top"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/40" />
         </div>
