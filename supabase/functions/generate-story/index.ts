@@ -284,14 +284,11 @@ Background requirements:
 - Leave sufficient white space for coloring
 
 Theme-specific background guidance:
-- Space Adventure: stars, planets, rocket panels, control consoles
-- Enchanted Forest: trees, mushrooms, flowers, woodland path
-- Under the Sea: coral, seaweed, bubbles, fish, ocean floor
-- Dinosaur Quest: ferns, volcanoes, rocks, prehistoric plants
-- Pirate Treasure: ship deck, treasure chest, island, palm trees
-- Fairy Tale Kingdom: castle towers, garden, stone path, banners
-- Safari Expedition: tall grass, acacia trees, watering hole, sun
-- Superhero Mission: city buildings, rooftops, clouds, skyline
+- Fairy Tale: castle towers, enchanted forest, stone paths, magical gardens, cottages
+- Ocean Adventure & Pirates: ship deck, treasure chest, coral reefs, island, palm trees, underwater scenes
+- Prince & Princess: royal palace, throne room, grand ballroom, castle gardens, kingdom village
+- Mythical Creatures: enchanted meadows, rainbow arches, crystal caves, magical forests, cloud kingdoms
+- Dinosaurs: ferns, volcanoes, rocks, prehistoric plants, jungle canopy, nesting grounds
 
 ----------------------------------------
 CHARACTER CONSISTENCY RULE (HIGHEST PRIORITY)
