@@ -22,7 +22,7 @@ const About = () => {
         <div className="space-y-8">
           <div className="bg-card rounded-2xl p-8 border border-border">
             <BookOpen className="h-8 w-8 text-primary mb-4" />
-            <h2 className="font-display text-2xl font-bold mb-4">Why We Created Star Stories</h2>
+            <h2 className="font-display text-2xl font-bold mb-4">Why We Created My Star Stories</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               Every child deserves to see themselves as the hero. Star Stories was born from a simple idea: 
               what if bedtime wasn't just about winding down, but about building confidence, sparking imagination, 
