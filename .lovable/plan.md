@@ -1,24 +1,21 @@
 
 
-# Plan: Update Story Themes to Final 5
+# Plan: Adjust Story Word Counts
 
-## What Changes
+## New Word Count Ranges
 
-Replace the current 8 themes with your chosen 5:
+Evenly spaced between 1–3 (350–500) and 11+ (800–900):
 
-1. **Fairy Tale**
-2. **Ocean Adventure & Pirates**
-3. **Prince & Princess**
-4. **Mythical Creatures** (unicorns, elves, fairies)
-5. **Dinosaurs**
+| Age Group | Current | New |
+|-----------|---------|-----|
+| 1–3 | 350–500 | 350–500 (unchanged) |
+| 4–7 | 400–575 | **500–635** |
+| 8–10 | 460–660 | **650–770** |
+| 11+ | 530–760 | **800–900** |
 
-## Technical Details
+## Technical Change
 
-**Two files to update:**
+**One file**: `supabase/functions/generate-story/index.ts`
 
-1. **`src/pages/ProductDetail.tsx`** — Replace the `STORY_THEMES` array (lines ~14-23) with the new 5 themes.
-
-2. **`supabase/functions/generate-story/index.ts`** — If themes are referenced in the story engine prompts, update them there too to match.
-
-No other changes needed — the theme is passed as a string to the AI, so it works automatically with any theme name.
+Update the 4 word count ranges in the Layer 1 system prompt (lines 28–56). Also remove the "15% more complex" phrasing since we're now using explicit even spacing.
 
