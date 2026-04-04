@@ -20,7 +20,7 @@ export const Footer = () => {
             <Link to="/why-read-together" className="hover:text-foreground transition-colors">Why Read</Link>
           </div>
           <p className="text-xs text-muted-foreground mt-4">
-            © {new Date().getFullYear()} Star Stories. All rights reserved.
+            © {new Date().getFullYear()} My Star Stories. All rights reserved.
           </p>
         </div>
       </div>

@@ -59,7 +59,7 @@ const About = () => {
             </p>
             <p className="text-xs text-muted-foreground/60 italic">Paperback books coming soon!</p>
             <p className="text-muted-foreground leading-relaxed">
-              We believe that reading together creates lifelong memories. With Star Stories, 
+              We believe that reading together creates lifelong memories. With My Star Stories, 
               bedtime becomes the most magical part of the day.
             </p>
           </div>
