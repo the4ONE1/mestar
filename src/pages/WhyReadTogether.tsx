@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { BookOpen, Heart, Star, Clock, Sparkles } from "lucide-react";
+import { fetchProducts } from "@/lib/shopify";
 
 const benefits = [
   {
@@ -19,6 +22,14 @@ const benefits = [
 ];
 
 const WhyReadTogether = () => {
+  const [firstHandle, setFirstHandle] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchProducts(1).then((products) => {
+      if (products.length > 0) setFirstHandle(products[0].node.handle);
+    }).catch(console.error);
+  }, []);
+
   return (
     <div className="min-h-screen py-16">
       <div className="container max-w-3xl">
@@ -75,13 +86,23 @@ const WhyReadTogether = () => {
           <p className="text-muted-foreground mb-4">
             Give them both gifts tonight.
           </p>
-          <a
-            href="/#products"
-            className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-display font-bold rounded-full px-8 py-3 hover:opacity-90 transition-opacity"
-          >
-            <Sparkles className="h-4 w-4" />
-            Create Their Story
-          </a>
+          {firstHandle ? (
+            <Link
+              to={`/product/${firstHandle}`}
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-display font-bold rounded-full px-8 py-3 hover:opacity-90 transition-opacity"
+            >
+              <Sparkles className="h-4 w-4" />
+              Create Their Story
+            </Link>
+          ) : (
+            <a
+              href="/#products"
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-display font-bold rounded-full px-8 py-3 hover:opacity-90 transition-opacity"
+            >
+              <Sparkles className="h-4 w-4" />
+              Create Their Story
+            </a>
+          )}
         </div>
       </div>
     </div>
