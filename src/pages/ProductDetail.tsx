@@ -10,14 +10,11 @@ import { ArrowLeft, Loader2, Star, Upload, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 const STORY_THEMES = [
-  "Space Adventure",
-  "Enchanted Forest",
-  "Under the Sea",
-  "Dinosaur Quest",
-  "Pirate Treasure",
-  "Fairy Tale Kingdom",
-  "Safari Expedition",
-  "Superhero Mission",
+  "Fairy Tale",
+  "Ocean Adventure & Pirates",
+  "Prince & Princess",
+  "Mythical Creatures",
+  "Dinosaurs",
 ];
 
 const STRENGTHS = [
