@@ -84,7 +84,7 @@ const Index = () => {
       </div>
 
       {/* Hero — Full-width magical image */}
-      <section className="relative overflow-hidden max-h-[600px] sm:max-h-[700px]">
+      <section className="relative overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="/images/hero-bg.png"
