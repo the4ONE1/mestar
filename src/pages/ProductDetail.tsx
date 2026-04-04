@@ -13,7 +13,7 @@ const STORY_THEMES = [
   "Fairy Tale",
   "Ocean Adventure & Pirates",
   "Prince & Princess",
-  "Mythical Creatures",
+  "Outer Space",
   "Dinosaurs",
 ];
 
