@@ -8,7 +8,7 @@ export const Footer = () => {
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="flex items-center gap-2">
             <Star className="h-5 w-5 text-primary fill-primary" />
-            <span className="font-display text-lg font-bold">Star Stories</span>
+            <span className="font-display text-lg font-bold">My Star Stories</span>
           </div>
           <p className="text-sm text-muted-foreground max-w-md">
             Where every child becomes the hero of their own bedtime adventure. ⭐
