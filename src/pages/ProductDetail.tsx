@@ -179,87 +179,7 @@ const ProductDetail = () => {
                 ✨ Personalize Your Story
               </h3>
 
-              <div className="space-y-2">
-                <Label htmlFor="customerEmail" className="font-medium">Your Email *</Label>
-                <Input
-                  id="customerEmail"
-                  type="email"
-                  placeholder="Where we'll send your finished PDF"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  maxLength={255}
-                />
-                <p className="text-xs text-muted-foreground">We'll email your storybook PDF to this address</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="childName" className="font-medium">Child's Name *</Label>
-                <Input
-                  id="childName"
-                  placeholder="Enter your child's name"
-                  value={childName}
-                  onChange={(e) => setChildName(e.target.value)}
-                  maxLength={50}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="childGender" className="font-medium">Boy or Girl *</Label>
-                <Select value={childGender} onValueChange={setChildGender}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select boy or girl" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="boy">Boy</SelectItem>
-                    <SelectItem value="girl">Girl</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="childAge" className="font-medium">Age Group *</Label>
-                <Select value={childAge} onValueChange={setChildAge}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select age group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1-3">1–3 years old</SelectItem>
-                    <SelectItem value="4-7">4–7 years old</SelectItem>
-                    <SelectItem value="8-10">8–10 years old</SelectItem>
-                    <SelectItem value="11+">11+ years old</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="theme" className="font-medium">Story Theme *</Label>
-                <Select value={theme} onValueChange={setTheme}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a theme" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STORY_THEMES.map(t => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="strength" className="font-medium">Strength to Nurture</Label>
-                <p className="text-xs text-muted-foreground">Optional — choose a positive trait your child will demonstrate in the story</p>
-                <Select value={strength} onValueChange={setStrength}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a strength (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STRENGTHS.map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
+              {/* 1. Photo Upload */}
               <div className="space-y-2">
                 <Label className="font-medium">Child's Photo *</Label>
                 <p className="text-xs text-muted-foreground">Upload a clear photo of your child to be featured in the story</p>
@@ -299,6 +219,93 @@ const ProductDetail = () => {
                     Upload Photo
                   </Button>
                 )}
+              </div>
+
+              {/* 2. Child's Name */}
+              <div className="space-y-2">
+                <Label htmlFor="childName" className="font-medium">Child's Name *</Label>
+                <Input
+                  id="childName"
+                  placeholder="Enter your child's name"
+                  value={childName}
+                  onChange={(e) => setChildName(e.target.value)}
+                  maxLength={50}
+                />
+              </div>
+
+              {/* 3. Boy or Girl */}
+              <div className="space-y-2">
+                <Label htmlFor="childGender" className="font-medium">Boy or Girl *</Label>
+                <Select value={childGender} onValueChange={setChildGender}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select boy or girl" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="boy">Boy</SelectItem>
+                    <SelectItem value="girl">Girl</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 4. Age Group */}
+              <div className="space-y-2">
+                <Label htmlFor="childAge" className="font-medium">Age Group *</Label>
+                <Select value={childAge} onValueChange={setChildAge}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select age group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1-3">1–3 years old</SelectItem>
+                    <SelectItem value="4-7">4–7 years old</SelectItem>
+                    <SelectItem value="8-10">8–10 years old</SelectItem>
+                    <SelectItem value="11+">11+ years old</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 5. Email */}
+              <div className="space-y-2">
+                <Label htmlFor="customerEmail" className="font-medium">Your Email *</Label>
+                <Input
+                  id="customerEmail"
+                  type="email"
+                  placeholder="Where we'll send your finished PDF"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  maxLength={255}
+                />
+                <p className="text-xs text-muted-foreground">We'll email your storybook PDF to this address</p>
+              </div>
+
+              {/* 6. Theme */}
+              <div className="space-y-2">
+                <Label htmlFor="theme" className="font-medium">Story Theme *</Label>
+                <Select value={theme} onValueChange={setTheme}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a theme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STORY_THEMES.map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 7. Strength / Traits */}
+              <div className="space-y-2">
+                <Label htmlFor="strength" className="font-medium">Strength to Nurture</Label>
+                <p className="text-xs text-muted-foreground">Optional — choose a positive trait your child will demonstrate in the story</p>
+                <Select value={strength} onValueChange={setStrength}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a strength (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STRENGTHS.map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
