@@ -1,52 +1,44 @@
 
 
-# Audit: Order of Operations & Consistency
+# Payments Status & Privacy Policy Plan
 
-After reviewing every page, here are the inconsistencies found and what needs to be fixed:
+## Payments: Already Working ✅
 
----
+Your store is fully set up to receive payments. The Shopify integration is live with:
+- Real Shopify storefront connected (`qqn01v-hw.myshopify.com`)
+- Cart system with real Shopify checkout
+- Customers click "Add to Cart" → open cart → "Checkout with Shopify" → pay on Shopify's secure checkout page
 
-## Issues Found
-
-### 1. ProductDetail still says "Beautifully illustrated" (line 333)
-The About page was already fixed to remove "illustrated," but the ProductDetail features list still says **"📖 Beautifully illustrated digital PDF storybook"**. These stories are not illustrated — this needs to match.
-
-**Fix**: Change to "📖 Personalized digital PDF storybook"
-
-### 2. FAQ personalization description is incomplete
-The FAQ says: *"upload a clear photo of your child, enter their name and age, and pick a story theme"* — but doesn't mention selecting boy/girl, which is a required step in the actual form.
-
-**Fix**: Update to mention boy/girl selection so it matches the real form.
-
-### 3. Supporting character has no $9.99 price shown
-You said the added character costs an extra $9.99, but the OrderComplete page doesn't mention any price for the supporting character option. There's no indication it's a paid add-on.
-
-**Fix**: Add "$9.99" price text to the supporting character section on the OrderComplete page.
-
-### 4. Footer is missing links
-The Navbar has About, FAQ, Reviews, and Why Read links, but the Footer only has About and FAQ. Should be consistent.
-
-**Fix**: Add Reviews and Why Read links to the Footer.
-
-### 5. "How It Works" steps are correct ✅
-Homepage steps (Personalize → Place Order → Download) match the actual flow.
-
-### 6. ProductDetail form order is correct ✅
-Photo → Name → Boy/Girl → Age → Email → Theme → Strength — matches your requested order.
-
-### 7. CTA buttons all go to product page ✅
-All CTA buttons correctly link to the product detail page (photo upload / personalization start).
+**One thing to confirm**: your Shopify store needs an active billing plan to process real payments. If you're still on a development/sandbox store, you'll need to claim it first (just ask me to "claim store" when you're ready).
 
 ---
 
-## Summary of Changes
+## Add Privacy Policy Page
 
-| File | What Changes |
-|------|-------------|
-| `src/pages/ProductDetail.tsx` | Remove "Beautifully illustrated" from features list |
-| `src/pages/FAQ.tsx` | Update personalization answer to include boy/girl step |
-| `src/pages/OrderComplete.tsx` | Add $9.99 price to supporting character section |
-| `src/components/Footer.tsx` | Add Reviews and Why Read links |
+### New file: `src/pages/PrivacyPolicy.tsx`
 
-4 small text/link fixes across 4 files. No layout or logic changes needed.
+A clean, readable privacy policy page covering:
+
+- **What we collect**: Child's name, age group, gender, photo, email, story preferences
+- **How we use it**: Solely for generating the personalized storybook and coloring pages
+- **Photo policy** (prominent): All uploaded photos are used exclusively for story and coloring page generation and are **permanently deleted after 30 days**
+- **Payment info**: Handled securely by Shopify — My Star Stories never sees or stores payment details
+- **No sharing**: We do not sell, share, or distribute any personal data to third parties
+- **Contact**: How to reach out with questions
+
+### Update: `src/App.tsx`
+- Add route `/privacy-policy`
+
+### Update: `src/components/Footer.tsx`
+- Add "Privacy Policy" link alongside the existing nav links
+
+---
+
+## Summary
+
+| Change | File |
+|--------|------|
+| New Privacy Policy page | `src/pages/PrivacyPolicy.tsx` |
+| Add route | `src/App.tsx` |
+| Add footer link | `src/components/Footer.tsx` |
 
