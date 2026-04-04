@@ -11,6 +11,7 @@ import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import FAQ from "./pages/FAQ";
 import Reviews from "./pages/Reviews";
+import WhyReadTogether from "./pages/WhyReadTogether";
 import NotFound from "./pages/NotFound";
 import OrderComplete from "./pages/OrderComplete";
 
@@ -28,6 +29,7 @@ const AppContent = () => {
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/reviews" element={<Reviews />} />
+          <Route path="/why-read-together" element={<WhyReadTogether />} />
           <Route path="/order-complete" element={<OrderComplete />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
