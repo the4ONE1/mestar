@@ -106,13 +106,23 @@ const Index = () => {
           <p className="text-lg text-foreground/90 max-w-lg mx-auto mb-8 leading-relaxed drop-shadow-md">
             A one-of-a-kind digital storybook where your little one is the hero. Instantly download and start the magic tonight.
           </p>
-          <Button
-            asChild
-            size="lg"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all duration-300"
-          >
-            <a href="#products">Start Your Magical Journey ⭐</a>
-          </Button>
+          {products.length > 0 ? (
+            <Button
+              asChild
+              size="lg"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all duration-300"
+            >
+              <Link to={`/product/${products[0].node.handle}`}>Start Your Magical Journey ⭐</Link>
+            </Button>
+          ) : (
+            <Button
+              asChild
+              size="lg"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all duration-300"
+            >
+              <a href="#products">Start Your Magical Journey ⭐</a>
+            </Button>
+          )}
 
           {/* Social proof */}
           <div className="mt-8 flex items-center justify-center gap-1">
