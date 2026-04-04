@@ -22,6 +22,14 @@ const benefits = [
 ];
 
 const WhyReadTogether = () => {
+  const [firstHandle, setFirstHandle] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchProducts(1).then((products) => {
+      if (products.length > 0) setFirstHandle(products[0].node.handle);
+    }).catch(console.error);
+  }, []);
+
   return (
     <div className="min-h-screen py-16">
       <div className="container max-w-3xl">
