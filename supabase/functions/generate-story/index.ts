@@ -410,6 +410,12 @@ Each prompt must:
 4. End with:
 "Clean white background behind the scene elements, no grayscale, no color."
 
+If a supporting character is included, follow the PAGE DISTRIBUTION rules:
+Pages 1, 3, 5 = main character only.
+Page 2 = both characters together.
+Page 4 = supporting character only.
+Include the appropriate CHARACTER_REFERENCE and/or SUPPORTING_CHARACTER_REFERENCE in each prompt accordingly.
+
 ----------------------------------------
 QUALITY CONTROL RULE
 ----------------------------------------
