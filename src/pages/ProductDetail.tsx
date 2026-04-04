@@ -100,7 +100,8 @@ const ProductDetail = () => {
     // Save personalization for story generation after checkout
     const personalizationData = {
       childName: childName.trim(),
-      childAge: childAge, // age group string like "1-3", "4-7", "8-10", "11+"
+      childGender,
+      childAge: childAge,
       theme,
       strength,
       photoUrl: photoPreview!,
