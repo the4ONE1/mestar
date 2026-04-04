@@ -74,8 +74,8 @@ const PrivacyPolicy = () => {
           </div>
           <p className="text-muted-foreground leading-relaxed">
             Questions about your privacy? Reach out to us anytime at{" "}
-            <a href="mailto:hello@mystarstories.com" className="text-primary hover:underline">
-              hello@mystarstories.com
+            <a href="mailto:notify@mystarstories.com" className="text-primary hover:underline">
+              notify@mystarstories.com
             </a>
           </p>
         </section>
