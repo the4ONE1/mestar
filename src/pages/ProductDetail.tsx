@@ -338,6 +338,7 @@ const ProductDetail = () => {
               ].map((feature) => (
                 <div key={feature} className="text-sm text-muted-foreground">{feature}</div>
               ))}
+              <p className="text-xs text-muted-foreground/60 italic mt-2">📚 Paperback books coming soon</p>
             </div>
           </div>
         </div>
