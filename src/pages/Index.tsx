@@ -235,13 +235,23 @@ const Index = () => {
           <p className="text-muted-foreground max-w-md mx-auto mb-6">
             Download instantly after purchase. Give your child a gift they'll never forget.
           </p>
-          <Button
-            asChild
-            size="lg"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:scale-105 transition-all"
-          >
-            <a href="#products">Create Your Story Now ⭐</a>
-          </Button>
+          {products.length > 0 ? (
+            <Button
+              asChild
+              size="lg"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:scale-105 transition-all"
+            >
+              <Link to={`/product/${products[0].node.handle}`}>Create Your Story Now ⭐</Link>
+            </Button>
+          ) : (
+            <Button
+              asChild
+              size="lg"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:scale-105 transition-all"
+            >
+              <a href="#products">Create Your Story Now ⭐</a>
+            </Button>
+          )}
         </div>
       </section>
     </div>
