@@ -172,9 +172,9 @@ const Index = () => {
           <h2 className="font-display text-3xl font-bold text-center mb-10">How It Works</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[
-              { step: "1", icon: BookOpen, title: "Choose Your Story", desc: "Pick from magical adventure themes" },
-              { step: "2", icon: Sparkles, title: "Personalize It", desc: "Add your child's name, age & photo" },
-              { step: "3", icon: Download, title: "Download & Enjoy", desc: "Get your PDF instantly after purchase" },
+              { step: "1", icon: Sparkles, title: "Personalize It", desc: "Upload a photo, choose a theme & add details" },
+              { step: "2", icon: BookOpen, title: "Place Your Order", desc: "Complete checkout — optionally add a second character" },
+              { step: "3", icon: Download, title: "Download & Enjoy", desc: "Get your personalized PDF storybook instantly" },
             ].map(({ step, icon: Icon, title, desc }) => (
               <div key={step} className="text-center">
                 <div className="w-14 h-14 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center mx-auto mb-4">
