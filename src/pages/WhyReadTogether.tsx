@@ -32,7 +32,7 @@ const WhyReadTogether = () => {
             The Best Gift You Can Give a Child Is{" "}
             <span className="text-primary">Your Time</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="font-display text-4xl md:text-5xl font-extrabold text-primary leading-tight">
             The second best? A story where they're the hero.
           </p>
         </div>
