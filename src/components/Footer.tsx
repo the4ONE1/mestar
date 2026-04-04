@@ -16,6 +16,8 @@ export const Footer = () => {
           <div className="flex gap-6 text-sm text-muted-foreground">
             <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
             <Link to="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
+            <Link to="/reviews" className="hover:text-foreground transition-colors">Reviews</Link>
+            <Link to="/why-read-together" className="hover:text-foreground transition-colors">Why Read</Link>
           </div>
           <p className="text-xs text-muted-foreground mt-4">
             © {new Date().getFullYear()} Star Stories. All rights reserved.
