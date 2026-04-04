@@ -322,6 +322,23 @@ MANDATORY — define once, repeat verbatim in every prompt:
    - Must be visually distinct from the main character
    - Must also remain identical across all pages
 
+   PAGE DISTRIBUTION (when supporting character is included):
+   - COLOR_PAGE_1: Main character ONLY
+   - COLOR_PAGE_2: BOTH characters together in the scene
+   - COLOR_PAGE_3: Main character ONLY
+   - COLOR_PAGE_4: Supporting character ONLY (solo scene)
+   - COLOR_PAGE_5: Main character ONLY
+
+   For the BOTH page:
+   - Both characters share the scene interacting together
+   - Main character remains the focal point (slightly larger or foreground)
+   - Include BOTH character reference blocks verbatim
+
+   For the SOLO supporting character page:
+   - Supporting character is the central figure
+   - Use their EXACT reference description
+   - Show them in an action moment from the story
+
 FAILURE MODE TO AVOID:
 - Do NOT use vague descriptions like "a young child" or "the hero"
 - Do NOT change any detail of appearance between pages
