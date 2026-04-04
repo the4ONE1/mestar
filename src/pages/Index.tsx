@@ -89,11 +89,11 @@ const Index = () => {
           <img
             src="/images/hero-bg.png"
             alt="Magical storybook adventure"
-            className="w-full h-full object-cover"
+            className="w-full h-[75%] object-cover object-top"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/40" />
         </div>
-        <div className="relative z-10 container text-center pt-12 pb-24 sm:pt-20 sm:pb-32">
+        <div className="relative z-10 container text-center pt-12 pb-16 sm:pt-20 sm:pb-24">
           <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm border border-primary/30 rounded-full px-4 py-2 mb-6">
             <Sparkles className="h-4 w-4 text-primary" />
             <span className="text-sm font-bold text-primary">Personalized Bedtime Magic</span>
