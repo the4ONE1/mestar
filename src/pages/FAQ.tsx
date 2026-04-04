@@ -3,36 +3,16 @@ import { HelpCircle } from "lucide-react";
 
 const faqs = [
   {
+    q: "What do I get with my order?",
+    a: "You'll receive a personalized digital PDF storybook where your child is the hero, plus 5 bonus coloring pages featuring scenes from their adventure — all as an instant download you can print at home or read on any device.",
+  },
+  {
     q: "How does the personalization work?",
-    a: "When you order, you'll provide your child's name, age, a photo, and choose a story theme. We use these details to create a one-of-a-kind story where your child is the hero!",
+    a: "Simply upload a clear photo of your child, enter their name and age, and pick a story theme. Our AI creates a one-of-a-kind story and coloring pages tailored just for them!",
   },
   {
-    q: "What age group are the stories designed for?",
-    a: "Our stories are crafted for children ages 2-10. The language and themes are age-appropriate, with simple narratives for younger readers and more detailed adventures for older kids.",
-  },
-  {
-    q: "Are the stories appropriate for all children?",
-    a: "Absolutely! All Star Stories are non-violent and age-appropriate. Every story portrays the child as a brave hero and problem-solver, teaching positive values through fun adventures.",
-  },
-  {
-    q: "What's included in my order?",
-    a: "Each Star Stories set includes a personalized digital PDF storybook plus 5 bonus coloring pages featuring scenes from the adventure. Everything is delivered as an instant download!",
-  },
-  {
-    q: "How do I receive my story?",
-    a: "Star Stories are delivered as an instant digital download. After purchase, you'll receive your personalized PDF storybook and coloring pages that you can print at home or read on any device.",
-  },
-  {
-    q: "What is the Supporting Character add-on?",
-    a: "For a small additional charge, you can upload a second photo to include a friend, sibling, or pet as a supporting character in your child's story. It's a great way to make the adventure even more special!",
-  },
-  {
-    q: "Can I order stories for multiple children?",
-    a: "Yes! You can order separate personalized stories for each child. Each story will be uniquely crafted with their name, photo, and chosen theme.",
-  },
-  {
-    q: "What if I need to make changes after ordering?",
-    a: "Please reach out to us as soon as possible after placing your order. We'll do our best to accommodate any changes before your story is generated.",
+    q: "Is the content safe and age-appropriate?",
+    a: "Absolutely! Every story is non-violent and age-appropriate. Your child is always the hero and problem-solver, learning positive values through fun adventures. Stories are carefully crafted for ages 1–11+.",
   },
 ];
 

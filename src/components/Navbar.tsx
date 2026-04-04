@@ -17,6 +17,9 @@ export const Navbar = () => {
           <Link to="/faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             FAQ
           </Link>
+          <Link to="/reviews" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            Reviews
+          </Link>
           <CartDrawer />
         </div>
       </div>
