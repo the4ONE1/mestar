@@ -442,7 +442,7 @@ serve(async (req) => {
   }
 
   try {
-    const { childName, childAge, theme, strength, hasSupportingCharacter, supportingCharacterName } = await req.json();
+    const { childName, childAge, childGender, theme, strength, hasSupportingCharacter, supportingCharacterName } = await req.json();
 
     // Validate inputs
     if (!childName || !childAge || !theme) {
@@ -457,8 +457,14 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // Determine pronouns based on gender selection
+    const pronouns = childGender === "girl"
+      ? { subject: "she", object: "her", possessive: "her", child: "girl" }
+      : { subject: "he", object: "him", possessive: "his", child: "boy" };
+
     // Build Layer 1 input
     const layer1Input = `Loved One Name: ${childName}
+Gender: ${pronouns.child} (use ${pronouns.subject}/${pronouns.object}/${pronouns.possessive} pronouns)
 Age Group: ${childAge}
 Theme: ${theme}
 Supporting Character Included: ${hasSupportingCharacter ? "Yes" : "No"}

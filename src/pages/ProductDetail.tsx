@@ -38,7 +38,8 @@ const ProductDetail = () => {
 
   // Personalization form state
   const [childName, setChildName] = useState("");
-  const [childAge, setChildAge] = useState(""); // stores age group like "1-3", "4-7", "8-10", "11+"
+  const [childGender, setChildGender] = useState("");
+  const [childAge, setChildAge] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [theme, setTheme] = useState("");
   const [strength, setStrength] = useState("");
@@ -69,7 +70,7 @@ const ProductDetail = () => {
   };
 
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
-  const isFormValid = childName.trim().length > 0 && childAge && theme && photoPreview && isEmailValid;
+  const isFormValid = childName.trim().length > 0 && childGender && childAge && theme && photoPreview && isEmailValid;
 
   if (loading) {
     return (
@@ -99,7 +100,8 @@ const ProductDetail = () => {
     // Save personalization for story generation after checkout
     const personalizationData = {
       childName: childName.trim(),
-      childAge: childAge, // age group string like "1-3", "4-7", "8-10", "11+"
+      childGender,
+      childAge: childAge,
       theme,
       strength,
       photoUrl: photoPreview!,
@@ -199,6 +201,19 @@ const ProductDetail = () => {
                   onChange={(e) => setChildName(e.target.value)}
                   maxLength={50}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="childGender" className="font-medium">Boy or Girl *</Label>
+                <Select value={childGender} onValueChange={setChildGender}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select boy or girl" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="boy">Boy</SelectItem>
+                    <SelectItem value="girl">Girl</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
