@@ -1,44 +1,29 @@
 
 
-# Payments Status & Privacy Policy Plan
+# Fixes from End-to-End Review
 
-## Payments: Already Working ✅
+## Issues to Fix
 
-Your store is fully set up to receive payments. The Shopify integration is live with:
-- Real Shopify storefront connected (`qqn01v-hw.myshopify.com`)
-- Cart system with real Shopify checkout
-- Customers click "Add to Cart" → open cart → "Checkout with Shopify" → pay on Shopify's secure checkout page
+### 1. Add "Paperback coming soon" to Product Detail page
+The note only appears on About. Add it under the features list on ProductDetail.tsx (after line 340).
 
-**One thing to confirm**: your Shopify store needs an active billing plan to process real payments. If you're still on a development/sandbox store, you'll need to claim it first (just ask me to "claim store" when you're ready).
+### 2. Fix mobile ghost button on homepage
+The hero section's background image and overlay may be causing a ghost duplicate. Need to investigate the hero section's z-indexing and whether a second CTA button is being rendered underneath. Will check if it's just the background image showing through with text from the image itself.
 
----
+### 3. Update Shopify product description
+Use the `shopify--update_product` tool to:
+- Remove "fully illustrated" from the description
+- Add 11+ age group to the age group list
+- Remove any references to "illustrated"
 
-## Add Privacy Policy Page
+### 4. Check video section
+The video references `/videos/product-demo.mp4` — if this doesn't exist, it shows a broken player. Will either remove the section or add a placeholder message.
 
-### New file: `src/pages/PrivacyPolicy.tsx`
+## Files Changed
 
-A clean, readable privacy policy page covering:
-
-- **What we collect**: Child's name, age group, gender, photo, email, story preferences
-- **How we use it**: Solely for generating the personalized storybook and coloring pages
-- **Photo policy** (prominent): All uploaded photos are used exclusively for story and coloring page generation and are **permanently deleted after 30 days**
-- **Payment info**: Handled securely by Shopify — My Star Stories never sees or stores payment details
-- **No sharing**: We do not sell, share, or distribute any personal data to third parties
-- **Contact**: How to reach out with questions
-
-### Update: `src/App.tsx`
-- Add route `/privacy-policy`
-
-### Update: `src/components/Footer.tsx`
-- Add "Privacy Policy" link alongside the existing nav links
-
----
-
-## Summary
-
-| Change | File |
-|--------|------|
-| New Privacy Policy page | `src/pages/PrivacyPolicy.tsx` |
-| Add route | `src/App.tsx` |
-| Add footer link | `src/components/Footer.tsx` |
+| File | Change |
+|------|--------|
+| `src/pages/ProductDetail.tsx` | Add "Paperback coming soon" note |
+| `src/pages/Index.tsx` | Investigate/fix ghost button on mobile, check video section |
+| Shopify product (via tool) | Update description text |
 
