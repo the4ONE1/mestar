@@ -215,7 +215,7 @@ const OrderComplete = () => {
             <div className="text-center">
               <UserPlus className="h-8 w-8 text-primary mx-auto mb-3" />
               <h3 className="font-display text-lg font-bold mb-2">
-                Add a Supporting Character
+                Add a Supporting Character — $9.99
               </h3>
               <p className="text-sm text-muted-foreground">
                 Want a sibling, friend, or even a pet to join the adventure? Upload their photo and they'll appear alongside the main character in the story and coloring pages!

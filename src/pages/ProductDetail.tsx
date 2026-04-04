@@ -330,7 +330,7 @@ const ProductDetail = () => {
             <div className="mt-10 space-y-4 border-t border-border pt-8">
               {[
                 "✨ Personalized with your child's name & photo",
-                "📖 Beautifully illustrated digital PDF storybook",
+                "📖 Personalized digital PDF storybook",
                 "🎨 Includes 5 bonus coloring pages",
                 "🌟 Your child is the hero!",
                 "💝 Age-appropriate & non-violent",

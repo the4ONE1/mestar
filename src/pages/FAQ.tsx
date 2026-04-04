@@ -8,7 +8,7 @@ const faqs = [
   },
   {
     q: "How does the personalization work?",
-    a: "Simply upload a clear photo of your child, enter their name and age, and pick a story theme. Our AI creates a one-of-a-kind story and coloring pages tailored just for them!",
+    a: "Simply upload a clear photo of your child, enter their name, select boy or girl, choose their age group, and pick a story theme. Our AI creates a one-of-a-kind story and coloring pages tailored just for them!",
   },
   {
     q: "Is the content safe and age-appropriate?",
