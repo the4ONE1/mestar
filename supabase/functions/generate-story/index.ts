@@ -430,6 +430,10 @@ Before finalizing prompts, verify:
 - Background elements match the story theme
 - Character proportions and outfit are unchanged across pages
 - Prompts are concise but descriptive
+- If supporting character is included, verify page distribution:
+  Pages 1, 3, 5 show main character only
+  Page 2 shows both characters together
+  Page 4 shows supporting character only
 
 ========================================
 END OF COLORING ENGINE LAYER 2
