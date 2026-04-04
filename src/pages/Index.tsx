@@ -153,28 +153,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Video Section */}
-      <section className="py-16 bg-card/30">
-        <div className="container">
-          <div className="text-center mb-8">
-            <h2 className="font-display text-3xl font-bold mb-3">See the Magic Come Alive ✨</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">Watch how your child becomes the hero of their very own adventure</p>
-          </div>
-          <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-border shadow-2xl shadow-primary/10">
-            <video
-              className="w-full"
-              controls
-              autoPlay
-              muted
-              loop
-              playsInline
-              poster="/images/hero-bg.png"
-            >
-              <source src="/videos/product-demo.mp4" type="video/mp4" />
-            </video>
-          </div>
-        </div>
-      </section>
+      {/* Video Section - Coming Soon */}
 
       {/* How It Works */}
       <section className="py-16">
