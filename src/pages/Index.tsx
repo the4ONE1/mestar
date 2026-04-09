@@ -86,9 +86,12 @@ const Index = () => {
       {/* Hero — Full-width magical image */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src="/images/hero-bg.png"
-            alt="Magical storybook adventure"
+          <video
+            src="/videos/product-hero.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
             className="w-full h-[75%] object-cover object-top"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/40" />
