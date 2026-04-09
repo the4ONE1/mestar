@@ -133,7 +133,16 @@ const ProductDetail = () => {
           {/* Media Gallery — Video first, then images */}
           <div className="space-y-4">
             <div className="aspect-square rounded-2xl overflow-hidden bg-card border border-border">
-              {selectedImage === -1 ? (
+              {selectedMedia === 0 ? (
+                <video
+                  src="/videos/product-commercial.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              ) : selectedMedia === 1 ? (
                 <video
                   src="/videos/product-hero.mp4"
                   autoPlay
@@ -142,20 +151,32 @@ const ProductDetail = () => {
                   playsInline
                   className="w-full h-full object-cover"
                 />
-              ) : images[selectedImage] ? (
+              ) : images[selectedMedia - 2] ? (
                 <img
-                  src={images[selectedImage].node.url}
-                  alt={images[selectedImage].node.altText || node.title}
+                  src={images[selectedMedia - 2].node.url}
+                  alt={images[selectedMedia - 2].node.altText || node.title}
                   className="w-full h-full object-cover"
                 />
               ) : null}
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2">
-              {/* Video thumbnail */}
+              {/* Commercial video thumbnail */}
               <button
-                onClick={() => setSelectedImage(-1)}
+                onClick={() => setSelectedMedia(0)}
                 className={`w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors relative ${
-                  selectedImage === -1 ? 'border-primary' : 'border-border hover:border-primary/50'
+                  selectedMedia === 0 ? 'border-primary' : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <video src="/videos/product-commercial.mp4" muted className="w-full h-full object-cover" />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                  <span className="text-white text-xs font-bold">▶</span>
+                </div>
+              </button>
+              {/* Hero video thumbnail */}
+              <button
+                onClick={() => setSelectedMedia(1)}
+                className={`w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors relative ${
+                  selectedMedia === 1 ? 'border-primary' : 'border-border hover:border-primary/50'
                 }`}
               >
                 <video src="/videos/product-hero.mp4" muted className="w-full h-full object-cover" />
@@ -167,9 +188,9 @@ const ProductDetail = () => {
               {images.map((img, i) => (
                 <button
                   key={i}
-                  onClick={() => setSelectedImage(i)}
+                  onClick={() => setSelectedMedia(i + 2)}
                   className={`w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${
-                    i === selectedImage ? 'border-primary' : 'border-border hover:border-primary/50'
+                    (i + 2) === selectedMedia ? 'border-primary' : 'border-border hover:border-primary/50'
                   }`}
                 >
                   <img src={img.node.url} alt={img.node.altText || ''} className="w-full h-full object-cover" />
