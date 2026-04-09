@@ -32,7 +32,7 @@ const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
   const [product, setProduct] = useState<ShopifyProduct | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(-1); // -1 = video
+  const [selectedMedia, setSelectedMedia] = useState(0); // 0 = commercial, 1 = hero video, 2+ = images
   const addItem = useCartStore(state => state.addItem);
   const isLoading = useCartStore(state => state.isLoading);
 
