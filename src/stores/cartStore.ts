@@ -8,6 +8,7 @@ import {
   updateShopifyCartLine,
   removeLineFromShopifyCart,
   fetchCart,
+  recreateShopifyCart,
 } from '@/lib/shopify';
 
 export type { CartItem };
@@ -40,6 +41,7 @@ interface CartStore {
   clearCart: () => void;
   syncCart: () => Promise<void>;
   getCheckoutUrl: () => string | null;
+   ensureCheckoutUrl: () => Promise<string | null>;
   updatePersonalization: (variantId: string, personalization: Partial<Personalization>) => void;
 }
 
@@ -121,6 +123,67 @@ export const useCartStore = create<CartStore>()(
       clearCart: () => set({ items: [], cartId: null, checkoutUrl: null }),
       getCheckoutUrl: () => get().checkoutUrl,
 
+      ensureCheckoutUrl: async () => {
+        const { cartId, checkoutUrl, items, clearCart } = get();
+
+        if (items.length === 0) return null;
+
+        if (!cartId) {
+          const rebuiltCart = await recreateShopifyCart(items);
+          if (!rebuiltCart) return null;
+
+          set({
+            cartId: rebuiltCart.cartId,
+            checkoutUrl: rebuiltCart.checkoutUrl,
+            items: items.map((item) => ({
+              ...item,
+              lineId: rebuiltCart.lineIdByVariantId[item.variantId] ?? null,
+            })),
+          });
+
+          return rebuiltCart.checkoutUrl;
+        }
+
+        try {
+          const cart = await fetchCart(cartId);
+          if (!cart || cart.totalQuantity === 0) {
+            const rebuiltCart = await recreateShopifyCart(items);
+            if (!rebuiltCart) {
+              clearCart();
+              return null;
+            }
+
+            set({
+              cartId: rebuiltCart.cartId,
+              checkoutUrl: rebuiltCart.checkoutUrl,
+              items: items.map((item) => ({
+                ...item,
+                lineId: rebuiltCart.lineIdByVariantId[item.variantId] ?? null,
+              })),
+            });
+
+            return rebuiltCart.checkoutUrl;
+          }
+
+          const lineIdByVariantId = Object.fromEntries(
+            (cart.lines.edges || []).map(({ node }) => [node.merchandise.id, node.id])
+          );
+
+          set({
+            checkoutUrl: cart.checkoutUrl,
+            items: items.map((item) => ({
+              ...item,
+              lineId: lineIdByVariantId[item.variantId] ?? item.lineId,
+            })),
+          });
+
+          return cart.checkoutUrl;
+        } catch (error) {
+          console.error('Failed to ensure checkout URL:', error);
+          return checkoutUrl;
+        }
+      },
+
       updatePersonalization: (variantId, updates) => {
         set({
           items: get().items.map(i =>
@@ -138,6 +201,7 @@ export const useCartStore = create<CartStore>()(
         try {
           const cart = await fetchCart(cartId);
           if (!cart || cart.totalQuantity === 0) clearCart();
+          else if (cart.checkoutUrl) set({ checkoutUrl: cart.checkoutUrl });
         } catch (error) {
           console.error('Failed to sync cart:', error);
         } finally {
