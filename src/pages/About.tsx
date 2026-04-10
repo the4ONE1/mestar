@@ -1,6 +1,16 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Star, Heart, BookOpen, Sparkles, Download } from "lucide-react";
+import { fetchProducts } from "@/lib/shopify";
 
 const About = () => {
+  const [firstHandle, setFirstHandle] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchProducts(1).then((products) => {
+      if (products.length > 0) setFirstHandle(products[0].node.handle);
+    }).catch(console.error);
+  }, []);
   return (
     <div className="min-h-screen py-16">
       <div className="container max-w-3xl">
@@ -62,6 +72,27 @@ const About = () => {
               We believe that reading together creates lifelong memories. With My Star Stories, 
               bedtime becomes the most magical part of the day.
             </p>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center mt-10">
+            {firstHandle ? (
+              <Link
+                to={`/product/${firstHandle}`}
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-display font-bold rounded-full px-8 py-3 hover:opacity-90 transition-opacity"
+              >
+                <Sparkles className="h-4 w-4" />
+                Create Your Story Now ⭐
+              </Link>
+            ) : (
+              <Link
+                to="/#products"
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-display font-bold rounded-full px-8 py-3 hover:opacity-90 transition-opacity"
+              >
+                <Sparkles className="h-4 w-4" />
+                Create Your Story Now ⭐
+              </Link>
+            )}
           </div>
         </div>
       </div>
