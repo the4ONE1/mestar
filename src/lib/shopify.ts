@@ -188,7 +188,23 @@ export async function fetchProductByHandle(handle: string) {
 // Cart mutations
 const CART_QUERY = `
   query cart($id: ID!) {
-    cart(id: $id) { id totalQuantity }
+    cart(id: $id) {
+      id
+      checkoutUrl
+      totalQuantity
+      lines(first: 100) {
+        edges {
+          node {
+            id
+            merchandise {
+              ... on ProductVariant {
+                id
+              }
+            }
+          }
+        }
+      }
+    }
   }
 `;
 
@@ -259,6 +275,30 @@ export interface CartItem {
   selectedOptions: Array<{ name: string; value: string }>;
 }
 
+interface ShopifyCartLineEdge {
+  node: {
+    id: string;
+    merchandise: {
+      id: string;
+    };
+  };
+}
+
+interface ShopifyCart {
+  id: string;
+  checkoutUrl: string | null;
+  totalQuantity: number;
+  lines: {
+    edges: ShopifyCartLineEdge[];
+  };
+}
+
+function getLineIdByVariantId(cart: ShopifyCart): Record<string, string> {
+  return Object.fromEntries(
+    (cart.lines.edges || []).map(({ node }) => [node.merchandise.id, node.id])
+  );
+}
+
 export async function createShopifyCart(item: CartItem): Promise<{ cartId: string; checkoutUrl: string; lineId: string } | null> {
   const data = await storefrontApiRequest(CART_CREATE_MUTATION, {
     input: { lines: [{ quantity: item.quantity, merchandiseId: item.variantId }] },
@@ -269,6 +309,31 @@ export async function createShopifyCart(item: CartItem): Promise<{ cartId: strin
   const lineId = cart.lines.edges[0]?.node?.id;
   if (!lineId) return null;
   return { cartId: cart.id, checkoutUrl: formatCheckoutUrl(cart.checkoutUrl), lineId };
+}
+
+export async function recreateShopifyCart(items: CartItem[]): Promise<{ cartId: string; checkoutUrl: string; lineIdByVariantId: Record<string, string> } | null> {
+  if (items.length === 0) return null;
+
+  const data = await storefrontApiRequest(CART_CREATE_MUTATION, {
+    input: {
+      lines: items.map((item) => ({
+        quantity: item.quantity,
+        merchandiseId: item.variantId,
+      })),
+    },
+  });
+
+  const userErrors = data?.data?.cartCreate?.userErrors || [];
+  if (userErrors.length > 0) return null;
+
+  const cart = data?.data?.cartCreate?.cart as ShopifyCart | undefined;
+  if (!cart?.checkoutUrl) return null;
+
+  return {
+    cartId: cart.id,
+    checkoutUrl: formatCheckoutUrl(cart.checkoutUrl),
+    lineIdByVariantId: getLineIdByVariantId(cart),
+  };
 }
 
 export async function addLineToShopifyCart(cartId: string, item: CartItem): Promise<{ success: boolean; lineId?: string; cartNotFound?: boolean }> {
@@ -302,5 +367,11 @@ export async function removeLineFromShopifyCart(cartId: string, lineId: string):
 
 export async function fetchCart(cartId: string) {
   const data = await storefrontApiRequest(CART_QUERY, { id: cartId });
-  return data?.data?.cart;
+  const cart = data?.data?.cart as ShopifyCart | null | undefined;
+  if (!cart) return null;
+
+  return {
+    ...cart,
+    checkoutUrl: cart.checkoutUrl ? formatCheckoutUrl(cart.checkoutUrl) : null,
+  };
 }

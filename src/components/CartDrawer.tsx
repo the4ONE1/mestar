@@ -10,7 +10,7 @@ import { toast } from "sonner";
 export const CartDrawer = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const { items, isLoading, isSyncing, updateQuantity, removeItem, getCheckoutUrl, syncCart, updatePersonalization } = useCartStore();
+  const { items, isLoading, isSyncing, updateQuantity, removeItem, ensureCheckoutUrl, syncCart, updatePersonalization } = useCartStore();
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
   const upsellInputRef = useRef<HTMLInputElement>(null);
@@ -18,8 +18,8 @@ export const CartDrawer = () => {
 
   useEffect(() => { if (isOpen) syncCart(); }, [isOpen, syncCart]);
 
-  const handleCheckout = () => {
-    const checkoutUrl = getCheckoutUrl();
+  const handleCheckout = async () => {
+    const checkoutUrl = await ensureCheckoutUrl();
     if (checkoutUrl) {
       // Save personalization data for story generation
       const personalized = items.find(i => i.personalization);
@@ -30,7 +30,13 @@ export const CartDrawer = () => {
       setIsOpen(false);
       // Navigate to order complete page for story generation
       navigate("/order-complete");
+      return;
     }
+
+    toast.error("Checkout needs a fresh session", {
+      description: "Please tap checkout again. Your cart is safe and we’ll refresh it automatically.",
+      position: "top-center",
+    });
   };
 
   const handleUpsellPhoto = (variantId: string) => {
