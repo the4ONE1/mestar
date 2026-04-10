@@ -3,30 +3,10 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, CheckCircle2 } from "lucide-react";
 import { fetchProducts, ShopifyProduct } from "@/lib/shopify";
-import { useCartStore } from "@/stores/cartStore";
-import { toast } from "sonner";
 
 const ProductCard = ({ product }: { product: ShopifyProduct }) => {
-  const addItem = useCartStore(state => state.addItem);
-  const isLoading = useCartStore(state => state.isLoading);
-  const variant = product.node.variants.edges[0]?.node;
   const image = product.node.images.edges[0]?.node;
   const price = product.node.priceRange.minVariantPrice;
-
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!variant) return;
-    await addItem({
-      product,
-      variantId: variant.id,
-      variantTitle: variant.title,
-      price: variant.price,
-      quantity: 1,
-      selectedOptions: variant.selectedOptions || [],
-    });
-    toast.success("Added to cart! ⭐", { position: "top-center" });
-  };
 
   return (
     <Link to={`/product/${product.node.handle}`} className="group block">
@@ -51,14 +31,10 @@ const ProductCard = ({ product }: { product: ShopifyProduct }) => {
             <span className="text-xl font-bold text-primary">
               ${parseFloat(price.amount).toFixed(2)}
             </span>
-            <Button
-              onClick={handleAddToCart}
-              disabled={isLoading || !variant?.availableForSale}
-              size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-display rounded-full"
-            >
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add to Cart ⭐"}
-            </Button>
+            <span className="inline-flex items-center gap-1 bg-primary text-primary-foreground font-display rounded-full px-4 py-2 text-sm font-medium group-hover:bg-primary/90 transition-colors">
+              <Sparkles className="h-4 w-4" />
+              Personalize Now
+            </span>
           </div>
         </div>
       </div>

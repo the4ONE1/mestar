@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Sparkles } from "lucide-react";
+import { fetchProducts } from "@/lib/shopify";
 
 const faqs = [
   {
@@ -17,6 +20,14 @@ const faqs = [
 ];
 
 const FAQ = () => {
+  const [firstHandle, setFirstHandle] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchProducts(1).then((products) => {
+      if (products.length > 0) setFirstHandle(products[0].node.handle);
+    }).catch(console.error);
+  }, []);
+
   return (
     <div className="min-h-screen py-16">
       <div className="container max-w-2xl">
@@ -49,6 +60,28 @@ const FAQ = () => {
             </AccordionItem>
           ))}
         </Accordion>
+
+        {/* CTA */}
+        <div className="text-center mt-12">
+          <p className="text-muted-foreground mb-4">Ready to get started?</p>
+          {firstHandle ? (
+            <Link
+              to={`/product/${firstHandle}`}
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-display font-bold rounded-full px-8 py-3 hover:opacity-90 transition-opacity"
+            >
+              <Sparkles className="h-4 w-4" />
+              Create Your Story Now ⭐
+            </Link>
+          ) : (
+            <Link
+              to="/#products"
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-display font-bold rounded-full px-8 py-3 hover:opacity-90 transition-opacity"
+            >
+              <Sparkles className="h-4 w-4" />
+              Create Your Story Now ⭐
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
