@@ -18,25 +18,33 @@ export const CartDrawer = () => {
 
   useEffect(() => { if (isOpen) syncCart(); }, [isOpen, syncCart]);
 
-  const handleCheckout = async () => {
-    const checkoutUrl = await ensureCheckoutUrl();
-    if (checkoutUrl) {
-      // Save personalization data for story generation
-      const personalized = items.find(i => i.personalization);
-      if (personalized?.personalization) {
-        localStorage.setItem("mestar-pending-story", JSON.stringify(personalized.personalization));
-      }
-      window.open(checkoutUrl, '_blank');
-      setIsOpen(false);
-      // Navigate to order complete page for story generation
-      navigate("/order-complete");
-      return;
-    }
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-    toast.error("Checkout needs a fresh session", {
-      description: "Please tap checkout again. Your cart is safe and we’ll refresh it automatically.",
-      position: "top-center",
-    });
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const checkoutUrl = await ensureCheckoutUrl();
+      if (checkoutUrl) {
+        const personalized = items.find(i => i.personalization);
+        if (personalized?.personalization) {
+          localStorage.setItem("mestar-pending-story", JSON.stringify(personalized.personalization));
+        }
+        window.open(checkoutUrl, '_blank');
+        setIsOpen(false);
+        navigate("/order-complete");
+        return;
+      }
+
+      toast.error("Checkout needs a fresh session", {
+        description: "Please tap checkout again. Your cart is safe and we'll refresh it automatically.",
+        position: "top-center",
+      });
+    } catch (err) {
+      console.error("Checkout error:", err);
+      toast.error("Something went wrong. Please try again.", { position: "top-center" });
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   const handleUpsellPhoto = (variantId: string) => {
@@ -194,8 +202,8 @@ export const CartDrawer = () => {
                   <span className="text-lg font-display font-bold">Total</span>
                   <span className="text-xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
                 </div>
-                <Button onClick={handleCheckout} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display text-base" size="lg" disabled={items.length === 0 || isLoading || isSyncing}>
-                  {isLoading || isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ExternalLink className="w-4 h-4 mr-2" />Checkout ⭐</>}
+                <Button onClick={handleCheckout} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display text-base" size="lg" disabled={items.length === 0 || isLoading || isSyncing || checkoutLoading}>
+                  {isLoading || isSyncing || checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ExternalLink className="w-4 h-4 mr-2" />Checkout ⭐</>}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">⚡ Instant digital download after purchase</p>
               </div>
