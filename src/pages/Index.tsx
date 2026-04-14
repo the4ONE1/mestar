@@ -59,19 +59,25 @@ const Index = () => {
         </p>
       </div>
 
-      {/* Hero — Full-width magical image */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <video
-            src="/videos/product-hero.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-[75%] object-cover object-top"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/40" />
+      {/* Promo Video */}
+      <section className="bg-background">
+        <div className="container py-6 sm:py-10">
+          <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-border shadow-xl shadow-primary/10">
+            <video
+              src="/videos/promo-ad.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              controls
+              className="w-full aspect-video object-cover"
+            />
+          </div>
         </div>
+      </section>
+
+      {/* Hero */}
+      <section className="relative overflow-hidden">
         <div className="relative z-10 container text-center pt-12 pb-16 sm:pt-20 sm:pb-24">
           <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm border border-primary/30 rounded-full px-4 py-2 mb-6">
             <Sparkles className="h-4 w-4 text-primary" />
