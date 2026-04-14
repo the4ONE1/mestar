@@ -137,7 +137,7 @@ const ProductDetail = () => {
                 <img
                   src={images[selectedMedia].node.url}
                   alt={images[selectedMedia].node.altText || node.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               ) : null}
             </div>
