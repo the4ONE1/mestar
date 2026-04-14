@@ -1,29 +1,22 @@
 
 
-# Fixes from End-to-End Review
+# Add Audio to Intro Video
 
-## Issues to Fix
+## Problem
+The promo video plays muted because browsers block autoplay with sound. We need to attempt sound playback with a graceful fallback.
 
-### 1. Add "Paperback coming soon" to Product Detail page
-The note only appears on About. Add it under the features list on ProductDetail.tsx (after line 340).
+## Plan
 
-### 2. Fix mobile ghost button on homepage
-The hero section's background image and overlay may be causing a ghost duplicate. Need to investigate the hero section's z-indexing and whether a second CTA button is being rendered underneath. Will check if it's just the background image showing through with text from the image itself.
+**File: `src/pages/Index.tsx`**
 
-### 3. Update Shopify product description
-Use the `shopify--update_product` tool to:
-- Remove "fully illustrated" from the description
-- Add 11+ age group to the age group list
-- Remove any references to "illustrated"
+1. Remove the `muted` attribute from the `<video>` tag
+2. Add a `useEffect` that tries to play the video with sound using `video.play().catch()`
+3. If the browser blocks it (most will for first-time visitors), fall back to muted playback and show a "🔊 Tap for sound" button in the corner
+4. When the user taps the button, unmute the video
 
-### 4. Check video section
-The video references `/videos/product-demo.mp4` — if this doesn't exist, it shows a broken player. Will either remove the section or add a placeholder message.
-
-## Files Changed
-
-| File | Change |
-|------|--------|
-| `src/pages/ProductDetail.tsx` | Add "Paperback coming soon" note |
-| `src/pages/Index.tsx` | Investigate/fix ghost button on mobile, check video section |
-| Shopify product (via tool) | Update description text |
+### Technical detail
+- Add `isMuted` state to track mute status
+- In `useEffect`, attempt `videoRef.current.play()` — on rejection, set `videoRef.current.muted = true`, retry play, and set `isMuted = true`
+- Render a small speaker icon button (bottom-right corner) when `isMuted` is true — clicking it sets `videoRef.current.muted = false` and hides the button
+- This gives sound when the browser allows it, and a one-tap unmute when it doesn't
 
