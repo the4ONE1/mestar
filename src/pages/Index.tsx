@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, CheckCircle2 } from "lucide-react";
+import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, CheckCircle2, Volume2 } from "lucide-react";
 import { fetchProducts, ShopifyProduct } from "@/lib/shopify";
 
 const ProductCard = ({ product }: { product: ShopifyProduct }) => {
