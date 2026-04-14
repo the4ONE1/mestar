@@ -46,14 +46,35 @@ const Index = () => {
   const [products, setProducts] = useState<ShopifyProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [showIntro, setShowIntro] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     fetchProducts(20).then(setProducts).catch(console.error).finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (showIntro && videoRef.current) {
+      const video = videoRef.current;
+      video.muted = false;
+      video.play().catch(() => {
+        video.muted = true;
+        setIsMuted(true);
+        video.play().catch(console.error);
+      });
+    }
+  }, [showIntro]);
+
   const handleVideoEnd = () => {
     setShowIntro(false);
+  };
+
+  const handleUnmute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      videoRef.current.muted = false;
+      setIsMuted(false);
+    }
   };
 
   if (showIntro) {
@@ -65,12 +86,19 @@ const Index = () => {
         <video
           ref={videoRef}
           src="/videos/promo-ad.mp4"
-          autoPlay
-          muted
           playsInline
           onEnded={handleVideoEnd}
           className="w-full h-full object-contain"
         />
+        {isMuted && (
+          <button
+            onClick={handleUnmute}
+            className="absolute bottom-8 right-8 bg-white/20 backdrop-blur-sm text-white rounded-full p-4 hover:bg-white/30 transition-colors"
+          >
+            <Volume2 className="h-6 w-6" />
+            <span className="sr-only">Tap for sound</span>
+          </button>
+        )}
       </div>
     );
   }
