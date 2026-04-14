@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, CheckCircle2 } from "lucide-react";
@@ -45,10 +45,35 @@ const ProductCard = ({ product }: { product: ShopifyProduct }) => {
 const Index = () => {
   const [products, setProducts] = useState<ShopifyProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showIntro, setShowIntro] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     fetchProducts(20).then(setProducts).catch(console.error).finally(() => setLoading(false));
   }, []);
+
+  const handleVideoEnd = () => {
+    setShowIntro(false);
+  };
+
+  if (showIntro) {
+    return (
+      <div
+        className="fixed inset-0 z-50 bg-black flex items-center justify-center cursor-pointer"
+        onClick={handleVideoEnd}
+      >
+        <video
+          ref={videoRef}
+          src="/videos/promo-ad.mp4"
+          autoPlay
+          muted
+          playsInline
+          onEnded={handleVideoEnd}
+          className="w-full h-full object-contain"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -58,23 +83,6 @@ const Index = () => {
           ⚡ Instant Digital Download — Get Your Story in Minutes!
         </p>
       </div>
-
-      {/* Promo Video */}
-      <section className="bg-background">
-        <div className="container py-6 sm:py-10">
-          <div className="max-w-2xl mx-auto rounded-2xl overflow-hidden border border-border shadow-xl shadow-primary/10">
-            <video
-              src="/videos/promo-ad.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              controls
-              className="w-full aspect-video object-cover"
-            />
-          </div>
-        </div>
-      </section>
 
       {/* Hero */}
       <section className="relative overflow-hidden">
