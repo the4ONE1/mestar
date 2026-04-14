@@ -202,8 +202,8 @@ export const CartDrawer = () => {
                   <span className="text-lg font-display font-bold">Total</span>
                   <span className="text-xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
                 </div>
-                <Button onClick={handleCheckout} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display text-base" size="lg" disabled={items.length === 0 || isLoading || isSyncing}>
-                  {isLoading || isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ExternalLink className="w-4 h-4 mr-2" />Checkout ⭐</>}
+                <Button onClick={handleCheckout} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display text-base" size="lg" disabled={items.length === 0 || isLoading || isSyncing || checkoutLoading}>
+                  {isLoading || isSyncing || checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ExternalLink className="w-4 h-4 mr-2" />Checkout ⭐</>}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">⚡ Instant digital download after purchase</p>
               </div>
