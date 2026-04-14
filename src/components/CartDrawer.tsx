@@ -18,25 +18,33 @@ export const CartDrawer = () => {
 
   useEffect(() => { if (isOpen) syncCart(); }, [isOpen, syncCart]);
 
-  const handleCheckout = async () => {
-    const checkoutUrl = await ensureCheckoutUrl();
-    if (checkoutUrl) {
-      // Save personalization data for story generation
-      const personalized = items.find(i => i.personalization);
-      if (personalized?.personalization) {
-        localStorage.setItem("mestar-pending-story", JSON.stringify(personalized.personalization));
-      }
-      window.open(checkoutUrl, '_blank');
-      setIsOpen(false);
-      // Navigate to order complete page for story generation
-      navigate("/order-complete");
-      return;
-    }
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-    toast.error("Checkout needs a fresh session", {
-      description: "Please tap checkout again. Your cart is safe and we’ll refresh it automatically.",
-      position: "top-center",
-    });
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const checkoutUrl = await ensureCheckoutUrl();
+      if (checkoutUrl) {
+        const personalized = items.find(i => i.personalization);
+        if (personalized?.personalization) {
+          localStorage.setItem("mestar-pending-story", JSON.stringify(personalized.personalization));
+        }
+        window.open(checkoutUrl, '_blank');
+        setIsOpen(false);
+        navigate("/order-complete");
+        return;
+      }
+
+      toast.error("Checkout needs a fresh session", {
+        description: "Please tap checkout again. Your cart is safe and we'll refresh it automatically.",
+        position: "top-center",
+      });
+    } catch (err) {
+      console.error("Checkout error:", err);
+      toast.error("Something went wrong. Please try again.", { position: "top-center" });
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   const handleUpsellPhoto = (variantId: string) => {
