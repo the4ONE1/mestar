@@ -50,31 +50,39 @@ export interface ShopifyProduct {
 }
 
 export async function storefrontApiRequest(query: string, variables: Record<string, unknown> = {}) {
-  const response = await fetch(SHOPIFY_STOREFRONT_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_TOKEN,
-    },
-    body: JSON.stringify({ query, variables }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-  if (response.status === 402) {
-    toast.error("Shopify: Payment required", {
-      description: "Your Shopify store needs an active billing plan. Visit https://admin.shopify.com to upgrade.",
+  try {
+    const response = await fetch(SHOPIFY_STOREFRONT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_TOKEN,
+      },
+      body: JSON.stringify({ query, variables }),
+      signal: controller.signal,
     });
-    return;
-  }
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
+    if (response.status === 402) {
+      toast.error("Shopify: Payment required", {
+        description: "Your Shopify store needs an active billing plan. Visit https://admin.shopify.com to upgrade.",
+      });
+      return;
+    }
 
-  const data = await response.json();
-  if (data.errors) {
-    throw new Error(`Shopify error: ${data.errors.map((e: { message: string }) => e.message).join(', ')}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.errors) {
+      throw new Error(`Shopify error: ${data.errors.map((e: { message: string }) => e.message).join(', ')}`);
+    }
+    return data;
+  } finally {
+    clearTimeout(timeout);
   }
-  return data;
 }
 
 const PRODUCTS_QUERY = `
