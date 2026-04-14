@@ -12,11 +12,11 @@ const ProductCard = ({ product }: { product: ShopifyProduct }) => {
     <Link to={`/product/${product.node.handle}`} className="group block">
       <div className="bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10">
         {image && (
-          <div className="aspect-square overflow-hidden bg-secondary/20">
+          <div className="aspect-[4/3] overflow-hidden bg-secondary/20">
             <img
               src={image.url}
               alt={image.altText || product.node.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-contain bg-secondary/10 group-hover:scale-105 transition-transform duration-500"
             />
           </div>
         )}
