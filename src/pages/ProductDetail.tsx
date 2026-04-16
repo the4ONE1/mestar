@@ -1,13 +1,25 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { fetchProductByHandle, ShopifyProduct } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Star, Upload, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ADDONS,
+  BASE_PRICE,
+  BUNDLE_PRICE,
+  BUNDLE_INCLUDES,
+  DEFAULT_ADDON_STATE,
+  calculateTotal,
+  bundleSavings,
+  type AddonKey,
+  type AddonState,
+} from "@/lib/products";
 
 const STORY_THEMES = [
   "Fairy Tale",
@@ -18,18 +30,13 @@ const STORY_THEMES = [
 ];
 
 const STRENGTHS = [
-  "Kindness",
-  "Bravery",
-  "Curiosity",
-  "Patience",
-  "Creativity",
-  "Generosity",
-  "Determination",
-  "Empathy",
+  "Kindness", "Bravery", "Curiosity", "Patience",
+  "Creativity", "Generosity", "Determination", "Empathy",
 ];
 
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
+  const navigate = useNavigate();
   const [product, setProduct] = useState<ShopifyProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState(0);
@@ -46,6 +53,10 @@ const ProductDetail = () => {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Add-on state
+  const [addons, setAddons] = useState<AddonState>(DEFAULT_ADDON_STATE);
+  const [isBundle, setIsBundle] = useState(false);
 
   useEffect(() => {
     if (!handle) return;
@@ -68,6 +79,24 @@ const ProductDetail = () => {
     reader.onloadend = () => setPhotoPreview(reader.result as string);
     reader.readAsDataURL(file);
   };
+
+  const toggleAddon = (key: AddonKey) => {
+    setIsBundle(false);
+    setAddons(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const toggleBundle = (checked: boolean) => {
+    setIsBundle(checked);
+    if (checked) {
+      const newState = { ...DEFAULT_ADDON_STATE };
+      for (const k of BUNDLE_INCLUDES) newState[k] = true;
+      setAddons(newState);
+    } else {
+      setAddons(DEFAULT_ADDON_STATE);
+    }
+  };
+
+  const totalPrice = calculateTotal(addons, isBundle);
 
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
   const isFormValid = childName.trim().length > 0 && childGender && childAge && theme && photoPreview && isEmailValid;
@@ -92,20 +121,21 @@ const ProductDetail = () => {
   const { node } = product;
   const images = node.images.edges;
   const variant = node.variants.edges[0]?.node;
-  const price = node.priceRange.minVariantPrice;
 
   const handleAddToCart = async () => {
     if (!variant || !isFormValid) return;
 
-    // Save personalization for story generation after checkout
     const personalizationData = {
       childName: childName.trim(),
       childGender,
-      childAge: childAge,
+      childAge,
       theme,
       strength,
       photoUrl: photoPreview!,
       customerEmail: customerEmail.trim(),
+      selectedAddons: addons,
+      isBundle,
+      totalPrice,
     };
     localStorage.setItem("mestar-pending-story", JSON.stringify(personalizationData));
 
@@ -130,16 +160,16 @@ const ProductDetail = () => {
         </Link>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-          {/* Media Gallery — Video first, then images */}
+          {/* Media */}
           <div className="space-y-4">
             <div className="aspect-square rounded-2xl overflow-hidden bg-card border border-border">
-              {images[selectedMedia] ? (
+              {images[selectedMedia] && (
                 <img
                   src={images[selectedMedia].node.url}
                   alt={images[selectedMedia].node.altText || node.title}
                   className="w-full h-full object-contain"
                 />
-              ) : null}
+              )}
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2">
               {images.map((img, i) => (
@@ -156,19 +186,92 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          {/* Info */}
+          {/* Info + form */}
           <div className="flex flex-col">
             <h1 className="font-display text-3xl font-bold mb-4">{node.title}</h1>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-3xl font-bold text-primary">${parseFloat(price.amount).toFixed(2)}</span>
-              <span className="text-sm text-muted-foreground">{price.currencyCode}</span>
+
+            {/* Live total */}
+            <div className="flex items-baseline gap-2 mb-2">
+              <span className="text-3xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
+              <span className="text-sm text-muted-foreground">USD</span>
             </div>
-            <p className="text-muted-foreground leading-relaxed mb-6 whitespace-pre-line">{node.description}</p>
+            <p className="text-xs text-muted-foreground mb-6">
+              Base story (text only): ${BASE_PRICE.toFixed(2)} — add what you need below
+            </p>
 
             <div className="flex items-center gap-2 mb-6">
               {[1, 2, 3, 4, 5].map(i => (
                 <Star key={i} className="h-5 w-5 text-primary fill-primary" />
               ))}
+              <span className="text-sm text-muted-foreground ml-1">Loved by 2,000+ families</span>
+            </div>
+
+            {/* ── BUNDLE CALLOUT ── */}
+            <button
+              type="button"
+              onClick={() => toggleBundle(!isBundle)}
+              className={`relative text-left mb-6 p-4 rounded-2xl border-2 transition-all ${
+                isBundle
+                  ? "border-primary bg-primary/10 shadow-lg shadow-primary/20"
+                  : "border-primary/30 bg-primary/5 hover:border-primary/60"
+              }`}
+            >
+              <div className="absolute -top-3 right-4 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
+                BEST VALUE
+              </div>
+              <div className="flex items-start gap-3">
+                <Checkbox checked={isBundle} className="mt-1 pointer-events-none" />
+                <div className="flex-1">
+                  <div className="flex items-baseline justify-between gap-2 mb-1">
+                    <h3 className="font-display text-lg font-bold flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      Everything Bundle
+                    </h3>
+                    <span className="font-bold text-primary text-lg">${BUNDLE_PRICE.toFixed(2)}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Story + illustrations + coloring pages + 1 supporting character + interactive audiobook.
+                  </p>
+                  <p className="text-xs font-bold text-primary mt-1">
+                    Save ${bundleSavings().toFixed(2)} vs buying à la carte
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* ── ADD-ONS ── */}
+            <div className="bg-card rounded-2xl border border-border p-6 mb-6 space-y-4">
+              <h3 className="font-display text-lg font-bold">Customize Your Story</h3>
+              <p className="text-xs text-muted-foreground -mt-3">Pick only what you want — or grab the bundle above.</p>
+
+              {ADDONS.map((addon) => {
+                const checked = addons[addon.key];
+                const disabled = isBundle;
+                return (
+                  <label
+                    key={addon.key}
+                    className={`flex items-start gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
+                      checked && !disabled
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/40"
+                    } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
+                  >
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={() => !disabled && toggleAddon(addon.key)}
+                      disabled={disabled}
+                      className="mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="font-medium text-sm">{addon.label}</span>
+                        <span className="text-sm font-bold text-primary">+${addon.price.toFixed(2)}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{addon.description}</p>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
 
             {/* Personalization Form */}
@@ -177,17 +280,10 @@ const ProductDetail = () => {
                 ✨ Personalize Your Story
               </h3>
 
-              {/* 1. Photo Upload */}
               <div className="space-y-2">
                 <Label className="font-medium">Child's Photo *</Label>
-                <p className="text-xs text-muted-foreground">Upload a clear, well-lit photo with only your child in the picture — this helps us match their appearance in the story!</p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                  className="hidden"
-                />
+                <p className="text-xs text-muted-foreground">A clear, well-lit photo helps us match their look.</p>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
                 {photoPreview ? (
                   <div className="flex items-center gap-3">
                     <div className="w-16 h-16 rounded-lg overflow-hidden border border-border">
@@ -195,49 +291,29 @@ const ProductDetail = () => {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium flex items-center gap-1">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                        Photo uploaded
+                        <CheckCircle2 className="h-4 w-4 text-primary" /> Photo uploaded
                       </p>
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="text-xs text-primary hover:underline"
-                      >
+                      <button onClick={() => fileInputRef.current?.click()} className="text-xs text-primary hover:underline">
                         Change photo
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full border-dashed border-2"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Photo
+                  <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full border-dashed border-2">
+                    <Upload className="h-4 w-4 mr-2" /> Upload Photo
                   </Button>
                 )}
               </div>
 
-              {/* 2. Child's Name */}
               <div className="space-y-2">
                 <Label htmlFor="childName" className="font-medium">Child's Name *</Label>
-                <Input
-                  id="childName"
-                  placeholder="Enter your child's name"
-                  value={childName}
-                  onChange={(e) => setChildName(e.target.value)}
-                  maxLength={50}
-                />
+                <Input id="childName" placeholder="Enter your child's name" value={childName} onChange={(e) => setChildName(e.target.value)} maxLength={50} />
               </div>
 
-              {/* 3. Boy or Girl */}
               <div className="space-y-2">
                 <Label htmlFor="childGender" className="font-medium">Boy or Girl *</Label>
                 <Select value={childGender} onValueChange={setChildGender}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select boy or girl" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select boy or girl" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="boy">Boy</SelectItem>
                     <SelectItem value="girl">Girl</SelectItem>
@@ -245,13 +321,10 @@ const ProductDetail = () => {
                 </Select>
               </div>
 
-              {/* 4. Age Group */}
               <div className="space-y-2">
                 <Label htmlFor="childAge" className="font-medium">Age Group *</Label>
                 <Select value={childAge} onValueChange={setChildAge}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select age group" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select age group" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1-3">1–3 years old</SelectItem>
                     <SelectItem value="4-7">4–7 years old</SelectItem>
@@ -261,47 +334,28 @@ const ProductDetail = () => {
                 </Select>
               </div>
 
-              {/* 5. Email */}
               <div className="space-y-2">
                 <Label htmlFor="customerEmail" className="font-medium">Your Email *</Label>
-                <Input
-                  id="customerEmail"
-                  type="email"
-                  placeholder="Where we'll send your finished PDF"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  maxLength={255}
-                />
-                <p className="text-xs text-muted-foreground">We'll email your storybook PDF to this address</p>
+                <Input id="customerEmail" type="email" placeholder="Where we'll send your finished PDF" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} maxLength={255} />
               </div>
 
-              {/* 6. Theme */}
               <div className="space-y-2">
                 <Label htmlFor="theme" className="font-medium">Story Theme *</Label>
                 <Select value={theme} onValueChange={setTheme}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a theme" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Choose a theme" /></SelectTrigger>
                   <SelectContent>
-                    {STORY_THEMES.map(t => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
+                    {STORY_THEMES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* 7. Strength / Traits */}
               <div className="space-y-2">
                 <Label htmlFor="strength" className="font-medium">Strength to Nurture</Label>
-                <p className="text-xs text-muted-foreground">Optional — choose a positive trait your child will demonstrate in the story</p>
+                <p className="text-xs text-muted-foreground">Optional positive trait your child will demonstrate.</p>
                 <Select value={strength} onValueChange={setStrength}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a strength (optional)" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Choose a strength (optional)" /></SelectTrigger>
                   <SelectContent>
-                    {STRENGTHS.map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
+                    {STRENGTHS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -313,30 +367,20 @@ const ProductDetail = () => {
               size="lg"
               className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full shadow-lg shadow-primary/25"
             >
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Add to Cart ⭐"}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : `Add to Cart — $${totalPrice.toFixed(2)} ⭐`}
             </Button>
 
             {!isFormValid && childName.length === 0 && (
               <p className="text-xs text-muted-foreground mt-2 text-center">Fill in all personalization details to add to cart</p>
             )}
 
-            {!variant?.availableForSale && (
-              <p className="text-destructive text-sm mt-3">Currently unavailable</p>
-            )}
-
             {/* Features */}
-            <div className="mt-10 space-y-4 border-t border-border pt-8">
-              {[
-                "✨ Personalized with your child's name & photo",
-                "📖 Personalized digital PDF storybook",
-                "🎨 Includes 5 bonus coloring pages",
-                "🌟 Your child is the hero!",
-                "💝 Age-appropriate & non-violent",
-                "⚡ Instant download after purchase",
-              ].map((feature) => (
-                <div key={feature} className="text-sm text-muted-foreground">{feature}</div>
-              ))}
-              <p className="text-xs text-muted-foreground/60 italic mt-2">📚 Paperback books coming soon</p>
+            <div className="mt-10 space-y-3 border-t border-border pt-8 text-sm text-muted-foreground">
+              <p>✨ Personalized with your child's name & photo</p>
+              <p>📖 Personalized digital PDF storybook</p>
+              <p>🌟 Your child is the hero!</p>
+              <p>💝 Age-appropriate & non-violent</p>
+              <p>⚡ Instant download after purchase</p>
             </div>
           </div>
         </div>

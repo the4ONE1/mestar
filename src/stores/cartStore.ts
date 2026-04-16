@@ -17,12 +17,21 @@ export type { ShopifyProduct };
 export interface Personalization {
   childName: string;
   childAge: string; // age group: "1-3", "4-7", "8-10", "11+"
+  childGender?: string;
   theme: string;
   photoUrl: string;
   strength?: string;
   customerEmail?: string;
   supportingCharacterPhotoUrl?: string;
   supportingCharacterName?: string;
+  selectedAddons?: {
+    illustrations: boolean;
+    coloring: boolean;
+    character: boolean;
+    audiobook: boolean;
+  };
+  isBundle?: boolean;
+  totalPrice?: number;
 }
 
 export interface CartItemWithPersonalization extends CartItem {
