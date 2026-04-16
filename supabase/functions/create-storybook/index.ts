@@ -282,8 +282,8 @@ serve(async (req) => {
       illustrations: true,
       coloring: false,
       character: false,
-      audiobook: false,
       ...(selectedAddons || {}),
+      audiobook: false, // audiobook deferred to separate app
     };
 
     // Create order record

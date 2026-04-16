@@ -1,7 +1,7 @@
 // Local product config — pricing add-on model (replaces Shopify-driven pricing)
 // Storefront still loads product imagery/title from Shopify, but pricing is computed here.
 
-export type AddonKey = "illustrations" | "coloring" | "character" | "audiobook";
+export type AddonKey = "illustrations" | "coloring" | "character";
 
 export interface AddonOption {
   key: AddonKey;
@@ -32,16 +32,10 @@ export const ADDONS: AddonOption[] = [
     description: "Include a sibling, friend, or pet in the adventure.",
     price: 4.99,
   },
-  {
-    key: "audiobook",
-    label: "Interactive audiobook",
-    description: "Page-flip reader, narration, word highlighting + sound-it-out for early readers.",
-    price: 19.99,
-  },
 ];
 
-export const BUNDLE_PRICE = 29.99;
-export const BUNDLE_INCLUDES: AddonKey[] = ["illustrations", "coloring", "character", "audiobook"];
+export const BUNDLE_PRICE = 19.99;
+export const BUNDLE_INCLUDES: AddonKey[] = ["illustrations", "coloring", "character"];
 
 export type AddonState = Record<AddonKey, boolean>;
 
@@ -49,7 +43,6 @@ export const DEFAULT_ADDON_STATE: AddonState = {
   illustrations: false,
   coloring: false,
   character: false,
-  audiobook: false,
 };
 
 export function calculateTotal(addons: AddonState, isBundle: boolean): number {
