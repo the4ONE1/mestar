@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      storybook_audio: {
+        Row: {
+          audio_storage_path: string | null
+          created_at: string
+          id: string
+          order_id: string
+          page_number: number
+          page_text: string
+          word_timings: Json | null
+        }
+        Insert: {
+          audio_storage_path?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          page_number: number
+          page_text: string
+          word_timings?: Json | null
+        }
+        Update: {
+          audio_storage_path?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          page_number?: number
+          page_text?: string
+          word_timings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storybook_audio_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "storybook_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storybook_orders: {
         Row: {
           child_age: string
@@ -25,7 +63,10 @@ export type Database = {
           error_message: string | null
           has_supporting_character: boolean | null
           id: string
+          illustration_prompts: Json | null
+          illustration_storage_paths: Json | null
           pdf_storage_path: string | null
+          selected_addons: Json | null
           status: string
           story_text: string | null
           story_title: string | null
@@ -43,7 +84,10 @@ export type Database = {
           error_message?: string | null
           has_supporting_character?: boolean | null
           id?: string
+          illustration_prompts?: Json | null
+          illustration_storage_paths?: Json | null
           pdf_storage_path?: string | null
+          selected_addons?: Json | null
           status?: string
           story_text?: string | null
           story_title?: string | null
@@ -61,7 +105,10 @@ export type Database = {
           error_message?: string | null
           has_supporting_character?: boolean | null
           id?: string
+          illustration_prompts?: Json | null
+          illustration_storage_paths?: Json | null
           pdf_storage_path?: string | null
+          selected_addons?: Json | null
           status?: string
           story_text?: string | null
           story_title?: string | null
