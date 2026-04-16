@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, CheckCircle2, Volume2 } from "lucide-react";
 import { fetchProducts, ShopifyProduct } from "@/lib/shopify";
+import StoryPreview from "@/components/StoryPreview";
 
 const ProductCard = ({ product }: { product: ShopifyProduct }) => {
   const image = product.node.images.edges[0]?.node;
@@ -198,6 +199,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Story Preview / Trailer */}
+      <StoryPreview productHandle={products[0]?.node.handle} />
 
       {/* Products */}
       <section id="products" className="py-16 bg-card/30">
