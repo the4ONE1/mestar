@@ -230,7 +230,7 @@ const ProductDetail = () => {
                     <span className="font-bold text-primary text-lg">${BUNDLE_PRICE.toFixed(2)}</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Story + illustrations + coloring pages + 1 supporting character + interactive audiobook.
+                    Story + illustrations + coloring pages + 1 supporting character.
                   </p>
                   <p className="text-xs font-bold text-primary mt-1">
                     Save ${bundleSavings().toFixed(2)} vs buying à la carte
