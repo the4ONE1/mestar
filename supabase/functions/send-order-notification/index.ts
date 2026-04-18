@@ -75,40 +75,79 @@ This is an automated notification from MESTAR.
     // ── 2. Customer email (only if we have a valid email) ──
     if (customerEmail && customerEmail.includes("@")) {
       const customerSubject = `${childName}'s Personalized Storybook is Ready! ⭐`;
-      const customerBody = `
-Hi there!
+      const orderPageUrl = orderId
+        ? `https://mestar.pro/order-complete?order_id=${orderId}`
+        : pdfUrl;
 
-${childName}'s personalized MESTAR storybook is ready to download.
+      const customerHtml = `
+<!DOCTYPE html>
+<html>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a1a1a; background: #ffffff;">
+  <div style="text-align: center; padding: 16px 0;">
+    <h1 style="font-size: 28px; margin: 0 0 8px;">⭐ ${childName}'s Storybook is Ready!</h1>
+    <p style="color: #666; margin: 0;">Your personalized MESTAR storybook has been created.</p>
+  </div>
 
-📥 Download your PDF here:
-${pdfUrl}
+  <div style="background: #f8f5ff; border: 1px solid #e7dfff; border-radius: 16px; padding: 28px; text-align: center; margin: 24px 0;">
+    <p style="font-size: 16px; margin: 0 0 20px;">Click below to view and download your PDF:</p>
+    <a href="${orderPageUrl}"
+       style="display: inline-block; background: #6d28d9; color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 12px; font-weight: 600; font-size: 16px;">
+      📖 View Your Storybook
+    </a>
+    <p style="font-size: 13px; color: #888; margin: 20px 0 0;">
+      Or paste this link in your browser:<br/>
+      <a href="${orderPageUrl}" style="color: #6d28d9; word-break: break-all;">${orderPageUrl}</a>
+    </p>
+  </div>
 
-This link is valid for 7 days, so save your PDF to your device or print it out!
+  <div style="background: #f5f5f5; border-radius: 12px; padding: 20px; margin: 24px 0;">
+    <h3 style="margin: 0 0 12px; font-size: 16px;">What's inside:</h3>
+    <ul style="margin: 0; padding-left: 20px; color: #444;">
+      <li>A unique story written just for ${childName}</li>
+      <li>Beautiful personalized illustrations</li>
+      <li>Bonus coloring pages (if included in your order)</li>
+    </ul>
+  </div>
 
-What's inside:
-- A unique story written just for ${childName}
-- Beautiful illustrations
-- Bonus coloring pages (if included in your order)
+  <div style="font-size: 14px; color: #555; padding: 0 8px;">
+    <p style="margin: 0 0 8px;"><strong>Story details:</strong></p>
+    <p style="margin: 4px 0;">• Child's name: ${childName}</p>
+    <p style="margin: 4px 0;">• Age group: ${childAge}</p>
+    <p style="margin: 4px 0;">• Theme: ${theme}</p>
+    ${strength ? `<p style="margin: 4px 0;">• Featured strength: ${strength}</p>` : ""}
+    ${supportingCharacterName ? `<p style="margin: 4px 0;">• Supporting character: ${supportingCharacterName}</p>` : ""}
+  </div>
 
-Story details:
-- Child's name: ${childName}
-- Age group: ${childAge}
-- Theme: ${theme}
-${strength ? `- Featured strength: ${strength}` : ""}
-${supportingCharacterName ? `- Supporting character: ${supportingCharacterName}` : ""}
+  <p style="font-size: 13px; color: #888; text-align: center; margin: 32px 0 8px;">
+    💡 Tip: Save the PDF to your device or print it out — the download link is valid for 7 days.
+  </p>
 
-Thank you for choosing MESTAR! We hope this storybook becomes a treasured keepsake.
-
-If you have any questions, just reply to this email.
-
-— The MESTAR Team
+  <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0 16px;"/>
+  <p style="font-size: 13px; color: #888; text-align: center; margin: 0;">
+    Thank you for choosing MESTAR!<br/>
+    Questions? Just reply to this email.
+  </p>
+</body>
+</html>
 `;
 
+      const customerText = `Hi there!
+
+${childName}'s personalized MESTAR storybook is ready.
+
+👉 View and download your PDF here:
+${orderPageUrl}
+
+This link is valid for 7 days, so save your PDF or print it out!
+
+— The MESTAR Team`;
+
       await transporter.sendMail({
-        from: "mestar.orders@gmail.com",
+        from: "MESTAR <mestar.orders@gmail.com>",
         to: customerEmail,
         subject: customerSubject,
-        text: customerBody,
+        text: customerText,
+        html: customerHtml,
       });
       console.log("Customer email sent to:", customerEmail);
     } else {
