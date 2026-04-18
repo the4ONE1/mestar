@@ -259,6 +259,31 @@ const CART_LINES_REMOVE_MUTATION = `
   }
 `;
 
+const CART_ATTRIBUTES_UPDATE_MUTATION = `
+  mutation cartAttributesUpdate($cartId: ID!, $attributes: [AttributeInput!]!) {
+    cartAttributesUpdate(cartId: $cartId, attributes: $attributes) {
+      cart { id }
+      userErrors { field message }
+    }
+  }
+`;
+
+export async function attachCartAttributes(
+  cartId: string,
+  attributes: Array<{ key: string; value: string }>,
+): Promise<boolean> {
+  const data = await storefrontApiRequest(CART_ATTRIBUTES_UPDATE_MUTATION, {
+    cartId,
+    attributes: attributes.map((a) => ({ key: a.key, value: a.value })),
+  });
+  const userErrors = data?.data?.cartAttributesUpdate?.userErrors || [];
+  if (userErrors.length > 0) {
+    console.error("cartAttributesUpdate errors:", userErrors);
+    return false;
+  }
+  return true;
+}
+
 function formatCheckoutUrl(checkoutUrl: string): string {
   try {
     const url = new URL(checkoutUrl);
