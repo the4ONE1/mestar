@@ -257,6 +257,7 @@ serve(async (req) => {
 
   try {
     const {
+      orderId: incomingOrderId,
       title,
       story,
       coloringPrompts,
@@ -286,29 +287,44 @@ serve(async (req) => {
       audiobook: false, // audiobook deferred to separate app
     };
 
-    // Create order record
-    const { data: order, error: orderError } = await supabase
-      .from("storybook_orders")
-      .insert({
-        customer_email: customerEmail || null,
-        child_name: childName,
-        child_age: childAge,
-        theme,
-        strength: strength || null,
-        has_supporting_character: !!hasSupportingCharacter,
-        supporting_character_name: supportingCharacterName || null,
-        story_title: title,
-        story_text: story,
-        coloring_prompts: coloringPrompts || null,
-        illustration_prompts: illustrationPrompts || null,
-        selected_addons: addons,
-        status: "generating_images",
-      })
-      .select("id")
-      .single();
-
-    if (orderError) console.error("Order creation failed:", orderError);
-    const orderId = order?.id;
+    // If we were given an existing pending order, update it. Otherwise create new (legacy in-browser flow).
+    let orderId: string | undefined = incomingOrderId;
+    if (orderId) {
+      const { error: updateError } = await supabase
+        .from("storybook_orders")
+        .update({
+          story_title: title,
+          story_text: story,
+          coloring_prompts: coloringPrompts || null,
+          illustration_prompts: illustrationPrompts || null,
+          selected_addons: addons,
+          status: "generating_images",
+        })
+        .eq("id", orderId);
+      if (updateError) console.error("Order update failed:", updateError);
+    } else {
+      const { data: order, error: orderError } = await supabase
+        .from("storybook_orders")
+        .insert({
+          customer_email: customerEmail || null,
+          child_name: childName,
+          child_age: childAge,
+          theme,
+          strength: strength || null,
+          has_supporting_character: !!hasSupportingCharacter,
+          supporting_character_name: supportingCharacterName || null,
+          story_title: title,
+          story_text: story,
+          coloring_prompts: coloringPrompts || null,
+          illustration_prompts: illustrationPrompts || null,
+          selected_addons: addons,
+          status: "generating_images",
+        })
+        .select("id")
+        .single();
+      if (orderError) console.error("Order creation failed:", orderError);
+      orderId = order?.id;
+    }
 
     // Generate illustrations + coloring pages in parallel where requested
     console.log("Generating images...", { addons });
@@ -408,6 +424,7 @@ serve(async (req) => {
         .update({
           status: "complete",
           pdf_storage_path: fileName,
+          pdf_url: pdfUrl,
           completed_at: new Date().toISOString(),
         })
         .eq("id", orderId);

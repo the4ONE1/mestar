@@ -42,9 +42,9 @@ serve(async (req) => {
       },
     });
 
-    const subject = `New MESTAR Order — ${childName}'s Storybook Ready`;
-
-    const body = `
+    // ── 1. Admin notification ──
+    const adminSubject = `New MESTAR Order — ${childName}'s Storybook Ready`;
+    const adminBody = `
 New Storybook Order!
 ====================
 
@@ -67,11 +67,53 @@ This is an automated notification from MESTAR.
     await transporter.sendMail({
       from: "mestar.orders@gmail.com",
       to: "mestar.orders@gmail.com",
-      subject,
-      text: body,
+      subject: adminSubject,
+      text: adminBody,
     });
+    console.log("Admin notification sent");
 
-    console.log("Order notification sent to mestar.orders@gmail.com");
+    // ── 2. Customer email (only if we have a valid email) ──
+    if (customerEmail && customerEmail.includes("@")) {
+      const customerSubject = `${childName}'s Personalized Storybook is Ready! ⭐`;
+      const customerBody = `
+Hi there!
+
+${childName}'s personalized MESTAR storybook is ready to download.
+
+📥 Download your PDF here:
+${pdfUrl}
+
+This link is valid for 7 days, so save your PDF to your device or print it out!
+
+What's inside:
+- A unique story written just for ${childName}
+- Beautiful illustrations
+- Bonus coloring pages (if included in your order)
+
+Story details:
+- Child's name: ${childName}
+- Age group: ${childAge}
+- Theme: ${theme}
+${strength ? `- Featured strength: ${strength}` : ""}
+${supportingCharacterName ? `- Supporting character: ${supportingCharacterName}` : ""}
+
+Thank you for choosing MESTAR! We hope this storybook becomes a treasured keepsake.
+
+If you have any questions, just reply to this email.
+
+— The MESTAR Team
+`;
+
+      await transporter.sendMail({
+        from: "mestar.orders@gmail.com",
+        to: customerEmail,
+        subject: customerSubject,
+        text: customerBody,
+      });
+      console.log("Customer email sent to:", customerEmail);
+    } else {
+      console.log("No customer email provided — skipping customer email");
+    }
 
     return new Response(
       JSON.stringify({ success: true }),
