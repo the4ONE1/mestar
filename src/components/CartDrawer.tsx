@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2, Upload, Users, CheckCircle2 } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
+import { supabase } from "@/integrations/supabase/client";
+import { attachCartAttributes } from "@/lib/shopify";
 import { toast } from "sonner";
 
 export const CartDrawer = () => {
@@ -24,21 +26,58 @@ export const CartDrawer = () => {
     setCheckoutLoading(true);
     try {
       const checkoutUrl = await ensureCheckoutUrl();
-      if (checkoutUrl) {
-        const personalized = items.find(i => i.personalization);
-        if (personalized?.personalization) {
-          localStorage.setItem("mestar-pending-story", JSON.stringify(personalized.personalization));
-        }
-        window.open(checkoutUrl, '_blank');
-        setIsOpen(false);
-        navigate("/order-complete");
+      if (!checkoutUrl) {
+        toast.error("Checkout needs a fresh session", {
+          description: "Please tap checkout again. Your cart is safe and we'll refresh it automatically.",
+          position: "top-center",
+        });
         return;
       }
 
-      toast.error("Checkout needs a fresh session", {
-        description: "Please tap checkout again. Your cart is safe and we'll refresh it automatically.",
-        position: "top-center",
-      });
+      // Find the personalized item to create a pending order from
+      const personalized = items.find(i => i.personalization);
+      let internalOrderId: string | null = null;
+
+      if (personalized?.personalization) {
+        const p = personalized.personalization;
+        const { data: orderId, error: orderError } = await supabase.rpc("create_pending_order", {
+          _child_name: p.childName,
+          _child_age: p.childAge,
+          _theme: p.theme,
+          _strength: p.strength || "",
+          _supporting_character_name: p.supportingCharacterName || "",
+          _has_supporting_character: !!p.supportingCharacterPhotoUrl,
+          _selected_addons: (p.selectedAddons as never) || {},
+          _customer_email: p.customerEmail || "",
+        });
+
+        if (orderError) {
+          console.error("Failed to create pending order:", orderError);
+        } else if (orderId) {
+          internalOrderId = orderId as string;
+
+          // Attach order id to Shopify cart so the webhook can match payment back
+          const cartId = useCartStore.getState().cartId;
+          if (cartId) {
+            await attachCartAttributes(cartId, [
+              { key: "mestar_order_id", value: internalOrderId },
+            ]);
+          }
+
+          // Keep local copy as fallback (also useful for /order-complete to find by id)
+          localStorage.setItem("mestar-pending-story", JSON.stringify({ ...p, orderId: internalOrderId }));
+        }
+      }
+
+      // Open Shopify checkout in new tab
+      window.open(checkoutUrl, '_blank');
+      setIsOpen(false);
+      // Send user to order-complete page with order id so it can poll
+      if (internalOrderId) {
+        navigate(`/order-complete?order_id=${internalOrderId}`);
+      } else {
+        navigate("/order-complete");
+      }
     } catch (err) {
       console.error("Checkout error:", err);
       toast.error("Something went wrong. Please try again.", { position: "top-center" });
