@@ -29,8 +29,8 @@ export const ADDONS: AddonOption[] = [
   {
     key: "character",
     label: "Add a supporting character",
-    description: "Include a sibling, friend, or pet in the adventure.",
-    price: 4.99,
+    description: "Include a sibling, friend, or pet in the adventure (with another photo upload).",
+    price: 7.99,
   },
 ];
 
