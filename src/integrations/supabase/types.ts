@@ -66,7 +66,10 @@ export type Database = {
           illustration_prompts: Json | null
           illustration_storage_paths: Json | null
           pdf_storage_path: string | null
+          pdf_url: string | null
           selected_addons: Json | null
+          shopify_checkout_token: string | null
+          shopify_order_id: string | null
           status: string
           story_text: string | null
           story_title: string | null
@@ -87,7 +90,10 @@ export type Database = {
           illustration_prompts?: Json | null
           illustration_storage_paths?: Json | null
           pdf_storage_path?: string | null
+          pdf_url?: string | null
           selected_addons?: Json | null
+          shopify_checkout_token?: string | null
+          shopify_order_id?: string | null
           status?: string
           story_text?: string | null
           story_title?: string | null
@@ -108,7 +114,10 @@ export type Database = {
           illustration_prompts?: Json | null
           illustration_storage_paths?: Json | null
           pdf_storage_path?: string | null
+          pdf_url?: string | null
           selected_addons?: Json | null
+          shopify_checkout_token?: string | null
+          shopify_order_id?: string | null
           status?: string
           story_text?: string | null
           story_title?: string | null
@@ -123,7 +132,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_pending_order: {
+        Args: {
+          _child_age: string
+          _child_name: string
+          _customer_email: string
+          _has_supporting_character: boolean
+          _selected_addons: Json
+          _strength: string
+          _supporting_character_name: string
+          _theme: string
+        }
+        Returns: string
+      }
+      get_order_status: {
+        Args: { _order_id: string }
+        Returns: {
+          child_name: string
+          error_message: string
+          id: string
+          pdf_url: string
+          status: string
+          story_title: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
