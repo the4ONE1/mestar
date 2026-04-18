@@ -1,40 +1,80 @@
+## Switch to Stripe — step-by-step
 
+### What I do (you just approve)
 
-The user wants to securely paste the Shopify webhook signing secret without exposing it in chat. The right approach is to trigger the secure secret-storage popup so they can paste it into a hidden input field rather than typing it into the chat.
+**1. Rescue order #1014 (Jacob)**
 
-## Plan: Securely store the Shopify webhook secret
+- Pull his order from Shopify via API
+- Create his database row
+- Run story pipeline → PDF → email
+- Status: done in ~3 min
 
-When you approve this plan, a secure popup will appear in your chat with a password-style input field. You paste the `shpss_...` secret there, click Approve, and it gets stored encrypted — never visible in chat history, never visible in the codebase, never visible to me.
+**2. Enable Stripe payments**
 
-### What happens when you approve
+- Run Lovable's built-in Stripe (test mode active immediately, no account needed yet)
+- Creates `create-checkout` and `verify-payment` edge functions automatically
 
-1. A popup titled **"Add secret: SHOPIFY_WEBHOOK_SECRET"** appears
-2. It has a hidden password field (dots, not letters)
-3. You paste the secret → click **Approve**
-4. Secret is stored encrypted in Lovable Cloud, accessible only to your edge functions
+**3. Create your product in Stripe**
 
-### What I build immediately after
+- One product: "Personalized Storybook" — $19.99 (you confirm price)
+- Add-ons as separate line items if you want them priced separately
 
-Once the secret is stored, I'll build the full webhook pipeline in one go:
+**4. Rewire the checkout flow**
 
-1. **`shopify-order-webhook` edge function** — receives Shopify's `orders/paid` event, verifies the signature using your secret, then triggers story generation server-side
-2. **`CartDrawer` update** — saves a "pending" order row to the database before sending the customer to Shopify checkout, attaches the order ID as a Shopify cart attribute so the webhook can match payment back to the personalization details
-3. **`create-storybook` update** — reuses the pending order row instead of creating a new one, so everything stays linked
-4. **`send-order-notification` update** — emails the PDF link to BOTH you (admin) AND the customer who paid
-5. **`/order-complete` page rewrite** — polls the database for the order, shows progress ("Creating illustrations...", "Assembling PDF..."), then auto-opens the PDF in a new tab when ready
+- Personalization form → "Pay & Generate" button → Stripe Checkout (hosted page) → redirects back to `/order-complete?session_id=xxx`
+- `verify-payment` confirms payment → triggers existing `generate-story` → `create-storybook` → `send-order-notification` (already works)
+- Order row created BEFORE payment with `pending_payment` status (already exists in your DB)
 
-### End result for your customer
+**5. Rip out Shopify**
+
+- Delete `shopify-order-webhook` edge function
+- Delete `src/lib/shopify.ts`
+- Delete `CartDrawer.tsx` and cart sync logic
+- Update `Navbar` (remove cart icon)
+- Update `ProductDetail.tsx` to use new Stripe flow
+- Remove Shopify secrets
+
+**6. Test in test mode**
+
+- I run a fake card (`4242 4242 4242 4242`) end-to-end
+- Confirm: payment → row created → story generated → PDF in inbox
+- Show you the receipt + PDF before going live
+
+### What you do (3 things only)
+
+**A. Approve this plan** → I execute steps 1–6
+
+**B. After step 6 passes test**: claim Stripe live mode
+
+- I'll show you a single "Activate Stripe" button in your app
+- 5–10 min: business name, address, bank account for payouts
+- Stripe verifies → live payments on
+
+**C. Place one $1 real test order** to confirm live mode works → refund yourself
+
+### After it's live → marketing focus
+
+I stop here. Once Stripe is working, next conversation we tackle marketing:
+
+- Email capture on landing page
+- Stripe Payment Links for Instagram/Tik-Tok bio
+- Simple analytics (visitors → buyers funnel)
+- Abandoned form recovery email
+
+### Order of operations
 
 ```text
-1. Customer fills personalization form → clicks Add to Cart
-2. Clicks Checkout → goes to Shopify, pays
-3. Shopify redirects to /order-complete
-4. Page shows live progress for ~60 seconds
-5. PDF auto-opens + email arrives in their inbox
-6. You also get the admin notification email
+Step 1  → Rescue Jacob (3 min)
+Step 2  → Enable Stripe (1 min)
+Step 3  → Create product (2 min)
+Step 4  → Build new checkout flow (10 min)
+Step 5  → Remove Shopify (5 min)
+Step 6  → Test mode end-to-end test (5 min)
+─── you claim Stripe live (5–10 min) ───
+Step 7  → Your $1 live test
+Step 8  → Marketing setup (next session)
 ```
 
-### What you need to do
+**Total my-side work: ~30 min. Your work: approve, claim Stripe, place 1 test order.**
 
-Just click **Approve** on the popup that appears after this plan. Then paste the `shpss_...` secret into the password field and click Approve again.
-
+Reply "go" and I start with step 1.
