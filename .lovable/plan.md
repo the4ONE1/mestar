@@ -1,27 +1,40 @@
 
 
-The user is asking a yes/no status question, not requesting new code. So no implementation plan is needed — just a clear answer.
+The user wants to securely paste the Shopify webhook signing secret without exposing it in chat. The right approach is to trigger the secure secret-storage popup so they can paste it into a hidden input field rather than typing it into the chat.
 
-Status: Paddle is **not** working yet. Here's why:
+## Plan: Securely store the Shopify webhook secret
 
-1. Earlier I asked to enable Paddle payments — that request was **declined** (the approval popup wasn't accepted).
-2. Nothing in the codebase has been changed for Paddle. Checkout still points at the old Shopify flow in `CartDrawer.tsx` → `ensureCheckoutUrl()` → opens a Shopify checkout URL.
-3. No Paddle products, no Paddle checkout edge function, no webhook, no price-source-of-truth refactor have been built.
+When you approve this plan, a secure popup will appear in your chat with a password-style input field. You paste the `shpss_...` secret there, click Approve, and it gets stored encrypted — never visible in chat history, never visible in the codebase, never visible to me.
 
-So right now: Shopify is still the live checkout, Paddle is not enabled, and nothing has been wired.
+### What happens when you approve
 
-To actually get Paddle working, the sequence would be:
+1. A popup titled **"Add secret: SHOPIFY_WEBHOOK_SECRET"** appears
+2. It has a hidden password field (dots, not letters)
+3. You paste the secret → click **Approve**
+4. Secret is stored encrypted in Lovable Cloud, accessible only to your edge functions
 
-1. **Enable Paddle on the project** (one-click approval — creates a test environment immediately, no API keys needed from you, no separate Paddle account required to start)
-2. **Create the 5 Paddle products** matching your prices: Base $14.99, Illustrations $4.99, Coloring $4.99, Supporting Character $7.99, Bundle $24.99
-3. **Centralize prices** in `src/lib/products.ts` so every page (ProductDetail, CartDrawer, OrderComplete) reads from the same file — guarantees the page price = cart price = Paddle price
-4. **Build the checkout edge function** that turns the cart into a Paddle Checkout session and returns the URL
-5. **Build the Paddle webhook** that listens for `transaction.completed`, then triggers your existing `generate-story` → `create-storybook` pipeline and sends the order email
-6. **Swap `CartDrawer` checkout button** from the Shopify URL to the new Paddle URL
-7. **Remove Shopify cart code** from `cartStore.ts` and `src/lib/shopify.ts`
-8. **Test end-to-end** in Paddle's test mode (fake card, no real money) before going live
+### What I build immediately after
 
-The blocker is step 1 — I need you to approve the Paddle enable popup when it appears. Without that, none of the rest can happen.
+Once the secret is stored, I'll build the full webhook pipeline in one go:
 
-Want me to try the enable step again? If yes, just say "enable Paddle" and click Approve when the popup shows. If you'd rather not, tell me and I'll suggest alternatives (e.g. keep Shopify and just fix the price consistency issue, or use Stripe with your own keys).
+1. **`shopify-order-webhook` edge function** — receives Shopify's `orders/paid` event, verifies the signature using your secret, then triggers story generation server-side
+2. **`CartDrawer` update** — saves a "pending" order row to the database before sending the customer to Shopify checkout, attaches the order ID as a Shopify cart attribute so the webhook can match payment back to the personalization details
+3. **`create-storybook` update** — reuses the pending order row instead of creating a new one, so everything stays linked
+4. **`send-order-notification` update** — emails the PDF link to BOTH you (admin) AND the customer who paid
+5. **`/order-complete` page rewrite** — polls the database for the order, shows progress ("Creating illustrations...", "Assembling PDF..."), then auto-opens the PDF in a new tab when ready
+
+### End result for your customer
+
+```text
+1. Customer fills personalization form → clicks Add to Cart
+2. Clicks Checkout → goes to Shopify, pays
+3. Shopify redirects to /order-complete
+4. Page shows live progress for ~60 seconds
+5. PDF auto-opens + email arrives in their inbox
+6. You also get the admin notification email
+```
+
+### What you need to do
+
+Just click **Approve** on the popup that appears after this plan. Then paste the `shpss_...` secret into the password field and click Approve again.
 
