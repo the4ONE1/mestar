@@ -1,80 +1,50 @@
-## Switch to Stripe — step-by-step
 
-### What I do (you just approve)
 
-**1. Rescue order #1014 (Jacob)**
+## Goal
+Two fixes on the product page:
+1. **"Everything Bundle" button** must take customers into the photo-upload / personalization step (same flow as the regular base product), not skip it
+2. **"Surprise Me" button** that auto-fills all the personalization choices with sensible random picks so lazy users can go straight to checkout
 
-- Pull his order from Shopify via API
-- Create his database row
-- Run story pipeline → PDF → email
-- Status: done in ~3 min
+## What I need to check first
+Quick read of `src/pages/ProductDetail.tsx` to confirm:
+- Where the bundle CTA currently sends users
+- The shape of the personalization form (fields: child name, age, theme, strength, supporting character, photo upload)
+- Where addon state lives so "Surprise Me" can flip the bundle on
 
-**2. Enable Stripe payments**
+I'll also peek at `src/lib/products.ts` (already in context — confirms addons + bundle pricing) and `src/stores/cartStore.ts` to make sure the bundle still flows through the same cart/personalization path.
 
-- Run Lovable's built-in Stripe (test mode active immediately, no account needed yet)
-- Creates `create-checkout` and `verify-payment` edge functions automatically
+## The fix
 
-**3. Create your product in Stripe**
+### Fix 1 — Everything Bundle routes through personalization
+- Bundle button no longer jumps to checkout / cart directly
+- Instead: sets `isBundle = true` in form state → scrolls user to the photo-upload + child-details section → same "Add to Cart" flow as base product
+- Cart line carries the bundle flag + bundle price ($19.99) so checkout shows the right total
 
-- One product: "Personalized Storybook" — $19.99 (you confirm price)
-- Add-ons as separate line items if you want them priced separately
+### Fix 2 — "Surprise Me" button
+- New button placed near the top of the personalization form, styled as a soft secondary CTA (sparkle icon)
+- One click auto-fills:
+  - **Child name**: leaves blank (user must type real name) OR pre-fills "Your Child" placeholder — I'll leave name blank and only randomize the creative choices, since the name is personal
+  - **Age**: random pick from 3–8
+  - **Theme**: random from existing theme list (space, ocean, forest, dragons, etc. — whatever's already in the form)
+  - **Strength**: random from existing list (kindness, bravery, curiosity, etc.)
+  - **Supporting character**: 50/50 chance on/off; if on, random name from a small kid-friendly list (Luna, Max, Pip, Ollie, Bella)
+  - **Addons**: turns ON the Everything Bundle by default (best value + most surprise)
+- Toast confirmation: *"Surprise picks loaded — just add your child's name and photo!"*
+- User can still edit any field after — it's a starting point, not a lock-in
 
-**4. Rewire the checkout flow**
+### What stays the same
+- Photo upload still required (can't randomize a real child's photo)
+- Child's actual name still required (won't fake-fill)
+- Checkout flow, cart drawer, Shopify integration — all untouched
+- Pricing logic in `src/lib/products.ts` — no changes
 
-- Personalization form → "Pay & Generate" button → Stripe Checkout (hosted page) → redirects back to `/order-complete?session_id=xxx`
-- `verify-payment` confirms payment → triggers existing `generate-story` → `create-storybook` → `send-order-notification` (already works)
-- Order row created BEFORE payment with `pending_payment` status (already exists in your DB)
+## Files I'll touch
+- `src/pages/ProductDetail.tsx` — bundle button behavior + add Surprise Me button + randomizer function
 
-**5. Rip out Shopify**
+## What this does NOT change
+- No backend changes, no database changes, no Shopify config changes
+- No new dependencies
+- Doesn't touch the story generation engine — it just pre-fills form inputs
 
-- Delete `shopify-order-webhook` edge function
-- Delete `src/lib/shopify.ts`
-- Delete `CartDrawer.tsx` and cart sync logic
-- Update `Navbar` (remove cart icon)
-- Update `ProductDetail.tsx` to use new Stripe flow
-- Remove Shopify secrets
+Reply "go" and I'll make both changes in one pass.
 
-**6. Test in test mode**
-
-- I run a fake card (`4242 4242 4242 4242`) end-to-end
-- Confirm: payment → row created → story generated → PDF in inbox
-- Show you the receipt + PDF before going live
-
-### What you do (3 things only)
-
-**A. Approve this plan** → I execute steps 1–6
-
-**B. After step 6 passes test**: claim Stripe live mode
-
-- I'll show you a single "Activate Stripe" button in your app
-- 5–10 min: business name, address, bank account for payouts
-- Stripe verifies → live payments on
-
-**C. Place one $1 real test order** to confirm live mode works → refund yourself
-
-### After it's live → marketing focus
-
-I stop here. Once Stripe is working, next conversation we tackle marketing:
-
-- Email capture on landing page
-- Stripe Payment Links for Instagram/Tik-Tok bio
-- Simple analytics (visitors → buyers funnel)
-- Abandoned form recovery email
-
-### Order of operations
-
-```text
-Step 1  → Rescue Jacob (3 min)
-Step 2  → Enable Stripe (1 min)
-Step 3  → Create product (2 min)
-Step 4  → Build new checkout flow (10 min)
-Step 5  → Remove Shopify (5 min)
-Step 6  → Test mode end-to-end test (5 min)
-─── you claim Stripe live (5–10 min) ───
-Step 7  → Your $1 live test
-Step 8  → Marketing setup (next session)
-```
-
-**Total my-side work: ~30 min. Your work: approve, claim Stripe, place 1 test order.**
-
-Reply "go" and I start with step 1.
