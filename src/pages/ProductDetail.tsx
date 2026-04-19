@@ -58,6 +58,14 @@ const ProductDetail = () => {
   const [addons, setAddons] = useState<AddonState>(DEFAULT_ADDON_STATE);
   const [isBundle, setIsBundle] = useState(false);
 
+  // Ref to scroll into the personalization form
+  const personalizationRef = useRef<HTMLDivElement>(null);
+  const scrollToPersonalization = () => {
+    setTimeout(() => {
+      personalizationRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
   useEffect(() => {
     if (!handle) return;
     setLoading(true);
@@ -91,9 +99,31 @@ const ProductDetail = () => {
       const newState = { ...DEFAULT_ADDON_STATE };
       for (const k of BUNDLE_INCLUDES) newState[k] = true;
       setAddons(newState);
+      scrollToPersonalization();
     } else {
       setAddons(DEFAULT_ADDON_STATE);
     }
+  };
+
+  const SUPPORTING_NAMES = ["Luna", "Max", "Pip", "Ollie", "Bella"];
+  const AGE_OPTIONS = ["1-3", "4-7", "8-10", "11+"];
+  const GENDER_OPTIONS = ["boy", "girl"];
+
+  const surpriseMe = () => {
+    const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+    setChildGender(pick(GENDER_OPTIONS));
+    setChildAge(pick(AGE_OPTIONS));
+    setTheme(pick(STORY_THEMES));
+    setStrength(pick(STRENGTHS));
+    // Turn on the everything bundle
+    setIsBundle(true);
+    const newState = { ...DEFAULT_ADDON_STATE };
+    for (const k of BUNDLE_INCLUDES) newState[k] = true;
+    setAddons(newState);
+    toast.success("Surprise picks loaded — just add your child's name and photo!", {
+      position: "top-center",
+    });
+    scrollToPersonalization();
   };
 
   const totalPrice = calculateTotal(addons, isBundle);
@@ -275,10 +305,25 @@ const ProductDetail = () => {
             </div>
 
             {/* Personalization Form */}
-            <div className="bg-card rounded-2xl border border-border p-6 mb-6 space-y-5">
-              <h3 className="font-display text-lg font-bold flex items-center gap-2">
-                ✨ Personalize Your Story
-              </h3>
+            <div ref={personalizationRef} className="bg-card rounded-2xl border border-border p-6 mb-6 space-y-5 scroll-mt-24">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <h3 className="font-display text-lg font-bold flex items-center gap-2">
+                  ✨ Personalize Your Story
+                </h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={surpriseMe}
+                  className="border-primary/40 text-primary hover:bg-primary/10 hover:text-primary rounded-full"
+                >
+                  <Sparkles className="h-4 w-4 mr-1.5" />
+                  Surprise Me
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground -mt-2">
+                Too many choices? Hit Surprise Me and we'll pick the creative bits for you.
+              </p>
 
               <div className="space-y-2">
                 <Label className="font-medium">Child's Photo *</Label>
