@@ -64,7 +64,7 @@ const WhyReadTogether = () => {
           {benefits.map((benefit, i) => (
             <div
               key={i}
-              className="bg-card rounded-xl border border-border p-6 flex gap-5 items-start"
+              className="bg-card rounded-xl border border-border p-6 flex flex-col sm:flex-row gap-5 items-center sm:items-start text-center sm:text-left"
             >
               <div className="bg-primary/10 rounded-lg p-3 shrink-0">
                 <benefit.icon className="h-6 w-6 text-primary" />
