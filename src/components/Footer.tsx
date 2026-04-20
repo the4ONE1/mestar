@@ -13,7 +13,7 @@ export const Footer = () => {
           <p className="text-sm text-muted-foreground max-w-md">
             Where every child becomes the hero of their own bedtime adventure. ⭐
           </p>
-          <div className="flex gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
             <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
             <Link to="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
             <Link to="/reviews" className="hover:text-foreground transition-colors">Reviews</Link>
