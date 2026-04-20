@@ -1,58 +1,36 @@
+## Plan: Updated preview at `/style-preview` with brand-name "Star" treatments
 
+You want to revisit the preview AND see⁶⁶ for how the word **"Star"** in the brand name "My Star Stories" should be styled (since it stays as text, not ⭐). Everywhere else, "star" still becomes ⭐ when we roll out.
 
-## Plan: 3 visual mockups so you can pick
+### What I'll update on `/style-preview`
 
-I'll build a single hidden preview page at `/style-preview` that shows all 3 mood options side-by-side (or stacked on mobile). Each mockup will use a **mini version of your homepage hero + one product card + a heading sample** so you see exactly how it'd feel in real use.
+Keep the existing 3 moods × 2 heading styles, and **add a new section at the top** showing 4 brand-name treatments so you can pick how "Star" looks in "My Star Stories":
 
-### What you'll see on `/style-preview`
+**Brand-name treatments** (all on Option C background, since you already picked C):
 
-Three labeled sections, each a self-contained "mini site" card:
+1. **Bright yellow solid** — "My **Star** Stories" — Star in pure bright yellow (`hsl(50 100% 60%)`), bold
+2. **Champagne gold (matches site primary)** — "My **Star** Stories" — Star in the new soft gold from Option C
+3. **Bright yellow + tiny ⭐ after** — "My **Star**⭐ Stories" — yellow word plus a small star emoji
+4. **Bright yellow italic display font** — "My *Star* Stories" — yellow, italicized, slightly larger for personality
 
-**Option A — Magical Bedtime / Dreamy**
-- Background: deep navy (current)
-- Primary: gold star
-- NEW accent: soft lavender (`260 60% 70%`) for badges/secondary text highlights
-- Muted text: brightened cream
-- Vibe: cozy, nighttime, storybook
+Each treatment shown in a card with a "Pick this" label so you can tell me "Brand option 2" etc.
 
-**Option B — Warm & Playful**
-- Background: deep teal-navy (`200 35% 8%`)
-- Primary: warm gold
-- NEW accent: coral pink (`10 75% 65%`) for badges
-- Muted text: warm cream
-- Vibe: friendlier, daytime-friendly, kid-energy
+### Rest of the preview page stays the same
 
-**Option C — Premium & Calm**
-- Background: muted navy (`220 20% 10%`) — slightly lighter, less saturated
-- Primary: soft champagne gold (less neon)
-- Accent: none — just cream + gold
-- Muted text: clean light gray-cream
-- More whitespace, fewer emoji
-- Vibe: high-end gift / Apple-like calm
+The 3 mood mockups + 2 heading styles below remain exactly as they are so you can confirm Option C + heading choice at the same time.
 
-### For each mockup I'll also show 2 heading styles
-Inside each option you'll see the same sample heading rendered two ways:
-1. **Solid gold bold** — `Your Child Is the Star`
-2. **Cream with gold accent words** — `Your Child Is the` *Star* (only "Star" in gold)
+### After you pick (next round, not now)
 
-So in total you get 3 moods × 2 heading styles = 6 quick visual samples on one page.
+Once you say e.g. "Brand option 1, heading 2", I will:
 
-### How it stays isolated
-- New file: `src/pages/StylePreview.tsx`
-- New route added in `src/App.tsx`: `/style-preview` (not linked from anywhere — only you and I will know it exists)
-- Each mockup uses **inline color values**, NOT global tokens — so nothing on the live site changes until you pick a winner
-- A "Pick this one" button under each option (just a label for now — when you tell me which letter + heading style, I roll it out globally)
+1. Apply Option C tokens globally (`src/index.css`)
+2. Style the navbar "Star" word with your chosen yellow treatment
+3. Replace every other "star" / "Star" in user-facing copy with ⭐
+4. Remove all plain white text → cream
+5. Delete `/style-preview`
 
-### After you pick
-Once you say "Option B with cream + gold accent words" (or whatever combo), I'll:
-1. Update the global tokens in `src/index.css` and `tailwind.config.ts` to match
-2. Standardize heading styles across every page
-3. Brighten muted text site-wide for readability
-4. Remove the temporary `/style-preview` page
+### Files I'll touch this round
 
-### Files I'll touch (this round only)
-- **Create** `src/pages/StylePreview.tsx` — the mockup gallery
-- **Edit** `src/App.tsx` — add the hidden `/style-preview` route
+- **Edit** `src/pages/StylePreview.tsx` — add the new "Brand name treatments" section at the top
 
-Nothing else. Your live site stays exactly as it is until you pick.
-
+Nothing else changes. Live site untouched.
