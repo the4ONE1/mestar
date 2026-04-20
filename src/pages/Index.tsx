@@ -221,9 +221,11 @@ const Index = () => {
               <p className="text-sm text-muted-foreground mt-1">New stories coming soon!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="flex flex-wrap justify-center gap-6">
               {products.map((product) => (
-                <ProductCard key={product.node.id} product={product} />
+                <div key={product.node.id} className="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] max-w-sm">
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
           )}
