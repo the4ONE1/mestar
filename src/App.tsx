@@ -15,6 +15,7 @@ import WhyReadTogether from "./pages/WhyReadTogether";
 import NotFound from "./pages/NotFound";
 import OrderComplete from "./pages/OrderComplete";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import StylePreview from "./pages/StylePreview";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const AppContent = () => {
           <Route path="/why-read-together" element={<WhyReadTogether />} />
           <Route path="/order-complete" element={<OrderComplete />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/style-preview" element={<StylePreview />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
