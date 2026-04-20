@@ -63,6 +63,7 @@ export default {
         },
         star: {
           gold: "hsl(var(--star-gold))",
+          yellow: "hsl(var(--star-yellow))",
         },
         navy: {
           deep: "hsl(var(--navy-deep))",

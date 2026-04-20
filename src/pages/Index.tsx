@@ -94,7 +94,7 @@ const Index = () => {
         {isMuted && (
           <button
             onClick={handleUnmute}
-            className="absolute bottom-8 right-8 bg-white/20 backdrop-blur-sm text-white rounded-full p-4 hover:bg-white/30 transition-colors"
+            className="absolute bottom-8 right-8 bg-cream/20 backdrop-blur-sm text-cream rounded-full p-4 hover:bg-cream/30 transition-colors"
           >
             <Volume2 className="h-6 w-6" />
             <span className="sr-only">Tap for sound</span>
@@ -123,7 +123,7 @@ const Index = () => {
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-lg">
             Your Child Is
             <br />
-            <span className="text-primary drop-shadow-[0_0_20px_hsl(43_90%_55%/0.5)]">the Star</span> ⭐
+            <span className="text-primary drop-shadow-[0_0_20px_hsl(43_75%_62%/0.5)]">the ⭐</span>
           </h1>
           <p className="text-lg text-foreground/90 max-w-lg mx-auto mb-8 leading-relaxed drop-shadow-md">
             A one-of-a-kind digital storybook where your little one is the hero. Instantly download and start the magic tonight.
