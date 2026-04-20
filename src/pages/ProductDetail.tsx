@@ -306,24 +306,24 @@ const ProductDetail = () => {
 
             {/* Personalization Form */}
             <div ref={personalizationRef} className="bg-card rounded-2xl border border-border p-6 mb-6 space-y-5 scroll-mt-24">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <h3 className="font-display text-lg font-bold flex items-center gap-2">
+              <div className="text-center">
+                <h3 className="font-display text-lg font-bold flex items-center justify-center gap-2 mb-4">
                   ✨ Personalize Your Story
                 </h3>
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
+                  size="lg"
                   onClick={surpriseMe}
-                  className="border-primary/40 text-primary hover:bg-primary/10 hover:text-primary rounded-full"
+                  className="border-primary/40 text-primary hover:bg-primary/10 hover:text-primary rounded-full font-display text-lg px-8 py-6 shadow-lg shadow-primary/20 hover:scale-105 transition-all"
                 >
-                  <Sparkles className="h-4 w-4 mr-1.5" />
+                  <Sparkles className="h-5 w-5 mr-2" />
                   Surprise Me
                 </Button>
+                <p className="text-sm text-muted-foreground italic mt-3">
+                  "I want one now, skip the personalization"
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground -mt-2">
-                Too many choices? Hit Surprise Me and we'll pick the creative bits for you.
-              </p>
 
               <div className="space-y-2">
                 <Label className="font-medium">Child's Photo *</Label>
