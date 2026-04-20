@@ -307,9 +307,6 @@ const ProductDetail = () => {
             {/* Personalization Form */}
             <div ref={personalizationRef} className="bg-card rounded-2xl border border-border p-6 mb-6 space-y-5 scroll-mt-24">
               <div className="text-center">
-                <h3 className="font-display text-lg font-bold flex items-center justify-center gap-2 mb-4">
-                  ✨ Personalize Your Story
-                </h3>
                 <Button
                   type="button"
                   variant="outline"
@@ -320,9 +317,12 @@ const ProductDetail = () => {
                   <Sparkles className="h-5 w-5 mr-2" />
                   Surprise Me
                 </Button>
-                <p className="text-sm text-muted-foreground italic mt-3">
+                <p className="text-sm text-muted-foreground italic mt-3 mb-4">
                   "I want one now, skip the personalization"
                 </p>
+                <h3 className="font-display text-lg font-bold flex items-center justify-center gap-2">
+                  ✨ Personalize Your Story
+                </h3>
               </div>
 
               <div className="space-y-2">
