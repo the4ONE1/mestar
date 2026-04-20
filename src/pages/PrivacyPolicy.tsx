@@ -50,7 +50,7 @@ const PrivacyPolicy = () => {
           </div>
           <p className="text-muted-foreground leading-relaxed">
             All payments are processed securely through Shopify's checkout system. 
-            My Star Stories <strong>never sees or stores</strong> your credit card details, 
+            My <span className="text-star-yellow">Star</span> Stories <strong>never sees or stores</strong> your credit card details, 
             billing address, or any financial information. Shopify handles all payment 
             security with industry-standard encryption.
           </p>

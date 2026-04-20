@@ -55,7 +55,7 @@ const WhyReadTogether = () => {
             "Children won't remember the toys you bought them. They'll remember the time you spent with them — and the stories you shared."
           </blockquote>
           <p className="text-muted-foreground text-sm">
-            Every My Star Stories book is designed to be read together, turning bedtime into the best part of the day.
+            Every My <span className="text-star-yellow">Star</span> Stories book is designed to be read together, turning bedtime into the best part of the day.
           </p>
         </div>
 

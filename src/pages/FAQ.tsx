@@ -40,7 +40,7 @@ const FAQ = () => {
             Frequently Asked <span className="text-primary">Questions</span>
           </h1>
           <p className="text-lg text-muted-foreground">
-            Everything you need to know about My Star Stories ⭐
+            Everything you need to know about My <span className="text-star-yellow">Star</span> Stories ⭐
           </p>
         </div>
 
