@@ -115,7 +115,7 @@ const StoryPreview = ({ productHandle }: StoryPreviewProps) => {
 
         {/* Disclaimer */}
         <p className="text-center text-xs text-muted-foreground mt-6 max-w-sm mx-auto">
-          ✨ This is a sample story. Your child's personalized storybook will feature their name, photo, and a unique adventure created just for them!
+          ✨ This is a sample story. Your child's one of a kind custom storybook will feature their name, photo, and a unique adventure created just for them!
         </p>
       </div>
     </section>
