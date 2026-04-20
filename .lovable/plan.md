@@ -1,36 +1,57 @@
-## Plan: Updated preview at `/style-preview` with brand-name "Star" treatments
 
-You want to revisit the preview AND see⁶⁶ for how the word **"Star"** in the brand name "My Star Stories" should be styled (since it stays as text, not ⭐). Everywhere else, "star" still becomes ⭐ when we roll out.
 
-### What I'll update on `/style-preview`
+## Plan: Roll out Option C theme + bright yellow "Star" — customer-facing only, zero functional impact
 
-Keep the existing 3 moods × 2 heading styles, and **add a new section at the top** showing 4 brand-name treatments so you can pick how "Star" looks in "My Star Stories":
+Strict rules I'll follow:
+- **Only edit visible customer-facing UI** (pages, components, `index.html` title/meta)
+- **Do NOT touch** any edge function (`supabase/functions/*`), webhook code, Shopify integration logic, cart sync logic, Supabase client, types, or any business logic
+- **Do NOT change** route paths, component prop names, function names, or any code identifiers — only text content and CSS classes
+- **Do NOT change** the lucide `<Star />` icon component (it's decorative, already gold)
 
-**Brand-name treatments** (all on Option C background, since you already picked C):
+### 1. Global theme (Option C — cream + champagne gold + muted navy)
+- **Edit `src/index.css`**: update `:root` HSL tokens to Option C values (background, foreground=cream, card, primary=champagne gold, muted-foreground=readable warm cream, border). Add new token `--star-yellow: 50 100% 60%`.
+- **Edit `tailwind.config.ts`**: add `star.yellow: "hsl(var(--star-yellow))"` so we have a `text-star-yellow` utility.
 
-1. **Bright yellow solid** — "My **Star** Stories" — Star in pure bright yellow (`hsl(50 100% 60%)`), bold
-2. **Champagne gold (matches site primary)** — "My **Star** Stories" — Star in the new soft gold from Option C
-3. **Bright yellow + tiny ⭐ after** — "My **Star**⭐ Stories" — yellow word plus a small star emoji
-4. **Bright yellow italic display font** — "My *Star* Stories" — yellow, italicized, slightly larger for personality
+### 2. Brand name "My Star Stories" — color "Star" bright yellow
+Wherever the brand name appears as visible text:
+- `src/components/Navbar.tsx`
+- `src/components/Footer.tsx` (if shown)
+- `index.html` `<title>` stays as plain text "My Star Stories" (browser tab — can't color it)
 
-Each treatment shown in a card with a "Pick this" label so you can tell me "Brand option 2" etc.
+Render as: `My <span className="text-star-yellow">Star</span> Stories`
 
-### Rest of the preview page stays the same
+### 3. Replace "star"/"Star" with ⭐ in all OTHER customer-visible copy
+Sweep visible text only in:
+- `src/pages/*.tsx` (Index, ProductDetail, About, FAQ, Reviews, WhyReadTogether, OrderComplete, PrivacyPolicy, NotFound)
+- `src/components/*.tsx` (CartDrawer, StoryPreview, NavLink, Footer)
+- `index.html` meta description / og tags
 
-The 3 mood mockups + 2 heading styles below remain exactly as they are so you can confirm Option C + heading choice at the same time.
+Skip: brand name, code identifiers, CSS class names (`star-gold`, `star-yellow`), lucide `<Star />` imports, any string passed to APIs/webhooks.
 
-### After you pick (next round, not now)
+### 4. Remove plain white text → cream
+Find `text-white`, `text-white/80`, `text-white/90`, hardcoded `#fff`/`#ffffff` in customer-facing files only. Replace with `text-cream` / `text-foreground` / `text-muted-foreground`.
 
-Once you say e.g. "Brand option 1, heading 2", I will:
+### 5. Standardize headings (subtle, visual only)
+- h1/h2 default to `text-primary` (champagne gold)
+- h3/h4 default to `text-cream`
+Across all customer pages. Pure className changes — no structural edits.
 
-1. Apply Option C tokens globally (`src/index.css`)
-2. Style the navbar "Star" word with your chosen yellow treatment
-3. Replace every other "star" / "Star" in user-facing copy with ⭐
-4. Remove all plain white text → cream
-5. Delete `/style-preview`
+### 6. Remove temporary preview
+- Delete `src/pages/StylePreview.tsx`
+- Remove `/style-preview` route + import from `src/App.tsx`
 
-### Files I'll touch this round
+### What I will NOT touch (protected)
+- `supabase/functions/**` (all edge functions, webhooks, order notifications, story generation)
+- `src/lib/shopify.ts`, `src/lib/products.ts`
+- `src/integrations/supabase/*`
+- `src/hooks/useCartSync.ts`, `src/stores/cartStore.ts`
+- Any route paths, API calls, form field `name` attributes, or product IDs
+- Cart, checkout, order, or webhook flows
 
-- **Edit** `src/pages/StylePreview.tsx` — add the new "Brand name treatments" section at the top
+### Files touched
+- Edit: `src/index.css`, `tailwind.config.ts`, `src/App.tsx` (route removal only), `index.html` (meta text only), `src/components/Navbar.tsx`, `src/components/Footer.tsx`, `src/components/CartDrawer.tsx`, `src/components/StoryPreview.tsx`, `src/components/NavLink.tsx`, all 9 files in `src/pages/` except StylePreview
+- Delete: `src/pages/StylePreview.tsx`
 
-Nothing else changes. Live site untouched.
+### Result
+Visual refresh only. Every cart click, checkout, story generation, webhook, and order notification continues working identically — I'm only changing colors and swapping visible "star" words for ⭐.
+
