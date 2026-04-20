@@ -317,7 +317,7 @@ const ProductDetail = () => {
                   <Sparkles className="h-5 w-5 mr-2" />
                   Surprise Me
                 </Button>
-                <p className="text-sm text-muted-foreground italic mt-3 mb-4">
+                <p className="text-[9px] text-muted-foreground/60 italic mt-2 mb-4 leading-tight">
                   "I want one now, skip the personalization"
                 </p>
                 <h3 className="font-display text-lg font-bold flex items-center justify-center gap-2">
