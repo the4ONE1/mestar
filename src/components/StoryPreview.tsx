@@ -63,7 +63,7 @@ const StoryPreview = ({ productHandle }: StoryPreviewProps) => {
                 <Lock className="h-12 w-12 text-primary" />
                 <h3 className="font-display text-2xl font-bold">How does it end?</h3>
                 <p className="text-muted-foreground text-sm max-w-xs">
-                  Only your child can solve the mystery! Create their personalized story to discover the ending.
+                  Only your child can solve the mystery! Create their one of a kind custom story to discover the ending.
                 </p>
                 <Button
                   asChild
