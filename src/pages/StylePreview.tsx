@@ -162,6 +162,86 @@ const MiniMockup = ({ mood, headingStyle }: { mood: Mood; headingStyle: 1 | 2 })
   );
 };
 
+// Option C palette (the picked mood) — used as backdrop for brand-name samples
+const optionC = moods.find((m) => m.letter === "C")!;
+const brightYellow = "hsl(50 100% 60%)";
+
+type BrandTreatment = {
+  id: number;
+  label: string;
+  description: string;
+  render: () => JSX.Element;
+};
+
+const brandTreatments: BrandTreatment[] = [
+  {
+    id: 1,
+    label: "Bright yellow solid",
+    description: "Pure bright yellow, bold — maximum pop",
+    render: () => (
+      <span
+        className="font-display font-extrabold text-2xl"
+        style={{ color: optionC.cream }}
+      >
+        My{" "}
+        <span style={{ color: brightYellow }}>Star</span>{" "}
+        Stories
+      </span>
+    ),
+  },
+  {
+    id: 2,
+    label: "Champagne gold (matches site)",
+    description: "Soft gold — blends with the rest of the design system",
+    render: () => (
+      <span
+        className="font-display font-extrabold text-2xl"
+        style={{ color: optionC.cream }}
+      >
+        My{" "}
+        <span style={{ color: optionC.primary }}>Star</span>{" "}
+        Stories
+      </span>
+    ),
+  },
+  {
+    id: 3,
+    label: "Bright yellow + tiny ⭐",
+    description: "Yellow word plus a small star emoji after it",
+    render: () => (
+      <span
+        className="font-display font-extrabold text-2xl"
+        style={{ color: optionC.cream }}
+      >
+        My{" "}
+        <span style={{ color: brightYellow }}>Star</span>
+        <span className="text-base align-super ml-0.5">⭐</span>{" "}
+        Stories
+      </span>
+    ),
+  },
+  {
+    id: 4,
+    label: "Bright yellow italic display",
+    description: "Yellow, italicized, slightly larger — more personality",
+    render: () => (
+      <span
+        className="font-display font-extrabold text-2xl"
+        style={{ color: optionC.cream }}
+      >
+        My{" "}
+        <span
+          className="italic text-3xl"
+          style={{ color: brightYellow }}
+        >
+          Star
+        </span>{" "}
+        Stories
+      </span>
+    ),
+  },
+];
+
 const StylePreview = () => {
   return (
     <div className="min-h-screen bg-background text-foreground py-12">
@@ -171,11 +251,58 @@ const StylePreview = () => {
             Style Preview
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            3 mood options × 2 heading styles. Pick a combo by telling me the
-            letter + heading number (e.g. "B with heading 2"). Nothing on the
-            live site has changed yet.
+            Pick a brand-name treatment AND a mood/heading combo. Tell me e.g.
+            "Brand option 1, heading 2". Nothing on the live site has changed.
           </p>
         </div>
+
+        {/* Brand-name treatments */}
+        <section className="mb-16">
+          <div className="mb-4">
+            <h2 className="font-display text-2xl font-bold">
+              Brand name — how should "Star" look in "My Star Stories"?
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              The brand name stays as text (not ⭐). Pick how the word "Star"
+              should be styled. Shown on Option C background.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {brandTreatments.map((t) => (
+              <div
+                key={t.id}
+                className="rounded-2xl border p-6 flex flex-col gap-3"
+                style={{
+                  background: optionC.bg,
+                  borderColor: optionC.border,
+                }}
+              >
+                <div className="text-xs uppercase tracking-wider font-bold" style={{ color: optionC.muted }}>
+                  Brand option {t.id} — {t.label}
+                </div>
+                <div className="py-4 flex items-center justify-center min-h-[80px]">
+                  {t.render()}
+                </div>
+                <div className="text-xs text-center" style={{ color: optionC.muted }}>
+                  {t.description}
+                </div>
+                <button
+                  className="text-xs font-bold rounded-full px-4 py-2 mt-1 mx-auto"
+                  style={{
+                    background: optionC.primary,
+                    color: optionC.primaryFg,
+                  }}
+                  onClick={() =>
+                    alert(`Tell me in chat: "Brand option ${t.id}"`)
+                  }
+                >
+                  Pick Brand Option {t.id}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <div className="space-y-12">
           {moods.map((mood) => (
