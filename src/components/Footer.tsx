@@ -1,5 +1,4 @@
 import { Star } from "lucide-react";
-import { Link } from "react-router-dom";
 
 export const Footer = () => {
   return (
@@ -14,11 +13,11 @@ export const Footer = () => {
             Where every child becomes the hero of their own bedtime adventure. ⭐
           </p>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
-            <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
-            <Link to="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
-            <Link to="/reviews" className="hover:text-foreground transition-colors">Reviews</Link>
-            <Link to="/why-read-together" className="hover:text-foreground transition-colors">Why Read</Link>
-            <Link to="/privacy-policy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <a href="/about" className="hover:text-foreground transition-colors">About</a>
+            <a href="/faq" className="hover:text-foreground transition-colors">FAQ</a>
+            <a href="/reviews" className="hover:text-foreground transition-colors">Reviews</a>
+            <a href="/why-read-together" className="hover:text-foreground transition-colors">Why Read</a>
+            <a href="/privacy-policy" className="hover:text-foreground transition-colors">Privacy Policy</a>
           </div>
           <p className="text-xs text-muted-foreground mt-4">
             © {new Date().getFullYear()} My <span className="text-star-yellow">Star</span> Stories. All rights reserved.
