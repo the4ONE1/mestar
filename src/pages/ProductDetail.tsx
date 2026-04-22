@@ -343,7 +343,7 @@ const ProductDetail = () => {
                   Surprise Me
                 </Button>
                 <p className="text-[9px] text-muted-foreground/60 italic mt-2 mb-4 leading-tight">
-                  "I want one now, skip the personalization"
+                  "I want one now, skip the personalization — just add your email below"
                 </p>
                 <h3 className="font-display text-lg font-bold flex items-center justify-center gap-2">
                   ✨ Personalize Your Story
