@@ -108,10 +108,19 @@ const ProductDetail = () => {
   const SUPPORTING_NAMES = ["Luna", "Max", "Pip", "Ollie", "Bella"];
   const AGE_OPTIONS = ["1-3", "4-7", "8-10", "11+"];
   const GENDER_OPTIONS = ["boy", "girl"];
+  // Friendly default child names — Leo is the boy featured in the promo commercial / sample storybook
+  const SURPRISE_NAMES = ["Leo", "Mia", "Sam", "Ava", "Max", "Zoe"];
+  // Sample photo of Leo (the boy in the commercial) — used as default when user picks Surprise Me
+  const SURPRISE_PHOTO_PATH = "/images/sample-page-1.jpg";
 
-  const surpriseMe = () => {
+  const surpriseMe = async () => {
     const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-    setChildGender(pick(GENDER_OPTIONS));
+    const pickedName = pick(SURPRISE_NAMES);
+    // If we picked Leo, gender is locked to boy (he's the boy from the commercial). Otherwise random.
+    const pickedGender = pickedName === "Leo" ? "boy" : pick(GENDER_OPTIONS);
+
+    setChildName(pickedName);
+    setChildGender(pickedGender);
     setChildAge(pick(AGE_OPTIONS));
     setTheme(pick(STORY_THEMES));
     setStrength(pick(STRENGTHS));
@@ -120,7 +129,23 @@ const ProductDetail = () => {
     const newState = { ...DEFAULT_ADDON_STATE };
     for (const k of BUNDLE_INCLUDES) newState[k] = true;
     setAddons(newState);
-    toast.success("Surprise picks loaded — just add your child's name and photo!", {
+
+    // Auto-load the default child photo (Leo from the commercial) so the user
+    // doesn't have to upload anything. Convert to a data URL so it flows through
+    // the cart and story-generation pipeline exactly like a real upload.
+    try {
+      const res = await fetch(SURPRISE_PHOTO_PATH);
+      const blob = await res.blob();
+      const file = new File([blob], "surprise-child.jpg", { type: blob.type || "image/jpeg" });
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setPhotoPreview(reader.result as string);
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      console.error("Failed to load surprise photo", err);
+    }
+
+    toast.success("Surprise picks loaded — just add your email and you're set!", {
       position: "top-center",
     });
     scrollToPersonalization();
@@ -318,7 +343,7 @@ const ProductDetail = () => {
                   Surprise Me
                 </Button>
                 <p className="text-[9px] text-muted-foreground/60 italic mt-2 mb-4 leading-tight">
-                  "I want one now, skip the personalization"
+                  "I want one now, skip the personalization — just add your email below"
                 </p>
                 <h3 className="font-display text-lg font-bold flex items-center justify-center gap-2">
                   ✨ Personalize Your Story
