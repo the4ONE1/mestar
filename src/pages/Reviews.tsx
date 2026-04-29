@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Star, Sparkles } from "lucide-react";
 import { fetchProducts } from "@/lib/shopify";
+import SEO from "@/components/SEO";
 
 const reviews = [
   {

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Star, Heart, BookOpen, Sparkles, Download } from "lucide-react";
 import { fetchProducts } from "@/lib/shopify";
+import SEO from "@/components/SEO";
 
 const About = () => {
   const [firstHandle, setFirstHandle] = useState<string | null>(null);
@@ -13,6 +14,11 @@ const About = () => {
   }, []);
   return (
     <div className="min-h-screen py-16">
+      <SEO
+        title="About MESTAR — Personalized Children's Storybooks"
+        description="Learn the story behind MESTAR: AI-personalized PDF storybooks where your child is the hero. Safe, age-appropriate, and made to be treasured."
+        canonical="/about"
+      />
       <div className="container max-w-3xl">
         {/* Header */}
         <div className="text-center mb-12">

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { HelpCircle, Sparkles } from "lucide-react";
 import { fetchProducts } from "@/lib/shopify";
+import SEO from "@/components/SEO";
 
 const faqs = [
   {
