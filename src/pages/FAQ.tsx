@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { HelpCircle, Sparkles } from "lucide-react";
 import { fetchProducts } from "@/lib/shopify";
+import SEO from "@/components/SEO";
 
 const faqs = [
   {
@@ -28,8 +29,23 @@ const FAQ = () => {
     }).catch(console.error);
   }, []);
 
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  };
   return (
     <div className="min-h-screen py-16">
+      <SEO
+        title="FAQ — Personalized Storybook Questions Answered | MESTAR"
+        description="Answers to common questions about MESTAR's personalized PDF storybooks: how personalization works, what you get, safety, delivery, and refunds."
+        canonical="/faq"
+        jsonLd={faqJsonLd}
+      />
       <div className="container max-w-2xl">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 mb-6">

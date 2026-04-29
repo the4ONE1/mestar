@@ -1,8 +1,14 @@
 import { Shield, Camera, CreditCard, Users, Mail } from "lucide-react";
+import SEO from "@/components/SEO";
 
 const PrivacyPolicy = () => {
   return (
     <div className="container py-16 max-w-3xl">
+      <SEO
+        title="Privacy Policy — MESTAR"
+        description="How MESTAR handles your family's information: photos, payment, and personal details. Read our privacy commitments in plain English."
+        canonical="/privacy-policy"
+      />
       <div className="text-center mb-12">
         <Shield className="h-12 w-12 text-primary mx-auto mb-4" />
         <h1 className="font-display text-4xl font-bold mb-3">Privacy Policy</h1>

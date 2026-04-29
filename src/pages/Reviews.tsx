@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Star, Sparkles } from "lucide-react";
 import { fetchProducts } from "@/lib/shopify";
+import SEO from "@/components/SEO";
 
 const reviews = [
   {
@@ -32,6 +33,11 @@ const Reviews = () => {
 
   return (
     <div className="min-h-screen py-16">
+      <SEO
+        title="Reviews — What Families Say About MESTAR Storybooks"
+        description="Real reviews from parents and kids who received MESTAR personalized storybooks. See why families love making their child the hero of the story."
+        canonical="/reviews"
+      />
       <div className="container max-w-2xl">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 mb-6">

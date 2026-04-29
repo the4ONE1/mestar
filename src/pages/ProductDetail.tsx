@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import SEO from "@/components/SEO";
 import {
   ADDONS,
   BASE_PRICE,
@@ -208,6 +209,28 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen py-8">
+      <SEO
+        title={`${node.title} — Personalized Storybook | MESTAR`}
+        description={(node.description || "").slice(0, 155) || `Personalize ${node.title}: a one-of-a-kind PDF storybook starring your child.`}
+        canonical={`/product/${node.handle}`}
+        type="product"
+        image={node.images?.edges?.[0]?.node?.url}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: node.title,
+          description: node.description,
+          image: node.images?.edges?.map((e: { node: { url: string } }) => e.node.url) || [],
+          brand: { "@type": "Brand", name: "MESTAR" },
+          offers: {
+            "@type": "Offer",
+            price: node.priceRange?.minVariantPrice?.amount,
+            priceCurrency: node.priceRange?.minVariantPrice?.currencyCode || "USD",
+            availability: "https://schema.org/InStock",
+            url: `https://mestar.pro/product/${node.handle}`,
+          },
+        }}
+      />
       <div className="container">
         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8">
           <ArrowLeft className="h-4 w-4" />
