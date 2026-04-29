@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, CheckCircle2, Volume2 } from "lucide-react";
 import { fetchProducts, ShopifyProduct } from "@/lib/shopify";
 import StoryPreview from "@/components/StoryPreview";
+import SEO from "@/components/SEO";
 
 const ProductCard = ({ product }: { product: ShopifyProduct }) => {
   const image = product.node.images.edges[0]?.node;
@@ -106,6 +107,18 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
+      <SEO
+        title="MESTAR — Personalized PDF Storybooks Where Your Child Is the Hero"
+        description="Create a one-of-a-kind personalized children's storybook in minutes. Upload a photo, pick a theme, and instantly download a print-ready PDF starring your child."
+        canonical="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "MESTAR",
+          url: "https://mestar.pro",
+          logo: "https://mestar.pro/favicon.ico",
+        }}
+      />
       {/* Announcement Bar */}
       <div className="bg-primary text-primary-foreground text-center py-2 px-4">
         <p className="text-sm font-display font-bold animate-pulse">

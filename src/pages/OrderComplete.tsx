@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, BookOpen, Download, ArrowLeft, Sparkles, CheckCircle2, Mail } from "lucide-react";
 import { toast } from "sonner";
+import SEO from "@/components/SEO";
 
 const PROGRESS_STAGES = [
   { status: "pending_payment", label: "Waiting for payment to finish...", icon: "💳" },
@@ -190,6 +191,11 @@ const OrderComplete = () => {
   // ── Generating / Waiting State ──
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
+      <SEO
+        title="Your Order — MESTAR"
+        description="Your personalized storybook is being created."
+        noindex
+      />
       <div className="text-center max-w-md w-full">
         <div className="bg-primary/10 border border-primary/20 rounded-2xl p-6 mb-8">
           <CheckCircle2 className="h-10 w-10 text-primary mx-auto mb-3" />

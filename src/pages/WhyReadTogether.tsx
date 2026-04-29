@@ -33,6 +33,11 @@ const WhyReadTogether = () => {
 
   return (
     <div className="min-h-screen py-16">
+      <SEO
+        title="Why Read Together — The Power of Bedtime Stories | MESTAR"
+        description="Reading together builds bonds, sparks imagination, and grows confidence. Discover why personalized stories where your child is the hero matter most."
+        canonical="/why-read-together"
+      />
       <div className="container max-w-3xl">
         {/* Hero */}
         <div className="text-center mb-16">
