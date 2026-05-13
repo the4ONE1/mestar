@@ -254,6 +254,7 @@ const ProductDetail = () => {
                 <button
                   key={i}
                   onClick={() => setSelectedMedia(i)}
+                  aria-label={`View product image ${i + 1}`}
                   className={`w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${
                     i === selectedMedia ? 'border-primary' : 'border-border hover:border-primary/50'
                   }`}
@@ -319,7 +320,7 @@ const ProductDetail = () => {
 
             {/* ── ADD-ONS ── */}
             <div className="bg-card rounded-2xl border border-border p-6 mb-6 space-y-4">
-              <h3 className="font-display text-lg font-bold">Customize Your Story</h3>
+              <h2 className="font-display text-lg font-bold">Customize Your Story</h2>
               <p className="text-xs text-muted-foreground -mt-3">Pick only what you want — or grab the bundle above.</p>
 
               {ADDONS.map((addon) => {
@@ -368,9 +369,9 @@ const ProductDetail = () => {
                 <p className="text-[9px] text-muted-foreground/60 italic mt-2 mb-4 leading-tight">
                   "I want one now, skip the personalization — just add your email below"
                 </p>
-                <h3 className="font-display text-lg font-bold flex items-center justify-center gap-2">
+                <h2 className="font-display text-lg font-bold flex items-center justify-center gap-2">
                   ✨ Personalize Your Story
-                </h3>
+                </h2>
               </div>
 
               <div className="space-y-2">

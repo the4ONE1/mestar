@@ -87,6 +87,7 @@ const StoryPreview = ({ productHandle }: StoryPreviewProps) => {
           <button
             onClick={goPrev}
             disabled={currentPage === 0}
+            aria-label="Previous page"
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm border border-border rounded-full p-2 text-foreground disabled:opacity-30 hover:bg-card transition-colors"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -94,6 +95,7 @@ const StoryPreview = ({ productHandle }: StoryPreviewProps) => {
           <button
             onClick={goNext}
             disabled={isLastPage}
+            aria-label="Next page"
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm border border-border rounded-full p-2 text-foreground disabled:opacity-30 hover:bg-card transition-colors"
           >
             <ChevronRight className="h-5 w-5" />
@@ -105,6 +107,8 @@ const StoryPreview = ({ productHandle }: StoryPreviewProps) => {
               <button
                 key={i}
                 onClick={() => setCurrentPage(i)}
+                aria-label={`Go to page ${i + 1}`}
+                aria-current={i === currentPage ? "true" : undefined}
                 className={`w-2.5 h-2.5 rounded-full transition-all ${
                   i === currentPage ? "bg-primary w-6" : "bg-muted-foreground/30"
                 }`}
