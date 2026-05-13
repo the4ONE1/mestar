@@ -10,17 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
-import {
-  ADDONS,
-  BASE_PRICE,
-  BUNDLE_PRICE,
-  BUNDLE_INCLUDES,
-  DEFAULT_ADDON_STATE,
-  calculateTotal,
-  bundleSavings,
-  type AddonKey,
-  type AddonState,
-} from "@/lib/products";
+import { BASE_PRICE, SUPPORTING_CHARACTER_PRICE } from "@/lib/products";
 
 const STORY_THEMES = [
   "Fairy Tale",
