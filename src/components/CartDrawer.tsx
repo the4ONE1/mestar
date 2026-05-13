@@ -217,25 +217,43 @@ export const CartDrawer = () => {
                         </div>
                       </div>
 
-                      {/* Upsell: Supporting Character */}
-                      {item.personalization && !item.personalization.supportingCharacterPhotoUrl && (
-                        <div className="mx-3 mb-3 p-3 rounded-lg border border-primary/20 bg-primary/5">
+                      {/* Upsell: Supporting Character (+$9.99) — only on personalized items, hide once dismissed or accepted */}
+                      {item.personalization && !item.personalization.supportingCharacterPhotoUrl && !hasSupportingAddon && !upsellDismissed && (
+                        <div className="mx-3 mb-3 p-3 rounded-lg border border-primary/30 bg-primary/5 relative">
+                          <button
+                            type="button"
+                            aria-label="Dismiss supporting character offer"
+                            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+                            onClick={() => setUpsellDismissed(true)}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
                           <div className="flex items-start gap-3">
                             <Users className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                            <div className="flex-1">
-                              <p className="text-sm font-semibold">Add a Supporting Character!</p>
+                            <div className="flex-1 pr-4">
+                              <p className="text-sm font-semibold">Add a Supporting Character — +$9.99</p>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                Include a sibling, friend, pet, or even join the adventure yourself as a supporting character by uploading a second photo
+                                Include a sibling, friend, pet, or even yourself in the adventure. Upload a second photo and we'll write them into the story.
                               </p>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="mt-2 text-xs border-primary/30 text-primary hover:bg-primary/10"
-                                onClick={() => handleUpsellPhoto(item.variantId)}
-                              >
-                                <Upload className="h-3 w-3 mr-1" />
-                                Upload Photo
-                              </Button>
+                              <div className="flex flex-wrap gap-2 mt-3">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+                                  onClick={() => handleUpsellPhoto(item.variantId)}
+                                >
+                                  <Upload className="h-3 w-3 mr-1" />
+                                  Upload 2nd Photo (+$9.99)
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-xs text-muted-foreground hover:text-foreground"
+                                  onClick={() => setUpsellDismissed(true)}
+                                >
+                                  Continue without — ${parseFloat(item.price.amount).toFixed(2)}
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
