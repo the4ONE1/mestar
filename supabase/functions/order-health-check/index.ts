@@ -61,13 +61,14 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
   const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
 
-  // Require Supabase service-role or anon key as bearer (called by pg_cron only)
+  // Require Supabase service-role key as bearer (server-to-server only; called by pg_cron).
+  // The anon/publishable key is intentionally NOT accepted — it's embedded in the client
+  // bundle and would let anyone trigger admin alert emails or read aggregate metrics.
   const auth = req.headers.get("Authorization") || "";
   const presented = auth.startsWith("Bearer ") ? auth.slice("Bearer ".length) : "";
-  if (!presented || (presented !== SERVICE_ROLE && presented !== ANON_KEY)) {
+  if (!presented || !SERVICE_ROLE || presented !== SERVICE_ROLE) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
