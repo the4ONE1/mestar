@@ -118,6 +118,8 @@ const OrderComplete = () => {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
+        <SEO title="Your Order — MESTAR" description="Order status." noindex />
+        <h1 className="sr-only">Your Order Status</h1>
         <div className="text-center max-w-md">
           <p className="text-4xl mb-4">📬</p>
           <h2 className="font-display text-2xl font-bold mb-4">Check your email</h2>
@@ -196,6 +198,9 @@ const OrderComplete = () => {
         description="Your personalized storybook is being created."
         noindex
       />
+      <h1 className="sr-only">
+        {childName ? `Creating ${childName}'s Storybook` : "Creating Your Storybook"}
+      </h1>
       <div className="text-center max-w-md w-full">
         <div className="bg-primary/10 border border-primary/20 rounded-2xl p-6 mb-8">
           <CheckCircle2 className="h-10 w-10 text-primary mx-auto mb-3" />
@@ -210,9 +215,9 @@ const OrderComplete = () => {
         <div className="mb-6">
           <Sparkles className="h-12 w-12 text-primary mx-auto animate-pulse" />
         </div>
-        <h3 className="font-display text-lg font-semibold mb-1">
+        <h2 className="font-display text-lg font-semibold mb-1">
           {childName ? `Creating ${childName}'s Storybook` : "Creating Your Storybook"}
-        </h3>
+        </h2>
         <p className="text-sm text-muted-foreground mb-8">
           This usually takes 1–2 minutes after payment.
         </p>
