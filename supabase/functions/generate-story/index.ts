@@ -6,6 +6,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function requireServiceRole(req: Request): Response | null {
+  const auth = req.headers.get("Authorization");
+  const expected = `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""}`;
+  if (!auth || auth !== expected) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  return null;
+}
+
 const LAYER_1_SYSTEM_PROMPT = `========================================
 MESTAR STORY ENGINE — LAYER 1 (LOCKED)
 ========================================
