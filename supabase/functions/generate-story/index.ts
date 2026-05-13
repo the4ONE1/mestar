@@ -391,6 +391,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const authError = requireServiceRole(req);
+  if (authError) return authError;
+
   try {
     const {
       childName,
