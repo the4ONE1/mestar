@@ -51,11 +51,19 @@ serve(async (req) => {
       orderId,
     } = await req.json();
 
-    const childName = esc(childNameRaw);
-    const childAge = esc(childAgeRaw);
-    const theme = esc(themeRaw);
-    const strength = strengthRaw ? esc(strengthRaw) : "";
-    const supportingCharacterName = supportingCharacterNameRaw ? esc(supportingCharacterNameRaw) : "";
+    const childName = String(childNameRaw ?? "");
+    const childAge = String(childAgeRaw ?? "");
+    const theme = String(themeRaw ?? "");
+    const strength = strengthRaw ? String(strengthRaw) : "";
+    const supportingCharacterName = supportingCharacterNameRaw ? String(supportingCharacterNameRaw) : "";
+
+    // HTML-escaped versions for use inside customerHtml only
+    const eChildName = esc(childName);
+    const eChildAge = esc(childAge);
+    const eTheme = esc(theme);
+    const eStrength = strength ? esc(strength) : "";
+    const eSupportingCharacterName = supportingCharacterName ? esc(supportingCharacterName) : "";
+    const eOrderPageUrlSafe = (url: string) => esc(url);
 
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
