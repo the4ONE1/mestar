@@ -61,7 +61,18 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
   const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
+
+  // Require Supabase service-role or anon key as bearer (called by pg_cron only)
+  const auth = req.headers.get("Authorization") || "";
+  const presented = auth.startsWith("Bearer ") ? auth.slice("Bearer ".length) : "";
+  if (!presented || (presented !== SERVICE_ROLE && presented !== ANON_KEY)) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   if (!SUPABASE_URL || !SERVICE_ROLE || !GMAIL_APP_PASSWORD) {
     return new Response(JSON.stringify({ error: "Missing env vars" }), {
