@@ -1,60 +1,26 @@
-// Local product config — pricing add-on model (replaces Shopify-driven pricing)
-// Storefront still loads product imagery/title from Shopify, but pricing is computed here.
+// Local product config — single bundled product + one optional add-on.
+// Main product (Shopify variant): $19.99 — story + illustrations + coloring pages
+// Add-on (separate Shopify variant): $9.99 — supporting character (2nd photo)
 
-export type AddonKey = "illustrations" | "coloring" | "character";
+export const BASE_PRICE = 19.99;
+export const SUPPORTING_CHARACTER_PRICE = 9.99;
 
-export interface AddonOption {
-  key: AddonKey;
-  label: string;
+// Shopify variant ID for the Supporting Character Add-On product.
+// Created via Shopify admin — variant gid://shopify/ProductVariant/46218235412677
+export const SUPPORTING_CHARACTER_VARIANT_ID =
+  "gid://shopify/ProductVariant/46218235412677";
+
+export interface SupportingCharacterAddon {
+  variantId: string;
+  title: string;
+  price: number;
   description: string;
-  price: number; // in USD
-  defaultIncluded?: boolean; // included with base
 }
 
-export const BASE_PRICE = 9.99;
-
-export const ADDONS: AddonOption[] = [
-  {
-    key: "illustrations",
-    label: "Full-color illustrations",
-    description: "5 painted storybook illustrations — one for each scene.",
-    price: 4.99,
-  },
-  {
-    key: "coloring",
-    label: "Bonus coloring pages",
-    description: "5 printable black-and-white pages of the story scenes.",
-    price: 4.99,
-  },
-  {
-    key: "character",
-    label: "Add a supporting character",
-    description: "Include a sibling, friend, pet, or even join the adventure yourself as a supporting character by uploading a second photo.",
-    price: 7.99,
-  },
-];
-
-export const BUNDLE_PRICE = 19.99;
-export const BUNDLE_INCLUDES: AddonKey[] = ["illustrations", "coloring", "character"];
-
-export type AddonState = Record<AddonKey, boolean>;
-
-export const DEFAULT_ADDON_STATE: AddonState = {
-  illustrations: false,
-  coloring: false,
-  character: false,
+export const SUPPORTING_CHARACTER_ADDON: SupportingCharacterAddon = {
+  variantId: SUPPORTING_CHARACTER_VARIANT_ID,
+  title: "Supporting Character Add-On",
+  price: SUPPORTING_CHARACTER_PRICE,
+  description:
+    "Add a sibling, friend, pet, or even yourself as a supporting character by uploading a second photo.",
 };
-
-export function calculateTotal(addons: AddonState, isBundle: boolean): number {
-  if (isBundle) return BUNDLE_PRICE;
-  let total = BASE_PRICE;
-  for (const a of ADDONS) {
-    if (addons[a.key]) total += a.price;
-  }
-  return Math.round(total * 100) / 100;
-}
-
-export function bundleSavings(): number {
-  const all = ADDONS.reduce((s, a) => s + a.price, 0) + BASE_PRICE;
-  return Math.round((all - BUNDLE_PRICE) * 100) / 100;
-}

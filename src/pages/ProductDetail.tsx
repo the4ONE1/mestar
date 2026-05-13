@@ -5,22 +5,12 @@ import { useCartStore } from "@/stores/cartStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
-import {
-  ADDONS,
-  BASE_PRICE,
-  BUNDLE_PRICE,
-  BUNDLE_INCLUDES,
-  DEFAULT_ADDON_STATE,
-  calculateTotal,
-  bundleSavings,
-  type AddonKey,
-  type AddonState,
-} from "@/lib/products";
+import { BASE_PRICE, SUPPORTING_CHARACTER_PRICE } from "@/lib/products";
 
 const STORY_THEMES = [
   "Fairy Tale",
@@ -55,10 +45,6 @@ const ProductDetail = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Add-on state
-  const [addons, setAddons] = useState<AddonState>(DEFAULT_ADDON_STATE);
-  const [isBundle, setIsBundle] = useState(false);
-
   // Ref to scroll into the personalization form
   const personalizationRef = useRef<HTMLDivElement>(null);
   const scrollToPersonalization = () => {
@@ -89,23 +75,6 @@ const ProductDetail = () => {
     reader.readAsDataURL(file);
   };
 
-  const toggleAddon = (key: AddonKey) => {
-    setIsBundle(false);
-    setAddons(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const toggleBundle = (checked: boolean) => {
-    setIsBundle(checked);
-    if (checked) {
-      const newState = { ...DEFAULT_ADDON_STATE };
-      for (const k of BUNDLE_INCLUDES) newState[k] = true;
-      setAddons(newState);
-      scrollToPersonalization();
-    } else {
-      setAddons(DEFAULT_ADDON_STATE);
-    }
-  };
-
   const SUPPORTING_NAMES = ["Luna", "Max", "Pip", "Ollie", "Bella"];
   const AGE_OPTIONS = ["1-3", "4-7", "8-10", "11+"];
   const GENDER_OPTIONS = ["boy", "girl"];
@@ -125,11 +94,6 @@ const ProductDetail = () => {
     setChildAge(pick(AGE_OPTIONS));
     setTheme(pick(STORY_THEMES));
     setStrength(pick(STRENGTHS));
-    // Turn on the everything bundle
-    setIsBundle(true);
-    const newState = { ...DEFAULT_ADDON_STATE };
-    for (const k of BUNDLE_INCLUDES) newState[k] = true;
-    setAddons(newState);
 
     // Auto-load the default child photo (Leo from the commercial) so the user
     // doesn't have to upload anything. Convert to a data URL so it flows through
@@ -152,7 +116,7 @@ const ProductDetail = () => {
     scrollToPersonalization();
   };
 
-  const totalPrice = calculateTotal(addons, isBundle);
+  const totalPrice = BASE_PRICE;
 
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
   const isFormValid = childName.trim().length > 0 && childGender && childAge && theme && photoPreview && isEmailValid;
@@ -189,11 +153,12 @@ const ProductDetail = () => {
       strength,
       photoUrl: photoPreview!,
       customerEmail: customerEmail.trim(),
-      selectedAddons: addons,
-      isBundle,
+      selectedAddons: { illustrations: true, coloring: true, character: false },
+      isBundle: true,
       totalPrice,
     };
     localStorage.setItem("mestar-pending-story", JSON.stringify(personalizationData));
+
 
     await addItem({
       product,
@@ -275,7 +240,7 @@ const ProductDetail = () => {
               <span className="text-sm text-muted-foreground">USD</span>
             </div>
             <p className="text-xs text-muted-foreground mb-6">
-              Base story (text only): ${BASE_PRICE.toFixed(2)} — add what you need below
+              One-time purchase — instant digital download. Story + 5 illustrations + 5 coloring pages.
             </p>
 
             <div className="flex items-center gap-2 mb-6">
@@ -285,72 +250,20 @@ const ProductDetail = () => {
               <span className="text-sm text-muted-foreground ml-1">Loved by 2,000+ families</span>
             </div>
 
-            {/* ── BUNDLE CALLOUT ── */}
-            <button
-              type="button"
-              onClick={() => toggleBundle(!isBundle)}
-              className={`relative text-left mb-6 p-4 rounded-2xl border-2 transition-all ${
-                isBundle
-                  ? "border-primary bg-primary/10 shadow-lg shadow-primary/20"
-                  : "border-primary/30 bg-primary/5 hover:border-primary/60"
-              }`}
-            >
-              <div className="absolute -top-3 right-4 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-                BEST VALUE
-              </div>
-              <div className="flex items-start gap-3">
-                <Checkbox checked={isBundle} className="mt-1 pointer-events-none" />
-                <div className="flex-1">
-                  <div className="flex items-baseline justify-between gap-2 mb-1">
-                    <h3 className="font-display text-lg font-bold flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                      Everything Bundle
-                    </h3>
-                    <span className="font-bold text-primary text-lg">${BUNDLE_PRICE.toFixed(2)}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Story + illustrations + coloring pages + 1 supporting character.
-                  </p>
-                  <p className="text-xs font-bold text-primary mt-1">
-                    Save ${bundleSavings().toFixed(2)} vs buying à la carte
-                  </p>
-                </div>
-              </div>
-            </button>
-
-            {/* ── ADD-ONS ── */}
-            <div className="bg-card rounded-2xl border border-border p-6 mb-6 space-y-4">
-              <h2 className="font-display text-lg font-bold">Customize Your Story</h2>
-              <p className="text-xs text-muted-foreground -mt-3">Pick only what you want — or grab the bundle above.</p>
-
-              {ADDONS.map((addon) => {
-                const checked = addons[addon.key];
-                const disabled = isBundle;
-                return (
-                  <label
-                    key={addon.key}
-                    className={`flex items-start gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
-                      checked && !disabled
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/40"
-                    } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
-                  >
-                    <Checkbox
-                      checked={checked}
-                      onCheckedChange={() => !disabled && toggleAddon(addon.key)}
-                      disabled={disabled}
-                      className="mt-0.5"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="font-medium text-sm">{addon.label}</span>
-                        <span className="text-sm font-bold text-primary">+${addon.price.toFixed(2)}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">{addon.description}</p>
-                    </div>
-                  </label>
-                );
-              })}
+            {/* What's included */}
+            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 mb-6">
+              <h2 className="font-display text-lg font-bold flex items-center gap-2 mb-3">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Everything Included
+              </h2>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /> Personalized PDF storybook starring your child</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /> 5 full-color storybook illustrations</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /> 5 matching printable coloring pages</li>
+              </ul>
+              <p className="text-xs text-muted-foreground mt-3">
+                Want to add a sibling, friend, or pet? You can add a Supporting Character (+${SUPPORTING_CHARACTER_PRICE.toFixed(2)}) on the next step.
+              </p>
             </div>
 
             {/* Personalization Form */}

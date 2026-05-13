@@ -3,16 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2, Upload, Users, CheckCircle2 } from "lucide-react";
-import { useCartStore } from "@/stores/cartStore";
+import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2, Upload, Users, CheckCircle2, X } from "lucide-react";
+import { useCartStore, type ShopifyProduct } from "@/stores/cartStore";
 import { supabase } from "@/integrations/supabase/client";
 import { attachCartAttributes } from "@/lib/shopify";
+import { SUPPORTING_CHARACTER_ADDON } from "@/lib/products";
 import { toast } from "sonner";
 
 export const CartDrawer = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const { items, isLoading, isSyncing, updateQuantity, removeItem, ensureCheckoutUrl, syncCart, updatePersonalization } = useCartStore();
+  const { items, isLoading, isSyncing, updateQuantity, removeItem, ensureCheckoutUrl, syncCart, updatePersonalization, addItem } = useCartStore();
+  const [upsellDismissed, setUpsellDismissed] = useState(false);
+  const hasSupportingAddon = items.some(i => i.variantId === SUPPORTING_CHARACTER_ADDON.variantId);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
   const upsellInputRef = useRef<HTMLInputElement>(null);
@@ -91,19 +94,47 @@ export const CartDrawer = () => {
     upsellInputRef.current?.click();
   };
 
-  const handleUpsellFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const ensureSupportingCharacterAddOn = async () => {
+    if (hasSupportingAddon) return;
+    const mainItem = items.find(i => i.personalization);
+    const addonProduct: ShopifyProduct = {
+      node: {
+        id: SUPPORTING_CHARACTER_ADDON.variantId,
+        title: SUPPORTING_CHARACTER_ADDON.title,
+        description: SUPPORTING_CHARACTER_ADDON.description,
+        handle: "supporting-character-add-on",
+        priceRange: { minVariantPrice: { amount: SUPPORTING_CHARACTER_ADDON.price.toFixed(2), currencyCode: "USD" } },
+        images: mainItem?.product.node.images ?? { edges: [] },
+        variants: { edges: [] },
+        options: [],
+      },
+    };
+    await addItem({
+      product: addonProduct,
+      variantId: SUPPORTING_CHARACTER_ADDON.variantId,
+      variantTitle: SUPPORTING_CHARACTER_ADDON.title,
+      price: { amount: SUPPORTING_CHARACTER_ADDON.price.toFixed(2), currencyCode: "USD" },
+      quantity: 1,
+      selectedOptions: [],
+    });
+  };
+
+  const handleUpsellFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !upsellTargetVariant) return;
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Photo must be under 5MB");
       return;
     }
+    const targetVariant = upsellTargetVariant;
     const reader = new FileReader();
-    reader.onloadend = () => {
-      updatePersonalization(upsellTargetVariant, {
+    reader.onloadend = async () => {
+      updatePersonalization(targetVariant, {
         supportingCharacterPhotoUrl: reader.result as string,
+        selectedAddons: { illustrations: true, coloring: true, character: true },
       });
-      toast.success("Supporting character added! 🌟", { position: "top-center" });
+      await ensureSupportingCharacterAddOn();
+      toast.success("Supporting character added! 🌟 (+$9.99)", { position: "top-center" });
       setUpsellTargetVariant(null);
     };
     reader.readAsDataURL(file);
@@ -186,25 +217,43 @@ export const CartDrawer = () => {
                         </div>
                       </div>
 
-                      {/* Upsell: Supporting Character */}
-                      {item.personalization && !item.personalization.supportingCharacterPhotoUrl && (
-                        <div className="mx-3 mb-3 p-3 rounded-lg border border-primary/20 bg-primary/5">
+                      {/* Upsell: Supporting Character (+$9.99) — only on personalized items, hide once dismissed or accepted */}
+                      {item.personalization && !item.personalization.supportingCharacterPhotoUrl && !hasSupportingAddon && !upsellDismissed && (
+                        <div className="mx-3 mb-3 p-3 rounded-lg border border-primary/30 bg-primary/5 relative">
+                          <button
+                            type="button"
+                            aria-label="Dismiss supporting character offer"
+                            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+                            onClick={() => setUpsellDismissed(true)}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
                           <div className="flex items-start gap-3">
                             <Users className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                            <div className="flex-1">
-                              <p className="text-sm font-semibold">Add a Supporting Character!</p>
+                            <div className="flex-1 pr-4">
+                              <p className="text-sm font-semibold">Add a Supporting Character — +$9.99</p>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                Include a sibling, friend, pet, or even join the adventure yourself as a supporting character by uploading a second photo
+                                Include a sibling, friend, pet, or even yourself in the adventure. Upload a second photo and we'll write them into the story.
                               </p>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="mt-2 text-xs border-primary/30 text-primary hover:bg-primary/10"
-                                onClick={() => handleUpsellPhoto(item.variantId)}
-                              >
-                                <Upload className="h-3 w-3 mr-1" />
-                                Upload Photo
-                              </Button>
+                              <div className="flex flex-wrap gap-2 mt-3">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+                                  onClick={() => handleUpsellPhoto(item.variantId)}
+                                >
+                                  <Upload className="h-3 w-3 mr-1" />
+                                  Upload 2nd Photo (+$9.99)
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-xs text-muted-foreground hover:text-foreground"
+                                  onClick={() => setUpsellDismissed(true)}
+                                >
+                                  Continue without — ${parseFloat(item.price.amount).toFixed(2)}
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
