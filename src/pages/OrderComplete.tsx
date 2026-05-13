@@ -150,7 +150,7 @@ const OrderComplete = () => {
 
           <div className="bg-card rounded-2xl border border-border p-8 mb-6 text-center">
             <BookOpen className="h-12 w-12 text-primary mx-auto mb-4" />
-            <h3 className="font-display text-xl font-bold mb-2">Your PDF Storybook</h3>
+            <h2 className="font-display text-xl font-bold mb-2">Your PDF Storybook</h2>
             <p className="text-sm text-muted-foreground mb-6">
               Includes the personalized story plus any add-ons you selected.
             </p>
