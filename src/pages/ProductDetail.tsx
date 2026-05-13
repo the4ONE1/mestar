@@ -94,11 +94,6 @@ const ProductDetail = () => {
     setChildAge(pick(AGE_OPTIONS));
     setTheme(pick(STORY_THEMES));
     setStrength(pick(STRENGTHS));
-    // Turn on the everything bundle
-    setIsBundle(true);
-    const newState = { ...DEFAULT_ADDON_STATE };
-    for (const k of BUNDLE_INCLUDES) newState[k] = true;
-    setAddons(newState);
 
     // Auto-load the default child photo (Leo from the commercial) so the user
     // doesn't have to upload anything. Convert to a data URL so it flows through
@@ -121,7 +116,7 @@ const ProductDetail = () => {
     scrollToPersonalization();
   };
 
-  const totalPrice = calculateTotal(addons, isBundle);
+  const totalPrice = BASE_PRICE;
 
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
   const isFormValid = childName.trim().length > 0 && childGender && childAge && theme && photoPreview && isEmailValid;
@@ -158,11 +153,12 @@ const ProductDetail = () => {
       strength,
       photoUrl: photoPreview!,
       customerEmail: customerEmail.trim(),
-      selectedAddons: addons,
-      isBundle,
+      selectedAddons: { illustrations: true, coloring: true, character: false },
+      isBundle: true,
       totalPrice,
     };
     localStorage.setItem("mestar-pending-story", JSON.stringify(personalizationData));
+
 
     await addItem({
       product,
