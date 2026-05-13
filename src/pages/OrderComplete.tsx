@@ -91,7 +91,7 @@ const OrderComplete = () => {
         }
 
         if (row.status === "failed") {
-          setError(row.error_message || "Something went wrong creating your storybook. We've been notified — please contact support.");
+          setError("Something went wrong creating your storybook. We've been notified — please contact support.");
           return; // stop polling
         }
       }

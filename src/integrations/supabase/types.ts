@@ -149,7 +149,7 @@ export type Database = {
         Args: { _order_id: string }
         Returns: {
           child_name: string
-          error_message: string
+          has_error: boolean
           id: string
           pdf_url: string
           status: string
