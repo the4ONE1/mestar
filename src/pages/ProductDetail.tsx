@@ -45,10 +45,6 @@ const ProductDetail = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Add-on state
-  const [addons, setAddons] = useState<AddonState>(DEFAULT_ADDON_STATE);
-  const [isBundle, setIsBundle] = useState(false);
-
   // Ref to scroll into the personalization form
   const personalizationRef = useRef<HTMLDivElement>(null);
   const scrollToPersonalization = () => {
@@ -77,23 +73,6 @@ const ProductDetail = () => {
     const reader = new FileReader();
     reader.onloadend = () => setPhotoPreview(reader.result as string);
     reader.readAsDataURL(file);
-  };
-
-  const toggleAddon = (key: AddonKey) => {
-    setIsBundle(false);
-    setAddons(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const toggleBundle = (checked: boolean) => {
-    setIsBundle(checked);
-    if (checked) {
-      const newState = { ...DEFAULT_ADDON_STATE };
-      for (const k of BUNDLE_INCLUDES) newState[k] = true;
-      setAddons(newState);
-      scrollToPersonalization();
-    } else {
-      setAddons(DEFAULT_ADDON_STATE);
-    }
   };
 
   const SUPPORTING_NAMES = ["Luna", "Max", "Pip", "Ollie", "Bella"];
