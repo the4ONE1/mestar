@@ -3,16 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2, Upload, Users, CheckCircle2 } from "lucide-react";
-import { useCartStore } from "@/stores/cartStore";
+import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2, Upload, Users, CheckCircle2, X } from "lucide-react";
+import { useCartStore, type ShopifyProduct } from "@/stores/cartStore";
 import { supabase } from "@/integrations/supabase/client";
 import { attachCartAttributes } from "@/lib/shopify";
+import { SUPPORTING_CHARACTER_ADDON } from "@/lib/products";
 import { toast } from "sonner";
 
 export const CartDrawer = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const { items, isLoading, isSyncing, updateQuantity, removeItem, ensureCheckoutUrl, syncCart, updatePersonalization } = useCartStore();
+  const { items, isLoading, isSyncing, updateQuantity, removeItem, ensureCheckoutUrl, syncCart, updatePersonalization, addItem } = useCartStore();
+  const [upsellDismissed, setUpsellDismissed] = useState(false);
+  const hasSupportingAddon = items.some(i => i.variantId === SUPPORTING_CHARACTER_ADDON.variantId);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
   const upsellInputRef = useRef<HTMLInputElement>(null);
