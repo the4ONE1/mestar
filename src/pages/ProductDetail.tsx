@@ -240,7 +240,7 @@ const ProductDetail = () => {
               <span className="text-sm text-muted-foreground">USD</span>
             </div>
             <p className="text-xs text-muted-foreground mb-6">
-              Base story (text only): ${BASE_PRICE.toFixed(2)} — add what you need below
+              One-time purchase — instant digital download. Story + 5 illustrations + 5 coloring pages.
             </p>
 
             <div className="flex items-center gap-2 mb-6">
@@ -250,72 +250,20 @@ const ProductDetail = () => {
               <span className="text-sm text-muted-foreground ml-1">Loved by 2,000+ families</span>
             </div>
 
-            {/* ── BUNDLE CALLOUT ── */}
-            <button
-              type="button"
-              onClick={() => toggleBundle(!isBundle)}
-              className={`relative text-left mb-6 p-4 rounded-2xl border-2 transition-all ${
-                isBundle
-                  ? "border-primary bg-primary/10 shadow-lg shadow-primary/20"
-                  : "border-primary/30 bg-primary/5 hover:border-primary/60"
-              }`}
-            >
-              <div className="absolute -top-3 right-4 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-                BEST VALUE
-              </div>
-              <div className="flex items-start gap-3">
-                <Checkbox checked={isBundle} className="mt-1 pointer-events-none" />
-                <div className="flex-1">
-                  <div className="flex items-baseline justify-between gap-2 mb-1">
-                    <h3 className="font-display text-lg font-bold flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                      Everything Bundle
-                    </h3>
-                    <span className="font-bold text-primary text-lg">${BUNDLE_PRICE.toFixed(2)}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Story + illustrations + coloring pages + 1 supporting character.
-                  </p>
-                  <p className="text-xs font-bold text-primary mt-1">
-                    Save ${bundleSavings().toFixed(2)} vs buying à la carte
-                  </p>
-                </div>
-              </div>
-            </button>
-
-            {/* ── ADD-ONS ── */}
-            <div className="bg-card rounded-2xl border border-border p-6 mb-6 space-y-4">
-              <h2 className="font-display text-lg font-bold">Customize Your Story</h2>
-              <p className="text-xs text-muted-foreground -mt-3">Pick only what you want — or grab the bundle above.</p>
-
-              {ADDONS.map((addon) => {
-                const checked = addons[addon.key];
-                const disabled = isBundle;
-                return (
-                  <label
-                    key={addon.key}
-                    className={`flex items-start gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
-                      checked && !disabled
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/40"
-                    } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
-                  >
-                    <Checkbox
-                      checked={checked}
-                      onCheckedChange={() => !disabled && toggleAddon(addon.key)}
-                      disabled={disabled}
-                      className="mt-0.5"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="font-medium text-sm">{addon.label}</span>
-                        <span className="text-sm font-bold text-primary">+${addon.price.toFixed(2)}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">{addon.description}</p>
-                    </div>
-                  </label>
-                );
-              })}
+            {/* What's included */}
+            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 mb-6">
+              <h2 className="font-display text-lg font-bold flex items-center gap-2 mb-3">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Everything Included
+              </h2>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /> Personalized PDF storybook starring your child</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /> 5 full-color storybook illustrations</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /> 5 matching printable coloring pages</li>
+              </ul>
+              <p className="text-xs text-muted-foreground mt-3">
+                Want to add a sibling, friend, or pet? You can add a Supporting Character (+${SUPPORTING_CHARACTER_PRICE.toFixed(2)}) on the next step.
+              </p>
             </div>
 
             {/* Personalization Form */}
