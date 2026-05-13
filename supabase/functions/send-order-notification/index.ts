@@ -12,6 +12,16 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Service-role auth: this function is server-to-server only
+  const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const auth = req.headers.get("Authorization");
+  if (!SERVICE_ROLE_KEY || auth !== `Bearer ${SERVICE_ROLE_KEY}`) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
   if (!GMAIL_APP_PASSWORD) {
     return new Response(
@@ -20,17 +30,32 @@ serve(async (req) => {
     );
   }
 
+  // HTML-escape user-supplied values before interpolating into the email template
+  const esc = (v: unknown): string =>
+    String(v ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
   try {
     const {
-      childName,
-      childAge,
-      theme,
-      strength,
+      childName: childNameRaw,
+      childAge: childAgeRaw,
+      theme: themeRaw,
+      strength: strengthRaw,
       customerEmail,
-      supportingCharacterName,
+      supportingCharacterName: supportingCharacterNameRaw,
       pdfUrl,
       orderId,
     } = await req.json();
+
+    const childName = esc(childNameRaw);
+    const childAge = esc(childAgeRaw);
+    const theme = esc(themeRaw);
+    const strength = strengthRaw ? esc(strengthRaw) : "";
+    const supportingCharacterName = supportingCharacterNameRaw ? esc(supportingCharacterNameRaw) : "";
 
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
