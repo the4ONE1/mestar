@@ -76,9 +76,9 @@ const WhyReadTogether = () => {
                 <benefit.icon className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-display text-lg font-bold text-foreground mb-1">
+                <h2 className="font-display text-lg font-bold text-foreground mb-1">
                   {benefit.title}
-                </h3>
+                </h2>
                 <p className="text-muted-foreground leading-relaxed">
                   {benefit.description}
                 </p>
