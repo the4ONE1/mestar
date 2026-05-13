@@ -117,26 +117,26 @@ This is an automated notification from MESTAR.
 <html>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1a1a1a; background: #ffffff;">
   <div style="text-align: center; padding: 16px 0;">
-    <h1 style="font-size: 28px; margin: 0 0 8px;">⭐ ${childName}'s Storybook is Ready!</h1>
+    <h1 style="font-size: 28px; margin: 0 0 8px;">⭐ ${eChildName}'s Storybook is Ready!</h1>
     <p style="color: #666; margin: 0;">Your personalized MESTAR storybook has been created.</p>
   </div>
 
   <div style="background: #f8f5ff; border: 1px solid #e7dfff; border-radius: 16px; padding: 28px; text-align: center; margin: 24px 0;">
     <p style="font-size: 16px; margin: 0 0 20px;">Click below to view and download your PDF:</p>
-    <a href="${orderPageUrl}"
+    <a href="${eOrderPageUrlSafe(orderPageUrl)}"
        style="display: inline-block; background: #6d28d9; color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 12px; font-weight: 600; font-size: 16px;">
       📖 View Your Storybook
     </a>
     <p style="font-size: 13px; color: #888; margin: 20px 0 0;">
       Or paste this link in your browser:<br/>
-      <a href="${orderPageUrl}" style="color: #6d28d9; word-break: break-all;">${orderPageUrl}</a>
+      <a href="${eOrderPageUrlSafe(orderPageUrl)}" style="color: #6d28d9; word-break: break-all;">${eOrderPageUrlSafe(orderPageUrl)}</a>
     </p>
   </div>
 
   <div style="background: #f5f5f5; border-radius: 12px; padding: 20px; margin: 24px 0;">
     <h3 style="margin: 0 0 12px; font-size: 16px;">What's inside:</h3>
     <ul style="margin: 0; padding-left: 20px; color: #444;">
-      <li>A unique story written just for ${childName}</li>
+      <li>A unique story written just for ${eChildName}</li>
       <li>Beautiful personalized illustrations</li>
       <li>Bonus coloring pages (if included in your order)</li>
     </ul>
@@ -144,11 +144,11 @@ This is an automated notification from MESTAR.
 
   <div style="font-size: 14px; color: #555; padding: 0 8px;">
     <p style="margin: 0 0 8px;"><strong>Story details:</strong></p>
-    <p style="margin: 4px 0;">• Child's name: ${childName}</p>
-    <p style="margin: 4px 0;">• Age group: ${childAge}</p>
-    <p style="margin: 4px 0;">• Theme: ${theme}</p>
-    ${strength ? `<p style="margin: 4px 0;">• Featured strength: ${strength}</p>` : ""}
-    ${supportingCharacterName ? `<p style="margin: 4px 0;">• Supporting character: ${supportingCharacterName}</p>` : ""}
+    <p style="margin: 4px 0;">• Child's name: ${eChildName}</p>
+    <p style="margin: 4px 0;">• Age group: ${eChildAge}</p>
+    <p style="margin: 4px 0;">• Theme: ${eTheme}</p>
+    ${eStrength ? `<p style="margin: 4px 0;">• Featured strength: ${eStrength}</p>` : ""}
+    ${eSupportingCharacterName ? `<p style="margin: 4px 0;">• Supporting character: ${eSupportingCharacterName}</p>` : ""}
   </div>
 
   <p style="font-size: 13px; color: #888; text-align: center; margin: 32px 0 8px;">
