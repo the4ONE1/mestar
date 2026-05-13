@@ -94,19 +94,47 @@ export const CartDrawer = () => {
     upsellInputRef.current?.click();
   };
 
-  const handleUpsellFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const ensureSupportingCharacterAddOn = async () => {
+    if (hasSupportingAddon) return;
+    const mainItem = items.find(i => i.personalization);
+    const addonProduct: ShopifyProduct = {
+      node: {
+        id: SUPPORTING_CHARACTER_ADDON.variantId,
+        title: SUPPORTING_CHARACTER_ADDON.title,
+        description: SUPPORTING_CHARACTER_ADDON.description,
+        handle: "supporting-character-add-on",
+        priceRange: { minVariantPrice: { amount: SUPPORTING_CHARACTER_ADDON.price.toFixed(2), currencyCode: "USD" } },
+        images: mainItem?.product.node.images ?? { edges: [] },
+        variants: { edges: [] },
+        options: [],
+      },
+    };
+    await addItem({
+      product: addonProduct,
+      variantId: SUPPORTING_CHARACTER_ADDON.variantId,
+      variantTitle: SUPPORTING_CHARACTER_ADDON.title,
+      price: { amount: SUPPORTING_CHARACTER_ADDON.price.toFixed(2), currencyCode: "USD" },
+      quantity: 1,
+      selectedOptions: [],
+    });
+  };
+
+  const handleUpsellFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !upsellTargetVariant) return;
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Photo must be under 5MB");
       return;
     }
+    const targetVariant = upsellTargetVariant;
     const reader = new FileReader();
-    reader.onloadend = () => {
-      updatePersonalization(upsellTargetVariant, {
+    reader.onloadend = async () => {
+      updatePersonalization(targetVariant, {
         supportingCharacterPhotoUrl: reader.result as string,
+        selectedAddons: { illustrations: true, coloring: true, character: true },
       });
-      toast.success("Supporting character added! 🌟", { position: "top-center" });
+      await ensureSupportingCharacterAddOn();
+      toast.success("Supporting character added! 🌟 (+$9.99)", { position: "top-center" });
       setUpsellTargetVariant(null);
     };
     reader.readAsDataURL(file);
