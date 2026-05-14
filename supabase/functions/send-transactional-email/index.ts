@@ -29,6 +29,30 @@ function generateToken(): string {
 // backend keys may be opaque strings, not JWTs. We validate the exact protected
 // backend key in code so anon/authenticated users still cannot send emails.
 
+function getServerKeys(): string[] {
+  const keys = [Deno.env.get('LOVABLE_API_KEY'), Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')]
+  const secretKeys = Deno.env.get('SUPABASE_SECRET_KEYS')
+
+  if (secretKeys) {
+    try {
+      const parsed = JSON.parse(secretKeys)
+      if (Array.isArray(parsed)) keys.push(...parsed)
+      else if (typeof parsed === 'string') keys.push(parsed)
+      else if (parsed && typeof parsed === 'object') keys.push(...Object.values(parsed).filter((value): value is string => typeof value === 'string'))
+    } catch {
+      keys.push(...secretKeys.split(/[\n,]/))
+    }
+  }
+
+  return keys.map((key) => key?.trim()).filter((key): key is string => Boolean(key))
+}
+
+function isAuthorized(authHeader: string | null): boolean {
+  if (!authHeader?.startsWith('Bearer ')) return false
+  const token = authHeader.slice('Bearer '.length).trim()
+  return getServerKeys().includes(token)
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -51,7 +75,7 @@ Deno.serve(async (req) => {
 
   // Service-role only: reject anon/authenticated callers.
   const authHeader = req.headers.get('Authorization')
-  if (authHeader !== `Bearer ${supabaseServiceKey}`) {
+  if (!isAuthorized(authHeader)) {
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
