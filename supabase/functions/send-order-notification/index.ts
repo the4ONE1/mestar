@@ -7,16 +7,44 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function getServerKeys(): string[] {
+  const keys = [Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")];
+  const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
+
+  if (secretKeys) {
+    try {
+      const parsed = JSON.parse(secretKeys);
+      if (Array.isArray(parsed)) keys.push(...parsed);
+      else if (typeof parsed === "string") keys.push(parsed);
+      else if (parsed && typeof parsed === "object") keys.push(...Object.values(parsed).filter((value): value is string => typeof value === "string"));
+    } catch {
+      keys.push(...secretKeys.split(/[\n,]/));
+    }
+  }
+
+  return keys.map((key) => key?.trim()).filter((key): key is string => Boolean(key));
+}
+
+function getInternalAuthKey(): string | null {
+  return getServerKeys()[0] ?? null;
+}
+
+function isAuthorized(authHeader: string | null): boolean {
+  if (!authHeader?.startsWith("Bearer ")) return false;
+  const token = authHeader.slice("Bearer ".length).trim();
+  return getServerKeys().includes(token);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   // Service-role auth: this function is server-to-server only
-  const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+  const INTERNAL_AUTH_KEY = getInternalAuthKey();
   const auth = req.headers.get("Authorization");
-  if (!SERVICE_ROLE_KEY || !SUPABASE_URL || auth !== `Bearer ${SERVICE_ROLE_KEY}`) {
+  if (!INTERNAL_AUTH_KEY || !SUPABASE_URL || !isAuthorized(auth)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
