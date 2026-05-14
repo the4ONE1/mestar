@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 function getServerKeys(): string[] {
-  const keys = [Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")];
+  const keys = [Deno.env.get("LOVABLE_API_KEY"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")];
   const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
 
   if (secretKeys) {
@@ -26,7 +26,7 @@ function getServerKeys(): string[] {
 }
 
 function getInternalAuthKey(): string | null {
-  return getServerKeys()[0] ?? null;
+  return Deno.env.get("LOVABLE_API_KEY")?.trim() || getServerKeys()[0] || null;
 }
 
 function isAuthorized(authHeader: string | null): boolean {
@@ -41,10 +41,11 @@ serve(async (req) => {
   }
 
   // Service-role auth: this function is server-to-server only
+  const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const INTERNAL_AUTH_KEY = getInternalAuthKey();
   const auth = req.headers.get("Authorization");
-  if (!INTERNAL_AUTH_KEY || !SUPABASE_URL || !isAuthorized(auth)) {
+  if (!SERVICE_ROLE_KEY || !INTERNAL_AUTH_KEY || !SUPABASE_URL || !isAuthorized(auth)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -63,7 +64,7 @@ serve(async (req) => {
       orderId,
     } = await req.json();
 
-    const supabase = createClient(SUPABASE_URL, INTERNAL_AUTH_KEY);
+    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     const orderPageUrl = orderId
       ? `https://mestar.pro/order-complete?order_id=${orderId}`
