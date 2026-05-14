@@ -394,12 +394,34 @@ serve(async (req) => {
     // Generate illustrations + coloring pages in parallel where requested
     console.log("Generating images...", { addons });
 
+    // Load the customer's reference photos (if any) so the AI uses them for likeness
+    let mainPhotoRef: string | null = null;
+    let supportingPhotoRef: string | null = null;
+    if (orderId) {
+      const { data: orderRow } = await supabase
+        .from("storybook_orders")
+        .select("child_photo_path, supporting_character_photo_path")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (orderRow) {
+        mainPhotoRef = await photoPathToDataUrl(supabase, orderRow.child_photo_path);
+        supportingPhotoRef = await photoPathToDataUrl(supabase, orderRow.supporting_character_photo_path);
+      }
+    }
+    console.log("Photo refs:", { hasMain: !!mainPhotoRef, hasSupporting: !!supportingPhotoRef });
+
     const illustrationPromises = addons.illustrations && illustrationPrompts?.length
-      ? illustrationPrompts.slice(0, 5).map((p: string) => generateImage(p, LOVABLE_API_KEY))
+      ? illustrationPrompts.slice(0, 5).map((p: string, i: number) => {
+          const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
+          return generateImage(withLikenessLock(p, refs.length > 0), LOVABLE_API_KEY, refs);
+        })
       : Array(5).fill(Promise.resolve(null));
 
     const coloringPromises = addons.coloring && coloringPrompts?.length
-      ? coloringPrompts.slice(0, 5).map((p: string) => generateImage(p, LOVABLE_API_KEY))
+      ? coloringPrompts.slice(0, 5).map((p: string, i: number) => {
+          const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
+          return generateImage(withLikenessLock(p, refs.length > 0), LOVABLE_API_KEY, refs);
+        })
       : Array(5).fill(Promise.resolve(null));
 
     const [illustrationImages, coloringImages] = await Promise.all([
