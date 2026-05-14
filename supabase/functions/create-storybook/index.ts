@@ -293,6 +293,28 @@ async function buildStorybookPDF(
 }
 
 // ── Main Handler ──
+function getServerKeys(): string[] {
+  const keys = [Deno.env.get("LOVABLE_API_KEY"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")];
+  const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (secretKeys) {
+    try {
+      const parsed = JSON.parse(secretKeys);
+      if (Array.isArray(parsed)) keys.push(...parsed);
+      else if (typeof parsed === "string") keys.push(parsed);
+      else if (parsed && typeof parsed === "object") keys.push(...Object.values(parsed).filter((v): v is string => typeof v === "string"));
+    } catch {
+      keys.push(...secretKeys.split(/[\n,]/));
+    }
+  }
+  return keys.map((k) => k?.trim()).filter((k): k is string => Boolean(k));
+}
+
+function isAuthorized(authHeader: string | null): boolean {
+  if (!authHeader?.startsWith("Bearer ")) return false;
+  const token = authHeader.slice("Bearer ".length).trim();
+  return getServerKeys().includes(token);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -302,9 +324,8 @@ serve(async (req) => {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-  // Service-role auth: this function is server-to-server only
-  const authHeader = req.headers.get("Authorization");
-  if (!SUPABASE_SERVICE_ROLE_KEY || authHeader !== `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`) {
+  // Server-to-server only — accept any configured server key
+  if (!isAuthorized(req.headers.get("Authorization"))) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -410,24 +431,29 @@ serve(async (req) => {
     }
     console.log("Photo refs:", { hasMain: !!mainPhotoRef, hasSupporting: !!supportingPhotoRef });
 
-    const illustrationPromises = addons.illustrations && illustrationPrompts?.length
-      ? illustrationPrompts.slice(0, 5).map((p: string, i: number) => {
-          const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
-          return generateImage(withLikenessLock(p, refs.length > 0), LOVABLE_API_KEY, refs);
-        })
-      : Array(5).fill(Promise.resolve(null));
+    // Run sequentially to stay within edge-function CPU/memory limits
+    // (parallelizing 10 multimodal image generations exhausts the worker)
+    const runSequential = async (
+      enabled: boolean,
+      prompts: string[] | undefined
+    ): Promise<(Uint8Array | null)[]> => {
+      const out: (Uint8Array | null)[] = [];
+      if (!enabled || !prompts?.length) return Array(5).fill(null);
+      for (let i = 0; i < Math.min(5, prompts.length); i++) {
+        const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
+        const img = await generateImage(
+          withLikenessLock(prompts[i], refs.length > 0),
+          LOVABLE_API_KEY,
+          refs
+        );
+        out.push(img);
+      }
+      while (out.length < 5) out.push(null);
+      return out;
+    };
 
-    const coloringPromises = addons.coloring && coloringPrompts?.length
-      ? coloringPrompts.slice(0, 5).map((p: string, i: number) => {
-          const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
-          return generateImage(withLikenessLock(p, refs.length > 0), LOVABLE_API_KEY, refs);
-        })
-      : Array(5).fill(Promise.resolve(null));
-
-    const [illustrationImages, coloringImages] = await Promise.all([
-      Promise.all(illustrationPromises),
-      Promise.all(coloringPromises),
-    ]);
+    const illustrationImages = await runSequential(addons.illustrations, illustrationPrompts);
+    const coloringImages = await runSequential(addons.coloring, coloringPrompts);
 
     const illustrationCount = illustrationImages.filter(Boolean).length;
     const coloringCount = coloringImages.filter(Boolean).length;
@@ -491,7 +517,7 @@ serve(async (req) => {
     const fileName = `${orderId || crypto.randomUUID()}.pdf`;
     const { error: uploadError } = await supabase.storage
       .from("storybooks")
-      .upload(fileName, pdfBytes, { contentType: "application/pdf", upsert: false });
+      .upload(fileName, pdfBytes, { contentType: "application/pdf", upsert: true });
 
     if (uploadError) throw new Error(`PDF upload failed: ${uploadError.message}`);
 
