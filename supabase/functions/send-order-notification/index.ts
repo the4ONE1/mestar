@@ -51,21 +51,35 @@ serve(async (req) => {
       orderPageUrl: String(orderPageUrl ?? ""),
     };
 
+    const enqueueDeliveryEmail = async (
+      recipientEmail: string,
+      idempotencyKey: string,
+      data: Record<string, string>,
+    ) => {
+      return fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+        },
+        body: JSON.stringify({
+          templateName: "story-delivery",
+          recipientEmail,
+          idempotencyKey,
+          templateData: data,
+        }),
+      });
+    };
+
     // ── 1. Customer delivery email via Lovable Emails ──
     if (customerEmail && String(customerEmail).includes("@")) {
-      const { error: customerErr } = await supabase.functions.invoke(
-        "send-transactional-email",
-        {
-          body: {
-            templateName: "story-delivery",
-            recipientEmail: customerEmail,
-            idempotencyKey: `story-delivery-${orderId || crypto.randomUUID()}`,
-            templateData,
-          },
-        }
+      const customerRes = await enqueueDeliveryEmail(
+        customerEmail,
+        `story-delivery-${orderId || crypto.randomUUID()}`,
+        templateData,
       );
-      if (customerErr) {
-        console.error("Customer email send failed:", customerErr);
+      if (!customerRes.ok) {
+        console.error("Customer email enqueue failed:", await customerRes.text());
       } else {
         console.log("Customer delivery email enqueued for:", customerEmail);
       }
@@ -74,22 +88,29 @@ serve(async (req) => {
     }
 
     // ── 2. Admin notification (also via Lovable Emails) ──
-    const { error: adminErr } = await supabase.functions.invoke(
-      "send-transactional-email",
+    const adminRes = await enqueueDeliveryEmail(
+      "mestar.orders@gmail.com",
+      `story-delivery-admin-${orderId || crypto.randomUUID()}`,
       {
-        body: {
-          templateName: "story-delivery",
-          recipientEmail: "mestar.orders@gmail.com",
-          idempotencyKey: `story-delivery-admin-${orderId || crypto.randomUUID()}`,
-          templateData: {
-            ...templateData,
-            childName: `[ADMIN] ${templateData.childName}`,
-          },
-        },
-      }
+        ...templateData,
+        childName: `[ADMIN] ${templateData.childName}`,
+      },
     );
-    if (adminErr) {
-      console.error("Admin notification failed:", adminErr);
+    if (!adminRes.ok) {
+      console.error("Admin notification enqueue failed:", await adminRes.text());
+    }
+
+    // Try to process the queue immediately; the scheduled worker remains as backup.
+    const queueRes = await fetch(`${SUPABASE_URL}/functions/v1/process-email-queue`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      },
+      body: "{}",
+    });
+    if (!queueRes.ok) {
+      console.error("Immediate email queue processing failed:", await queueRes.text());
     }
 
     return new Response(
