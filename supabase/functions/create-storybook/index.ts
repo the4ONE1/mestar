@@ -512,7 +512,7 @@ serve(async (req) => {
     const fileName = `${orderId || crypto.randomUUID()}.pdf`;
     const { error: uploadError } = await supabase.storage
       .from("storybooks")
-      .upload(fileName, pdfBytes, { contentType: "application/pdf", upsert: false });
+      .upload(fileName, pdfBytes, { contentType: "application/pdf", upsert: true });
 
     if (uploadError) throw new Error(`PDF upload failed: ${uploadError.message}`);
 
