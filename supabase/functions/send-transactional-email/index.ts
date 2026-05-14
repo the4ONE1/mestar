@@ -25,22 +25,9 @@ function generateToken(): string {
     .join('')
 }
 
-// Auth: verify_jwt = true at the gateway ensures a valid Supabase-signed JWT.
-// In addition we require the service_role claim so the public anon key cannot
-// be used to send arbitrary MESTAR-branded emails (phishing/spam protection).
-function parseJwtClaims(token: string): Record<string, unknown> | null {
-  const parts = token.split('.')
-  if (parts.length < 2) return null
-  try {
-    const payload = parts[1]
-      .replaceAll('-', '+')
-      .replaceAll('_', '/')
-      .padEnd(Math.ceil(parts[1].length / 4) * 4, '=')
-    return JSON.parse(atob(payload)) as Record<string, unknown>
-  } catch {
-    return null
-  }
-}
+// Server-to-server only: the gateway does not validate JWTs here because modern
+// backend keys may be opaque strings, not JWTs. We validate the exact protected
+// backend key in code so anon/authenticated users still cannot send emails.
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -62,20 +49,12 @@ Deno.serve(async (req) => {
     )
   }
 
-  // Service-role only: reject anon callers (which have a valid JWT but no privileges).
+  // Service-role only: reject anon/authenticated callers.
   const authHeader = req.headers.get('Authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
+  if (authHeader !== `Bearer ${supabaseServiceKey}`) {
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  }
-  const token = authHeader.slice('Bearer '.length).trim()
-  const claims = parseJwtClaims(token)
-  if (claims?.role !== 'service_role') {
-    return new Response(
-      JSON.stringify({ error: 'Forbidden' }),
-      { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 
