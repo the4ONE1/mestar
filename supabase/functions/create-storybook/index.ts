@@ -9,8 +9,18 @@ const corsHeaders = {
 };
 
 // ── AI Image Generation (works for both color illustrations and B&W coloring pages) ──
-async function generateImage(prompt: string, apiKey: string): Promise<Uint8Array | null> {
+// referenceImages: optional data-URL strings used as likeness references
+async function generateImage(
+  prompt: string,
+  apiKey: string,
+  referenceImages: string[] = []
+): Promise<Uint8Array | null> {
   try {
+    const userContent: any[] = [{ type: "text", text: prompt }];
+    for (const refUrl of referenceImages) {
+      if (refUrl) userContent.push({ type: "image_url", image_url: { url: refUrl } });
+    }
+
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -19,7 +29,7 @@ async function generateImage(prompt: string, apiKey: string): Promise<Uint8Array
       },
       body: JSON.stringify({
         model: "google/gemini-3.1-flash-image-preview",
-        messages: [{ role: "user", content: prompt }],
+        messages: [{ role: "user", content: userContent }],
         modalities: ["image", "text"],
       }),
     });
@@ -42,6 +52,52 @@ async function generateImage(prompt: string, apiKey: string): Promise<Uint8Array
     console.error("Image gen error:", e);
     return null;
   }
+}
+
+// Fetch a private photo from storage and convert to a base64 data URL the AI can use as reference
+async function photoPathToDataUrl(
+  supabase: any,
+  path: string | null | undefined
+): Promise<string | null> {
+  if (!path) return null;
+  try {
+    const { data, error } = await supabase.storage.from("customer-photos").download(path);
+    if (error || !data) {
+      console.error("Photo download failed:", path, error);
+      return null;
+    }
+    const buf = new Uint8Array(await data.arrayBuffer());
+    let binary = "";
+    for (let i = 0; i < buf.length; i++) binary += String.fromCharCode(buf[i]);
+    const b64 = btoa(binary);
+    const mime = (data as Blob).type || "image/jpeg";
+    return `data:${mime};base64,${b64}`;
+  } catch (e) {
+    console.error("Photo conversion error:", e);
+    return null;
+  }
+}
+
+// Decide which reference photos to attach for a given page (1-indexed)
+// Pages 1, 3, 5 = main only; Page 2 = both; Page 4 = supporting only (when present)
+function refsForPage(pageIndex: number, mainRef: string | null, supportingRef: string | null): string[] {
+  const page = pageIndex + 1;
+  if (!supportingRef) return mainRef ? [mainRef] : [];
+  if (page === 2) return [mainRef, supportingRef].filter(Boolean) as string[];
+  if (page === 4) return [supportingRef];
+  return mainRef ? [mainRef] : [];
+}
+
+// Prepend a likeness-lock instruction so the model uses the reference photo across all pages
+function withLikenessLock(prompt: string, hasRef: boolean): string {
+  if (!hasRef) return prompt;
+  return (
+    "IMPORTANT — LIKENESS REFERENCE: The attached photo(s) show the real person this character must look like. " +
+    "Match the face shape, hair color and style, skin tone, and overall likeness exactly. " +
+    "Keep this character visually IDENTICAL across every page so it looks like the same person throughout the book. " +
+    "Do not invent a different face. Now follow this prompt:\n\n" +
+    prompt
+  );
 }
 
 // ── Text Wrapping ──
