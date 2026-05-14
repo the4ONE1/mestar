@@ -456,7 +456,7 @@ serve(async (req) => {
 
     // Run sequentially to stay within edge-function CPU/memory limits
     // (parallelizing 10 multimodal image generations exhausts the worker)
-    const runSequential = async (
+    const runIllustrations = async (
       enabled: boolean,
       prompts: string[] | undefined
     ): Promise<(Uint8Array | null)[]> => {
@@ -475,8 +475,31 @@ serve(async (req) => {
       return out;
     };
 
-    const illustrationImages = await runSequential(addons.illustrations, illustrationPrompts);
-    const coloringImages = await runSequential(addons.coloring, coloringPrompts);
+    // For coloring pages, use the matching illustration as the reference (not the raw photo).
+    // This avoids the color-photo + B&W-output conflict that was returning 0 images.
+    const runColoring = async (
+      enabled: boolean,
+      prompts: string[] | undefined,
+      illustrations: (Uint8Array | null)[]
+    ): Promise<(Uint8Array | null)[]> => {
+      const out: (Uint8Array | null)[] = [];
+      if (!enabled || !prompts?.length) return Array(5).fill(null);
+      for (let i = 0; i < Math.min(5, prompts.length); i++) {
+        const illusRef = bytesToDataUrl(illustrations[i] || null, "image/png");
+        const refs = illusRef ? [illusRef] : [];
+        const img = await generateImage(
+          withColoringLock(prompts[i], refs.length > 0),
+          LOVABLE_API_KEY,
+          refs
+        );
+        out.push(img);
+      }
+      while (out.length < 5) out.push(null);
+      return out;
+    };
+
+    const illustrationImages = await runIllustrations(addons.illustrations, illustrationPrompts);
+    const coloringImages = await runColoring(addons.coloring, coloringPrompts, illustrationImages);
 
     const illustrationCount = illustrationImages.filter(Boolean).length;
     const coloringCount = coloringImages.filter(Boolean).length;
