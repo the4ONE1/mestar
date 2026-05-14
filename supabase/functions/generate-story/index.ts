@@ -6,10 +6,36 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function getServerKeys(): string[] {
+  const keys: (string | undefined)[] = [
+    Deno.env.get("LOVABLE_API_KEY"),
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+  ];
+  const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (secretKeys) {
+    try {
+      const parsed = JSON.parse(secretKeys);
+      if (Array.isArray(parsed)) keys.push(...parsed);
+      else if (typeof parsed === "string") keys.push(parsed);
+      else if (parsed && typeof parsed === "object")
+        keys.push(...Object.values(parsed).filter((v): v is string => typeof v === "string"));
+    } catch {
+      keys.push(...secretKeys.split(/[\n,]/));
+    }
+  }
+  return keys.map((k) => k?.trim()).filter((k): k is string => Boolean(k));
+}
+
 function requireServiceRole(req: Request): Response | null {
   const auth = req.headers.get("Authorization");
-  const expected = `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""}`;
-  if (!auth || auth !== expected) {
+  if (!auth?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const token = auth.slice("Bearer ".length).trim();
+  if (!getServerKeys().includes(token)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

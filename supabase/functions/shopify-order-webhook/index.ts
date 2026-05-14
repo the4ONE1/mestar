@@ -155,6 +155,7 @@ serve(async (req) => {
           strength: order.strength || "",
           hasSupportingCharacter: !!order.has_supporting_character,
           supportingCharacterName: order.supporting_character_name || "",
+          selectedAddons: order.selected_addons || {},
         }),
       });
 
@@ -180,8 +181,11 @@ serve(async (req) => {
           ...pipelinePayload,
           title: story.title,
           story: story.story,
-          coloringPrompts: story.coloringPrompts,
-          illustrationPrompts: story.scenes,
+          coloringPrompts: story.coloringPrompts || [],
+          illustrationPrompts:
+            (story.illustrationPrompts && story.illustrationPrompts.length
+              ? story.illustrationPrompts
+              : story.scenes) || [],
         }),
       });
 

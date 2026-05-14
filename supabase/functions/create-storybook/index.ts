@@ -100,6 +100,29 @@ function withLikenessLock(prompt: string, hasRef: boolean): string {
   );
 }
 
+// For coloring pages: use the matching color illustration as the reference and ask the model
+// to convert it to clean B&W line art. This keeps the same character across both formats
+// without confusing the model with a color photo + B&W instruction conflict.
+function withColoringLock(prompt: string, hasIllustrationRef: boolean): string {
+  if (!hasIllustrationRef) return prompt;
+  return (
+    "IMPORTANT — REFERENCE IMAGE: The attached image is the full-color illustration of this exact scene. " +
+    "Re-draw the SAME character, pose, and scene as a black-and-white printable coloring page: " +
+    "thick bold outlines, clean white background, NO shading, NO grayscale, NO color fill, NO text. " +
+    "The character's face, hairstyle, outfit, and proportions must match the reference exactly so it's " +
+    "clearly the same person as in the storybook illustration. Now follow this prompt:\n\n" +
+    prompt
+  );
+}
+
+// Convert raw image bytes to a data URL we can pass back to the model as a reference
+function bytesToDataUrl(bytes: Uint8Array | null, mime = "image/png"): string | null {
+  if (!bytes) return null;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return `data:${mime};base64,${btoa(binary)}`;
+}
+
 // ── Text Wrapping ──
 function wrapText(text: string, font: any, fontSize: number, maxWidth: number): string[] {
   const paragraphs = text.split("\n");
@@ -433,7 +456,7 @@ serve(async (req) => {
 
     // Run sequentially to stay within edge-function CPU/memory limits
     // (parallelizing 10 multimodal image generations exhausts the worker)
-    const runSequential = async (
+    const runIllustrations = async (
       enabled: boolean,
       prompts: string[] | undefined
     ): Promise<(Uint8Array | null)[]> => {
@@ -452,8 +475,31 @@ serve(async (req) => {
       return out;
     };
 
-    const illustrationImages = await runSequential(addons.illustrations, illustrationPrompts);
-    const coloringImages = await runSequential(addons.coloring, coloringPrompts);
+    // For coloring pages, use the matching illustration as the reference (not the raw photo).
+    // This avoids the color-photo + B&W-output conflict that was returning 0 images.
+    const runColoring = async (
+      enabled: boolean,
+      prompts: string[] | undefined,
+      illustrations: (Uint8Array | null)[]
+    ): Promise<(Uint8Array | null)[]> => {
+      const out: (Uint8Array | null)[] = [];
+      if (!enabled || !prompts?.length) return Array(5).fill(null);
+      for (let i = 0; i < Math.min(5, prompts.length); i++) {
+        const illusRef = bytesToDataUrl(illustrations[i] || null, "image/png");
+        const refs = illusRef ? [illusRef] : [];
+        const img = await generateImage(
+          withColoringLock(prompts[i], refs.length > 0),
+          LOVABLE_API_KEY,
+          refs
+        );
+        out.push(img);
+      }
+      while (out.length < 5) out.push(null);
+      return out;
+    };
+
+    const illustrationImages = await runIllustrations(addons.illustrations, illustrationPrompts);
+    const coloringImages = await runColoring(addons.coloring, coloringPrompts, illustrationImages);
 
     const illustrationCount = illustrationImages.filter(Boolean).length;
     const coloringCount = coloringImages.filter(Boolean).length;
