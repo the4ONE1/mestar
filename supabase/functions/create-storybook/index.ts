@@ -431,24 +431,29 @@ serve(async (req) => {
     }
     console.log("Photo refs:", { hasMain: !!mainPhotoRef, hasSupporting: !!supportingPhotoRef });
 
-    const illustrationPromises = addons.illustrations && illustrationPrompts?.length
-      ? illustrationPrompts.slice(0, 5).map((p: string, i: number) => {
-          const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
-          return generateImage(withLikenessLock(p, refs.length > 0), LOVABLE_API_KEY, refs);
-        })
-      : Array(5).fill(Promise.resolve(null));
+    // Run sequentially to stay within edge-function CPU/memory limits
+    // (parallelizing 10 multimodal image generations exhausts the worker)
+    const runSequential = async (
+      enabled: boolean,
+      prompts: string[] | undefined
+    ): Promise<(Uint8Array | null)[]> => {
+      const out: (Uint8Array | null)[] = [];
+      if (!enabled || !prompts?.length) return Array(5).fill(null);
+      for (let i = 0; i < Math.min(5, prompts.length); i++) {
+        const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
+        const img = await generateImage(
+          withLikenessLock(prompts[i], refs.length > 0),
+          LOVABLE_API_KEY,
+          refs
+        );
+        out.push(img);
+      }
+      while (out.length < 5) out.push(null);
+      return out;
+    };
 
-    const coloringPromises = addons.coloring && coloringPrompts?.length
-      ? coloringPrompts.slice(0, 5).map((p: string, i: number) => {
-          const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
-          return generateImage(withLikenessLock(p, refs.length > 0), LOVABLE_API_KEY, refs);
-        })
-      : Array(5).fill(Promise.resolve(null));
-
-    const [illustrationImages, coloringImages] = await Promise.all([
-      Promise.all(illustrationPromises),
-      Promise.all(coloringPromises),
-    ]);
+    const illustrationImages = await runSequential(addons.illustrations, illustrationPrompts);
+    const coloringImages = await runSequential(addons.coloring, coloringPrompts);
 
     const illustrationCount = illustrationImages.filter(Boolean).length;
     const coloringCount = coloringImages.filter(Boolean).length;
