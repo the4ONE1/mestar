@@ -63,7 +63,7 @@ serve(async (req) => {
       orderId,
     } = await req.json();
 
-    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const supabase = createClient(SUPABASE_URL, INTERNAL_AUTH_KEY);
 
     const orderPageUrl = orderId
       ? `https://mestar.pro/order-complete?order_id=${orderId}`
@@ -88,7 +88,7 @@ serve(async (req) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+          Authorization: `Bearer ${INTERNAL_AUTH_KEY}`,
         },
         body: JSON.stringify({
           templateName: "story-delivery",
@@ -133,7 +133,7 @@ serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+        Authorization: `Bearer ${INTERNAL_AUTH_KEY}`,
       },
       body: "{}",
     });
