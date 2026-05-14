@@ -143,6 +143,7 @@ export type Database = {
         Row: {
           child_age: string
           child_name: string
+          child_photo_path: string | null
           coloring_prompts: Json | null
           completed_at: string | null
           created_at: string
@@ -162,11 +163,13 @@ export type Database = {
           story_title: string | null
           strength: string | null
           supporting_character_name: string | null
+          supporting_character_photo_path: string | null
           theme: string
         }
         Insert: {
           child_age: string
           child_name: string
+          child_photo_path?: string | null
           coloring_prompts?: Json | null
           completed_at?: string | null
           created_at?: string
@@ -186,11 +189,13 @@ export type Database = {
           story_title?: string | null
           strength?: string | null
           supporting_character_name?: string | null
+          supporting_character_photo_path?: string | null
           theme: string
         }
         Update: {
           child_age?: string
           child_name?: string
+          child_photo_path?: string | null
           coloring_prompts?: Json | null
           completed_at?: string | null
           created_at?: string
@@ -210,6 +215,7 @@ export type Database = {
           story_title?: string | null
           strength?: string | null
           supporting_character_name?: string | null
+          supporting_character_photo_path?: string | null
           theme?: string
         }
         Relationships: []
@@ -243,19 +249,35 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_pending_order: {
-        Args: {
-          _child_age: string
-          _child_name: string
-          _customer_email: string
-          _has_supporting_character: boolean
-          _selected_addons: Json
-          _strength: string
-          _supporting_character_name: string
-          _theme: string
-        }
-        Returns: string
-      }
+      create_pending_order:
+        | {
+            Args: {
+              _child_age: string
+              _child_name: string
+              _customer_email: string
+              _has_supporting_character: boolean
+              _selected_addons: Json
+              _strength: string
+              _supporting_character_name: string
+              _theme: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _child_age: string
+              _child_name: string
+              _child_photo_path?: string
+              _customer_email: string
+              _has_supporting_character: boolean
+              _selected_addons: Json
+              _strength: string
+              _supporting_character_name: string
+              _supporting_character_photo_path?: string
+              _theme: string
+            }
+            Returns: string
+          }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
