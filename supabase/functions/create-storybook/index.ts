@@ -293,6 +293,28 @@ async function buildStorybookPDF(
 }
 
 // ── Main Handler ──
+function getServerKeys(): string[] {
+  const keys = [Deno.env.get("LOVABLE_API_KEY"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")];
+  const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (secretKeys) {
+    try {
+      const parsed = JSON.parse(secretKeys);
+      if (Array.isArray(parsed)) keys.push(...parsed);
+      else if (typeof parsed === "string") keys.push(parsed);
+      else if (parsed && typeof parsed === "object") keys.push(...Object.values(parsed).filter((v): v is string => typeof v === "string"));
+    } catch {
+      keys.push(...secretKeys.split(/[\n,]/));
+    }
+  }
+  return keys.map((k) => k?.trim()).filter((k): k is string => Boolean(k));
+}
+
+function isAuthorized(authHeader: string | null): boolean {
+  if (!authHeader?.startsWith("Bearer ")) return false;
+  const token = authHeader.slice("Bearer ".length).trim();
+  return getServerKeys().includes(token);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -302,9 +324,8 @@ serve(async (req) => {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-  // Service-role auth: this function is server-to-server only
-  const authHeader = req.headers.get("Authorization");
-  if (!SUPABASE_SERVICE_ROLE_KEY || authHeader !== `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`) {
+  // Server-to-server only — accept any configured server key
+  if (!isAuthorized(req.headers.get("Authorization"))) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
