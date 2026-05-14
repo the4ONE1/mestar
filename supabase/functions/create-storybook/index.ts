@@ -100,6 +100,29 @@ function withLikenessLock(prompt: string, hasRef: boolean): string {
   );
 }
 
+// For coloring pages: use the matching color illustration as the reference and ask the model
+// to convert it to clean B&W line art. This keeps the same character across both formats
+// without confusing the model with a color photo + B&W instruction conflict.
+function withColoringLock(prompt: string, hasIllustrationRef: boolean): string {
+  if (!hasIllustrationRef) return prompt;
+  return (
+    "IMPORTANT — REFERENCE IMAGE: The attached image is the full-color illustration of this exact scene. " +
+    "Re-draw the SAME character, pose, and scene as a black-and-white printable coloring page: " +
+    "thick bold outlines, clean white background, NO shading, NO grayscale, NO color fill, NO text. " +
+    "The character's face, hairstyle, outfit, and proportions must match the reference exactly so it's " +
+    "clearly the same person as in the storybook illustration. Now follow this prompt:\n\n" +
+    prompt
+  );
+}
+
+// Convert raw image bytes to a data URL we can pass back to the model as a reference
+function bytesToDataUrl(bytes: Uint8Array | null, mime = "image/png"): string | null {
+  if (!bytes) return null;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return `data:${mime};base64,${btoa(binary)}`;
+}
+
 // ── Text Wrapping ──
 function wrapText(text: string, font: any, fontSize: number, maxWidth: number): string[] {
   const paragraphs = text.split("\n");
