@@ -43,6 +43,34 @@ export const CartDrawer = () => {
 
       if (personalized?.personalization) {
         const p = personalized.personalization;
+
+        // Upload customer photos to private bucket so the AI can use them as likeness references
+        const uploadDataUrl = async (dataUrl: string, label: string): Promise<string | null> => {
+          try {
+            if (!dataUrl?.startsWith("data:")) return null;
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+            const ext = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
+            const path = `${crypto.randomUUID()}-${label}.${ext}`;
+            const { error: upErr } = await supabase.storage
+              .from("customer-photos")
+              .upload(path, blob, { contentType: blob.type, upsert: false });
+            if (upErr) {
+              console.error(`${label} photo upload failed:`, upErr);
+              return null;
+            }
+            return path;
+          } catch (e) {
+            console.error(`${label} photo upload exception:`, e);
+            return null;
+          }
+        };
+
+        const childPhotoPath = p.photoUrl ? await uploadDataUrl(p.photoUrl, "child") : null;
+        const supportingPhotoPath = p.supportingCharacterPhotoUrl
+          ? await uploadDataUrl(p.supportingCharacterPhotoUrl, "supporting")
+          : null;
+
         const { data: orderId, error: orderError } = await supabase.rpc("create_pending_order", {
           _child_name: p.childName,
           _child_age: p.childAge,
@@ -52,6 +80,8 @@ export const CartDrawer = () => {
           _has_supporting_character: !!p.supportingCharacterPhotoUrl,
           _selected_addons: (p.selectedAddons as never) || {},
           _customer_email: p.customerEmail || "",
+          _child_photo_path: childPhotoPath,
+          _supporting_character_photo_path: supportingPhotoPath,
         });
 
         if (orderError) {
