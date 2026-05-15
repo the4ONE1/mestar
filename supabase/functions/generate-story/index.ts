@@ -451,6 +451,26 @@ serve(async (req) => {
       ...(selectedAddons || {}),
     };
 
+    // Scene count scales with age group: 1–3=1, 4–7=2, 8–10=3, 11+=4
+    const sceneCountForAge = (age: string): number => {
+      const a = String(age || "").toLowerCase();
+      if (a.includes("1-3") || a.includes("1–3") || a.includes("1 to 3")) return 1;
+      if (a.includes("4-7") || a.includes("4–7") || a.includes("4 to 7")) return 2;
+      if (a.includes("8-10") || a.includes("8–10") || a.includes("8 to 10")) return 3;
+      if (a.includes("11")) return 4;
+      return 2;
+    };
+    const sceneCount = sceneCountForAge(childAge);
+    const sceneList = Array.from({ length: sceneCount }, (_, i) => i + 1);
+    const distributionRule =
+      sceneCount === 1
+        ? "Only 1 scene total: main character only."
+        : sceneCount === 2
+        ? "2 scenes: Page 1 = main only; Page 2 = both characters together (or main only if no supporting character)."
+        : sceneCount === 3
+        ? "3 scenes: Page 1 = main only; Page 2 = both together; Page 3 = supporting only (or main if no supporting character)."
+        : "4 scenes: Page 1 = main only; Page 2 = both together; Page 3 = main only; Page 4 = supporting only (or main if no supporting character).";
+
     const pronouns = childGender === "girl"
       ? { subject: "she", object: "her", possessive: "her", child: "girl" }
       : { subject: "he", object: "him", possessive: "his", child: "boy" };
