@@ -70,7 +70,7 @@ const About = () => {
             <h2 className="font-display text-2xl font-bold mb-4">Instant Digital Download</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               Each My <span className="text-star-yellow">Star</span> Stories set includes a personalized PDF storybook 
-              plus 5 bonus coloring pages featuring scenes from the adventure. Download instantly 
+              plus bonus coloring pages featuring scenes from the adventure. Download instantly 
               after purchase and start reading tonight! ✨
             </p>
             <p className="text-xs text-muted-foreground/60 italic">Paperback books coming soon!</p>

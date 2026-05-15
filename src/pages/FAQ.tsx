@@ -8,7 +8,7 @@ import SEO from "@/components/SEO";
 const faqs = [
   {
     q: "What do I get with my order?",
-    a: "You'll receive a personalized digital PDF storybook where your child is the hero, plus 5 bonus coloring pages featuring scenes from their adventure — all as an instant download you can print at home or read on any device.",
+    a: "You'll receive a personalized digital PDF storybook where your child is the hero, plus bonus coloring pages featuring scenes from their adventure — all as an instant download you can print at home or read on any device.",
   },
   {
     q: "How does the personalization work?",
