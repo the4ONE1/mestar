@@ -580,7 +580,7 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
     const titleMatch = storyOutput.match(/TITLE:\s*\n(.*?)(?:\n|$)/);
     const storyMatch = storyOutput.match(/STORY:\s*\n([\s\S]*?)(?=SCENE_1_SUMMARY:|$)/);
     const sceneMatches: string[] = [];
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= sceneCount; i++) {
       const regex = new RegExp(`SCENE_${i}_SUMMARY:\\s*\\n([\\s\\S]*?)(?=SCENE_${i + 1}_SUMMARY:|$)`);
       const match = storyOutput.match(regex);
       sceneMatches.push(match?.[1]?.trim() || "");
@@ -589,7 +589,7 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
     // Parse coloring prompts
     const coloringPrompts: string[] = [];
     if (coloringOutput) {
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= sceneCount; i++) {
         const regex = new RegExp(`COLOR_PAGE_${i}_PROMPT:\\s*\\n([\\s\\S]*?)(?=COLOR_PAGE_${i + 1}_PROMPT:|$)`);
         const match = coloringOutput.match(regex);
         coloringPrompts.push(match?.[1]?.trim() || "");
@@ -599,7 +599,7 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
     // Parse illustration prompts
     const illustrationPrompts: string[] = [];
     if (illustrationOutput) {
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= sceneCount; i++) {
         const regex = new RegExp(`ILLUSTRATION_${i}_PROMPT:\\s*\\n([\\s\\S]*?)(?=ILLUSTRATION_${i + 1}_PROMPT:|$)`);
         const match = illustrationOutput.match(regex);
         illustrationPrompts.push(match?.[1]?.trim() || "");
