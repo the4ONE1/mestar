@@ -540,7 +540,10 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
             model: "google/gemini-2.5-flash",
             messages: [
               { role: "system", content: LAYER_2_SYSTEM_PROMPT },
-              { role: "user", content: storyOutput },
+              {
+                role: "user",
+                content: `${storyOutput}\n\nPAGE COUNT OVERRIDE (CRITICAL):\nGenerate EXACTLY ${sceneCount} coloring page prompt${sceneCount === 1 ? "" : "s"} (COLOR_PAGE_1_PROMPT${sceneCount > 1 ? ` through COLOR_PAGE_${sceneCount}_PROMPT` : ""}). Do NOT output more than ${sceneCount}. Ignore any references to "5 pages" in the system prompt — the correct count is ${sceneCount}.\n\nCHARACTER DISTRIBUTION OVERRIDE:\n${distributionRule}`,
+              },
             ],
           }),
         }).then((r) => (r.ok ? r.json() : null))
@@ -557,7 +560,10 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
             model: "google/gemini-2.5-flash",
             messages: [
               { role: "system", content: LAYER_3_SYSTEM_PROMPT },
-              { role: "user", content: storyOutput },
+              {
+                role: "user",
+                content: `${storyOutput}\n\nILLUSTRATION COUNT OVERRIDE (CRITICAL):\nGenerate EXACTLY ${sceneCount} illustration prompt${sceneCount === 1 ? "" : "s"} (ILLUSTRATION_1_PROMPT${sceneCount > 1 ? ` through ILLUSTRATION_${sceneCount}_PROMPT` : ""}). Do NOT output more than ${sceneCount}. Ignore any references to "5 illustrations" in the system prompt — the correct count is ${sceneCount}.\n\nCHARACTER DISTRIBUTION OVERRIDE:\n${distributionRule}`,
+              },
             ],
           }),
         }).then((r) => (r.ok ? r.json() : null))
