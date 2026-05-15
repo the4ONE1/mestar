@@ -481,7 +481,12 @@ Age Group: ${childAge}
 Theme: ${theme}
 Supporting Character Included: ${hasSupportingCharacter ? "Yes" : "No"}
 Supporting Character Name: ${hasSupportingCharacter && supportingCharacterName ? supportingCharacterName : "N/A"}
-Desired Strength to Nurture: ${strength || "organic positive growth"}`;
+Desired Strength to Nurture: ${strength || "organic positive growth"}
+
+SCENE COUNT OVERRIDE (CRITICAL):
+Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"} (SCENE_1_SUMMARY${
+      sceneCount > 1 ? ` through SCENE_${sceneCount}_SUMMARY` : ""
+    }). Do NOT output more than ${sceneCount}. Ignore any references to "5 scenes" in the system prompt — the correct count for this story is ${sceneCount}.`;
 
     console.log("Generating story with Layer 1...");
 
