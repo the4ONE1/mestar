@@ -451,6 +451,26 @@ serve(async (req) => {
       ...(selectedAddons || {}),
     };
 
+    // Scene count scales with age group: 1–3=1, 4–7=2, 8–10=3, 11+=4
+    const sceneCountForAge = (age: string): number => {
+      const a = String(age || "").toLowerCase();
+      if (a.includes("1-3") || a.includes("1–3") || a.includes("1 to 3")) return 1;
+      if (a.includes("4-7") || a.includes("4–7") || a.includes("4 to 7")) return 2;
+      if (a.includes("8-10") || a.includes("8–10") || a.includes("8 to 10")) return 3;
+      if (a.includes("11")) return 4;
+      return 2;
+    };
+    const sceneCount = sceneCountForAge(childAge);
+    const sceneList = Array.from({ length: sceneCount }, (_, i) => i + 1);
+    const distributionRule =
+      sceneCount === 1
+        ? "Only 1 scene total: main character only."
+        : sceneCount === 2
+        ? "2 scenes: Page 1 = main only; Page 2 = both characters together (or main only if no supporting character)."
+        : sceneCount === 3
+        ? "3 scenes: Page 1 = main only; Page 2 = both together; Page 3 = supporting only (or main if no supporting character)."
+        : "4 scenes: Page 1 = main only; Page 2 = both together; Page 3 = main only; Page 4 = supporting only (or main if no supporting character).";
+
     const pronouns = childGender === "girl"
       ? { subject: "she", object: "her", possessive: "her", child: "girl" }
       : { subject: "he", object: "him", possessive: "his", child: "boy" };
@@ -461,7 +481,12 @@ Age Group: ${childAge}
 Theme: ${theme}
 Supporting Character Included: ${hasSupportingCharacter ? "Yes" : "No"}
 Supporting Character Name: ${hasSupportingCharacter && supportingCharacterName ? supportingCharacterName : "N/A"}
-Desired Strength to Nurture: ${strength || "organic positive growth"}`;
+Desired Strength to Nurture: ${strength || "organic positive growth"}
+
+SCENE COUNT OVERRIDE (CRITICAL):
+Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"} (SCENE_1_SUMMARY${
+      sceneCount > 1 ? ` through SCENE_${sceneCount}_SUMMARY` : ""
+    }). Do NOT output more than ${sceneCount}. Ignore any references to "5 scenes" in the system prompt — the correct count for this story is ${sceneCount}.`;
 
     console.log("Generating story with Layer 1...");
 
@@ -515,7 +540,10 @@ Desired Strength to Nurture: ${strength || "organic positive growth"}`;
             model: "google/gemini-2.5-flash",
             messages: [
               { role: "system", content: LAYER_2_SYSTEM_PROMPT },
-              { role: "user", content: storyOutput },
+              {
+                role: "user",
+                content: `${storyOutput}\n\nPAGE COUNT OVERRIDE (CRITICAL):\nGenerate EXACTLY ${sceneCount} coloring page prompt${sceneCount === 1 ? "" : "s"} (COLOR_PAGE_1_PROMPT${sceneCount > 1 ? ` through COLOR_PAGE_${sceneCount}_PROMPT` : ""}). Do NOT output more than ${sceneCount}. Ignore any references to "5 pages" in the system prompt — the correct count is ${sceneCount}.\n\nCHARACTER DISTRIBUTION OVERRIDE:\n${distributionRule}`,
+              },
             ],
           }),
         }).then((r) => (r.ok ? r.json() : null))
@@ -532,7 +560,10 @@ Desired Strength to Nurture: ${strength || "organic positive growth"}`;
             model: "google/gemini-2.5-flash",
             messages: [
               { role: "system", content: LAYER_3_SYSTEM_PROMPT },
-              { role: "user", content: storyOutput },
+              {
+                role: "user",
+                content: `${storyOutput}\n\nILLUSTRATION COUNT OVERRIDE (CRITICAL):\nGenerate EXACTLY ${sceneCount} illustration prompt${sceneCount === 1 ? "" : "s"} (ILLUSTRATION_1_PROMPT${sceneCount > 1 ? ` through ILLUSTRATION_${sceneCount}_PROMPT` : ""}). Do NOT output more than ${sceneCount}. Ignore any references to "5 illustrations" in the system prompt — the correct count is ${sceneCount}.\n\nCHARACTER DISTRIBUTION OVERRIDE:\n${distributionRule}`,
+              },
             ],
           }),
         }).then((r) => (r.ok ? r.json() : null))
@@ -549,7 +580,7 @@ Desired Strength to Nurture: ${strength || "organic positive growth"}`;
     const titleMatch = storyOutput.match(/TITLE:\s*\n(.*?)(?:\n|$)/);
     const storyMatch = storyOutput.match(/STORY:\s*\n([\s\S]*?)(?=SCENE_1_SUMMARY:|$)/);
     const sceneMatches: string[] = [];
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= sceneCount; i++) {
       const regex = new RegExp(`SCENE_${i}_SUMMARY:\\s*\\n([\\s\\S]*?)(?=SCENE_${i + 1}_SUMMARY:|$)`);
       const match = storyOutput.match(regex);
       sceneMatches.push(match?.[1]?.trim() || "");
@@ -558,7 +589,7 @@ Desired Strength to Nurture: ${strength || "organic positive growth"}`;
     // Parse coloring prompts
     const coloringPrompts: string[] = [];
     if (coloringOutput) {
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= sceneCount; i++) {
         const regex = new RegExp(`COLOR_PAGE_${i}_PROMPT:\\s*\\n([\\s\\S]*?)(?=COLOR_PAGE_${i + 1}_PROMPT:|$)`);
         const match = coloringOutput.match(regex);
         coloringPrompts.push(match?.[1]?.trim() || "");
@@ -568,7 +599,7 @@ Desired Strength to Nurture: ${strength || "organic positive growth"}`;
     // Parse illustration prompts
     const illustrationPrompts: string[] = [];
     if (illustrationOutput) {
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= sceneCount; i++) {
         const regex = new RegExp(`ILLUSTRATION_${i}_PROMPT:\\s*\\n([\\s\\S]*?)(?=ILLUSTRATION_${i + 1}_PROMPT:|$)`);
         const match = illustrationOutput.match(regex);
         illustrationPrompts.push(match?.[1]?.trim() || "");
