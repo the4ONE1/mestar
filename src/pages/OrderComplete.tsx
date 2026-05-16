@@ -118,7 +118,7 @@ const OrderComplete = () => {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <SEO title="Your Order — MESTAR" description="Order status." noindex />
+        <SEO title="Your Order — MESTAR" description="Check your order status for your MESTAR personalized PDF storybook. We'll email your download link as soon as it's ready." noindex />
         <h1 className="sr-only">Your Order Status</h1>
         <div className="text-center max-w-md">
           <p className="text-4xl mb-4">📬</p>
@@ -195,7 +195,7 @@ const OrderComplete = () => {
     <div className="min-h-screen flex items-center justify-center px-4">
       <SEO
         title="Your Order — MESTAR"
-        description="Your personalized storybook is being created."
+        description="Your personalized MESTAR PDF storybook is being created right now. We'll email your download link as soon as it's ready — usually within minutes."
         noindex
       />
       <h1 className="sr-only">

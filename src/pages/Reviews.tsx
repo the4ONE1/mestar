@@ -52,6 +52,7 @@ const Reviews = () => {
           </p>
         </div>
 
+        <h2 className="font-display text-2xl font-bold mb-6 text-center">Customer Stories</h2>
         <div className="space-y-6">
           {reviews.map((review, i) => (
             <div
@@ -75,6 +76,7 @@ const Reviews = () => {
 
         {/* CTA */}
         <div className="text-center mt-12">
+          <h2 className="font-display text-2xl font-bold mb-3">Create Your Story</h2>
           <p className="text-muted-foreground mb-4">Join these happy families!</p>
           {firstHandle ? (
             <Link
