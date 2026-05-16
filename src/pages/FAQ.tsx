@@ -60,6 +60,7 @@ const FAQ = () => {
           </p>
         </div>
 
+        <h2 className="font-display text-2xl font-bold mb-6 text-center">Questions &amp; Answers</h2>
         <Accordion type="single" collapsible className="space-y-3">
           {faqs.map((faq, i) => (
             <AccordionItem
@@ -79,6 +80,7 @@ const FAQ = () => {
 
         {/* CTA */}
         <div className="text-center mt-12">
+          <h2 className="font-display text-2xl font-bold mb-3">Get Started</h2>
           <p className="text-muted-foreground mb-4">Ready to get started?</p>
           {firstHandle ? (
             <Link
