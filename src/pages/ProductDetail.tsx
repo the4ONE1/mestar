@@ -336,7 +336,7 @@ const ProductDetail = () => {
               <div className="space-y-2">
                 <Label htmlFor="childGender" className="font-medium">Boy or Girl *</Label>
                 <Select value={childGender} onValueChange={setChildGender}>
-                  <SelectTrigger><SelectValue placeholder="Select boy or girl" /></SelectTrigger>
+                  <SelectTrigger id="childGender"><SelectValue placeholder="Select boy or girl" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="boy">Boy</SelectItem>
                     <SelectItem value="girl">Girl</SelectItem>
