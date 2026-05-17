@@ -123,18 +123,34 @@ const ProductDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <>
+        <SEO
+          title="Loading Personalized Storybook | MESTAR"
+          description="Personalize a one-of-a-kind PDF storybook starring your child. Upload a photo, pick a theme, and download instantly."
+          canonical={handle ? `/product/${handle}` : undefined}
+        />
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+          <h1 className="sr-only">Loading personalized storybook</h1>
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </>
     );
   }
 
   if (!product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-xl font-display">Product not found</p>
-        <Button asChild variant="outline"><Link to="/">Back to Home</Link></Button>
-      </div>
+      <>
+        <SEO
+          title="Product Not Found | MESTAR"
+          description="This storybook could not be found. Browse our personalized children's storybooks at MESTAR."
+          canonical={handle ? `/product/${handle}` : undefined}
+          noindex
+        />
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+          <h1 className="font-display text-2xl font-bold">Product not found</h1>
+          <Button asChild variant="outline"><Link to="/">Back to Home</Link></Button>
+        </div>
+      </>
     );
   }
 
@@ -320,7 +336,7 @@ const ProductDetail = () => {
               <div className="space-y-2">
                 <Label htmlFor="childGender" className="font-medium">Boy or Girl *</Label>
                 <Select value={childGender} onValueChange={setChildGender}>
-                  <SelectTrigger><SelectValue placeholder="Select boy or girl" /></SelectTrigger>
+                  <SelectTrigger id="childGender"><SelectValue placeholder="Select boy or girl" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="boy">Boy</SelectItem>
                     <SelectItem value="girl">Girl</SelectItem>
@@ -331,7 +347,7 @@ const ProductDetail = () => {
               <div className="space-y-2">
                 <Label htmlFor="childAge" className="font-medium">Age Group *</Label>
                 <Select value={childAge} onValueChange={setChildAge}>
-                  <SelectTrigger><SelectValue placeholder="Select age group" /></SelectTrigger>
+                  <SelectTrigger id="childAge"><SelectValue placeholder="Select age group" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1-3">1–3 years old</SelectItem>
                     <SelectItem value="4-7">4–7 years old</SelectItem>
@@ -349,7 +365,7 @@ const ProductDetail = () => {
               <div className="space-y-2">
                 <Label htmlFor="theme" className="font-medium">Story Theme *</Label>
                 <Select value={theme} onValueChange={setTheme}>
-                  <SelectTrigger><SelectValue placeholder="Choose a theme" /></SelectTrigger>
+                  <SelectTrigger id="theme"><SelectValue placeholder="Choose a theme" /></SelectTrigger>
                   <SelectContent>
                     {STORY_THEMES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
@@ -360,7 +376,7 @@ const ProductDetail = () => {
                 <Label htmlFor="strength" className="font-medium">Strength to Nurture</Label>
                 <p className="text-xs text-muted-foreground">Optional positive trait your child will demonstrate.</p>
                 <Select value={strength} onValueChange={setStrength}>
-                  <SelectTrigger><SelectValue placeholder="Choose a strength (optional)" /></SelectTrigger>
+                  <SelectTrigger id="strength"><SelectValue placeholder="Choose a strength (optional)" /></SelectTrigger>
                   <SelectContent>
                     {STRENGTHS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
