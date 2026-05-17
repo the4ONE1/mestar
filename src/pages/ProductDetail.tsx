@@ -376,7 +376,7 @@ const ProductDetail = () => {
                 <Label htmlFor="strength" className="font-medium">Strength to Nurture</Label>
                 <p className="text-xs text-muted-foreground">Optional positive trait your child will demonstrate.</p>
                 <Select value={strength} onValueChange={setStrength}>
-                  <SelectTrigger><SelectValue placeholder="Choose a strength (optional)" /></SelectTrigger>
+                  <SelectTrigger id="strength"><SelectValue placeholder="Choose a strength (optional)" /></SelectTrigger>
                   <SelectContent>
                     {STRENGTHS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
