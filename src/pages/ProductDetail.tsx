@@ -365,7 +365,7 @@ const ProductDetail = () => {
               <div className="space-y-2">
                 <Label htmlFor="theme" className="font-medium">Story Theme *</Label>
                 <Select value={theme} onValueChange={setTheme}>
-                  <SelectTrigger><SelectValue placeholder="Choose a theme" /></SelectTrigger>
+                  <SelectTrigger id="theme"><SelectValue placeholder="Choose a theme" /></SelectTrigger>
                   <SelectContent>
                     {STORY_THEMES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
