@@ -191,7 +191,7 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen py-8">
       <SEO
-        title={`${node.title} — Personalized Storybook | MESTAR`}
+        title={`${node.title} | MESTAR`}
         description={(node.description || "").slice(0, 155) || `Personalize ${node.title}: a one-of-a-kind PDF storybook starring your child.`}
         canonical={`/product/${node.handle}`}
         type="product"
