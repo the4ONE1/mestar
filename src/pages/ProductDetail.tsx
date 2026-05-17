@@ -123,18 +123,34 @@ const ProductDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <>
+        <SEO
+          title="Loading Personalized Storybook | MESTAR"
+          description="Personalize a one-of-a-kind PDF storybook starring your child. Upload a photo, pick a theme, and download instantly."
+          canonical={handle ? `/product/${handle}` : undefined}
+        />
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+          <h1 className="sr-only">Loading personalized storybook</h1>
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </>
     );
   }
 
   if (!product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-xl font-display">Product not found</p>
-        <Button asChild variant="outline"><Link to="/">Back to Home</Link></Button>
-      </div>
+      <>
+        <SEO
+          title="Product Not Found | MESTAR"
+          description="This storybook could not be found. Browse our personalized children's storybooks at MESTAR."
+          canonical={handle ? `/product/${handle}` : undefined}
+          noindex
+        />
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+          <h1 className="font-display text-2xl font-bold">Product not found</h1>
+          <Button asChild variant="outline"><Link to="/">Back to Home</Link></Button>
+        </div>
+      </>
     );
   }
 
