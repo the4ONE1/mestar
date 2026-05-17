@@ -66,7 +66,7 @@ const Unsubscribe = () => {
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 bg-background">
-      <SEO title="Unsubscribe — MESTAR" description="Manage your email preferences." />
+      <SEO title="Unsubscribe — MESTAR" description="Manage your MESTAR email preferences and confirm unsubscribe to stop receiving order updates, story delivery emails, and promotional messages." noindex />
       <div className="max-w-md w-full text-center space-y-6 p-8 rounded-2xl border border-border bg-card">
         <h1 className="text-2xl font-bold">Email preferences</h1>
         {state.kind === "loading" && <p className="text-muted-foreground">Checking your link…</p>}
