@@ -84,7 +84,7 @@ const Index = () => {
       <>
         <SEO
           title="MESTAR — Personalized Storybooks Starring Your Child"
-          description="Create a one-of-a-kind personalized children's storybook in minutes. Upload a photo, pick a theme, and instantly download a print-ready PDF starring your child."
+          description="Create a personalized children's storybook in minutes. Upload a photo, pick a theme, and download a print-ready PDF starring your child."
           canonical="/"
           jsonLd={{
             "@context": "https://schema.org",
@@ -124,7 +124,7 @@ const Index = () => {
     <div className="min-h-screen">
       <SEO
         title="MESTAR — Personalized Storybooks Starring Your Child"
-        description="Create a one-of-a-kind personalized children's storybook in minutes. Upload a photo, pick a theme, and instantly download a print-ready PDF starring your child."
+        description="Create a personalized children's storybook in minutes. Upload a photo, pick a theme, and download a print-ready PDF starring your child."
         canonical="/"
         jsonLd={{
           "@context": "https://schema.org",
