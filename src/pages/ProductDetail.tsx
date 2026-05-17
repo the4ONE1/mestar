@@ -347,7 +347,7 @@ const ProductDetail = () => {
               <div className="space-y-2">
                 <Label htmlFor="childAge" className="font-medium">Age Group *</Label>
                 <Select value={childAge} onValueChange={setChildAge}>
-                  <SelectTrigger><SelectValue placeholder="Select age group" /></SelectTrigger>
+                  <SelectTrigger id="childAge"><SelectValue placeholder="Select age group" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1-3">1–3 years old</SelectItem>
                     <SelectItem value="4-7">4–7 years old</SelectItem>
