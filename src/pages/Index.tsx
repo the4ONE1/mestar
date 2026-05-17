@@ -81,27 +81,42 @@ const Index = () => {
 
   if (showIntro) {
     return (
-      <div
-        className="fixed inset-0 z-50 bg-black flex items-center justify-center cursor-pointer"
-        onClick={handleVideoEnd}
-      >
-        <video
-          ref={videoRef}
-          src="/videos/promo-ad.mp4"
-          playsInline
-          onEnded={handleVideoEnd}
-          className="w-full h-full object-contain"
+      <>
+        <SEO
+          title="MESTAR — Personalized Storybooks Starring Your Child"
+          description="Create a one-of-a-kind personalized children's storybook in minutes. Upload a photo, pick a theme, and instantly download a print-ready PDF starring your child."
+          canonical="/"
+          jsonLd={{
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "MESTAR",
+            url: "https://mestar.pro",
+            logo: "https://mestar.pro/favicon.ico",
+          }}
         />
-        {isMuted && (
-          <button
-            onClick={handleUnmute}
-            className="absolute bottom-8 right-8 bg-cream/20 backdrop-blur-sm text-cream rounded-full p-4 hover:bg-cream/30 transition-colors"
-          >
-            <Volume2 className="h-6 w-6" />
-            <span className="sr-only">Tap for sound</span>
-          </button>
-        )}
-      </div>
+        <h1 className="sr-only">MESTAR — Personalized Storybooks Starring Your Child</h1>
+        <div
+          className="fixed inset-0 z-50 bg-black flex items-center justify-center cursor-pointer"
+          onClick={handleVideoEnd}
+        >
+          <video
+            ref={videoRef}
+            src="/videos/promo-ad.mp4"
+            playsInline
+            onEnded={handleVideoEnd}
+            className="w-full h-full object-contain"
+          />
+          {isMuted && (
+            <button
+              onClick={handleUnmute}
+              className="absolute bottom-8 right-8 bg-cream/20 backdrop-blur-sm text-cream rounded-full p-4 hover:bg-cream/30 transition-colors"
+            >
+              <Volume2 className="h-6 w-6" />
+              <span className="sr-only">Tap for sound</span>
+            </button>
+          )}
+        </div>
+      </>
     );
   }
 
