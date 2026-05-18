@@ -77,6 +77,33 @@ export type Database = {
         }
         Relationships: []
       }
+      email_subscribers: {
+        Row: {
+          created_at: string
+          discount_code_sent: string | null
+          email: string
+          id: string
+          ip_address: string | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          discount_code_sent?: string | null
+          email: string
+          id?: string
+          ip_address?: string | null
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          discount_code_sent?: string | null
+          email?: string
+          id?: string
+          ip_address?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
       email_unsubscribe_tokens: {
         Row: {
           created_at: string
