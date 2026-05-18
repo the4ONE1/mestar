@@ -105,6 +105,7 @@ const ProductDetail = () => {
       const blob = await res.blob();
       const file = new File([blob], "surprise-child.jpg", { type: blob.type || "image/jpeg" });
       setPhotoFile(file);
+      setIsSamplePhoto(true);
       const reader = new FileReader();
       reader.onloadend = () => setPhotoPreview(reader.result as string);
       reader.readAsDataURL(blob);
@@ -112,7 +113,7 @@ const ProductDetail = () => {
       console.error("Failed to load surprise photo", err);
     }
 
-    toast.success("Surprise picks loaded — just add your email and you're set!", {
+    toast.success("Sample loaded — upload your child's photo before checkout to make them the hero!", {
       position: "top-center",
     });
     scrollToPersonalization();
