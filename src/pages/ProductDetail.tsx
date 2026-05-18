@@ -248,15 +248,31 @@ const ProductDetail = () => {
 
           {/* Info + form */}
           <div className="flex flex-col">
+            {/* Badge row */}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1 bg-primary/15 text-primary text-[11px] font-bold uppercase tracking-wider rounded-full px-2.5 py-1">
+                <Sparkles className="h-3 w-3" /> Bestseller
+              </span>
+              <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wider rounded-full px-2.5 py-1">
+                <Download className="h-3 w-3" /> Instant PDF
+              </span>
+              <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wider rounded-full px-2.5 py-1">
+                <Heart className="h-3 w-3" /> Ages 1–11+
+              </span>
+            </div>
+
             <h1 className="font-display text-3xl font-bold mb-4">{node.title}</h1>
 
             {/* Live total */}
-            <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-3xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
-              <span className="text-sm text-muted-foreground">USD</span>
+            <div className="flex items-baseline gap-3 mb-2 flex-wrap">
+              <span className="text-3xl font-bold text-primary">${(totalPrice * 0.8).toFixed(2)}</span>
+              <span className="text-lg text-muted-foreground line-through">${totalPrice.toFixed(2)}</span>
+              <span className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-[11px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5">
+                Save 20%
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground mb-6">
-              One-time purchase — instant digital download. Story + illustrations + coloring pages included.
+            <p className="text-xs text-muted-foreground mb-4">
+              Use code <span className="font-bold text-primary">WELCOME</span> at checkout (orders $25+) • One-time purchase — instant digital download
             </p>
 
             <div className="flex items-center gap-2 mb-6">
@@ -264,6 +280,20 @@ const ProductDetail = () => {
                 <Star key={i} className="h-5 w-5 text-primary fill-primary" />
               ))}
               <span className="text-sm text-muted-foreground ml-1">Loved by 2,000+ families</span>
+            </div>
+
+            {/* Trust strip */}
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              {[
+                { icon: Download, label: "Instant download" },
+                { icon: ShieldCheck, label: "Secure checkout" },
+                { icon: Clock, label: "Ready in minutes" },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex flex-col items-center gap-1 bg-card border border-border rounded-xl p-2 text-center">
+                  <Icon className="h-4 w-4 text-primary" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground leading-tight">{label}</span>
+                </div>
+              ))}
             </div>
 
             {/* What's included */}
