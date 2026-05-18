@@ -33,7 +33,25 @@ export const Footer = () => {
           <p className="text-sm text-muted-foreground max-w-md">
             Where every child becomes the hero of their own bedtime adventure. ⭐
           </p>
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
+
+          {/* Contact block — visible & prominent */}
+          <div className="bg-background/60 border border-border rounded-2xl px-6 py-4 mt-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
+              Questions? We'd love to hear from you
+            </p>
+            <a
+              href="mailto:hello@mestar.pro"
+              className="inline-flex items-center gap-2 text-base font-semibold text-foreground hover:text-primary transition-colors"
+            >
+              <Mail className="h-4 w-4 text-primary" />
+              hello@mestar.pro
+            </a>
+            <p className="text-xs text-muted-foreground mt-1">
+              We reply within 24 hours, 7 days a week.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground mt-2">
             <a href="/about" className="hover:text-foreground transition-colors">About</a>
             <a href="/faq" className="hover:text-foreground transition-colors">FAQ</a>
             <a href="/reviews" className="hover:text-foreground transition-colors">Reviews</a>
