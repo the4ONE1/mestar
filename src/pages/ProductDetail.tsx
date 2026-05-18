@@ -427,6 +427,12 @@ const ProductDetail = () => {
               <p className="text-xs text-muted-foreground mt-2 text-center">Fill in all personalization details to add to cart</p>
             )}
 
+            {/* Guarantee */}
+            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <span>Love it or your money back — 100% satisfaction guarantee</span>
+            </div>
+
             {/* Features */}
             <div className="mt-10 space-y-3 border-t border-border pt-8 text-sm text-muted-foreground">
               <p>✨ Personalized with your child's name & photo</p>
@@ -438,6 +444,25 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Sticky mobile add-to-cart bar */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur-md border-t border-border p-3 shadow-2xl">
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col leading-none">
+            <span className="text-[10px] text-muted-foreground line-through">${totalPrice.toFixed(2)}</span>
+            <span className="text-lg font-extrabold text-primary">${(totalPrice * 0.8).toFixed(2)}</span>
+          </div>
+          <Button
+            onClick={handleAddToCart}
+            disabled={isLoading || !variant?.availableForSale || !isFormValid}
+            className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-display rounded-full shadow-lg shadow-primary/25"
+          >
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (isFormValid ? "Add to Cart ⭐" : "Personalize below ↓")}
+          </Button>
+        </div>
+      </div>
+      {/* Spacer so sticky bar doesn't cover content */}
+      <div className="md:hidden h-20" aria-hidden="true" />
     </div>
   );
 };
