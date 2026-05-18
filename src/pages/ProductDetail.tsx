@@ -71,6 +71,7 @@ const ProductDetail = () => {
       return;
     }
     setPhotoFile(file);
+    setIsSamplePhoto(false);
     const reader = new FileReader();
     reader.onloadend = () => setPhotoPreview(reader.result as string);
     reader.readAsDataURL(file);
