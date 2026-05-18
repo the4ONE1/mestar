@@ -43,6 +43,7 @@ const ProductDetail = () => {
   const [strength, setStrength] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isSamplePhoto, setIsSamplePhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Ref to scroll into the personalization form
