@@ -164,6 +164,16 @@ const ProductDetail = () => {
   const handleAddToCart = async () => {
     if (!variant || !isFormValid) return;
 
+    if (isSamplePhoto) {
+      const proceed = window.confirm(
+        "You're about to order with the sample photo (Leo). Your child won't appear as the hero unless you upload their photo first.\n\nContinue with the sample photo anyway?"
+      );
+      if (!proceed) {
+        fileInputRef.current?.click();
+        return;
+      }
+    }
+
     const personalizationData = {
       childName: childName.trim(),
       childGender,
