@@ -9,33 +9,68 @@ import SEO from "@/components/SEO";
 const ProductCard = ({ product }: { product: ShopifyProduct }) => {
   const image = product.node.images.edges[0]?.node;
   const price = product.node.priceRange.minVariantPrice;
+  const priceNum = parseFloat(price.amount);
+  const discounted = (priceNum * 0.8).toFixed(2);
 
   return (
-    <Link to={`/product/${product.node.handle}`} className="group block">
-      <div className="bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10">
+    <Link to={`/product/${product.node.handle}`} className="group block h-full">
+      <div className="relative h-full flex flex-col bg-card rounded-3xl overflow-hidden border border-border hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1">
+        {/* Top ribbon */}
+        <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider rounded-full px-2.5 py-1 shadow-md">
+          <Sparkles className="h-3 w-3" /> Bestseller
+        </div>
+        <div className="absolute top-3 right-3 z-10 bg-background/90 backdrop-blur-sm text-foreground text-[10px] font-bold uppercase tracking-wider rounded-full px-2.5 py-1 shadow-md border border-border">
+          Instant PDF
+        </div>
+
         {image && (
-          <div className="aspect-[4/3] overflow-hidden bg-secondary/20">
+          <div className="aspect-[4/3] overflow-hidden bg-gradient-to-br from-secondary/30 to-primary/5">
             <img
               src={image.url}
               alt={image.altText || product.node.title}
-              className="w-full h-full object-contain bg-secondary/10 group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
             />
           </div>
         )}
-        <div className="p-5">
+
+        <div className="p-5 flex flex-col flex-1">
+          {/* Rating row */}
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="h-3.5 w-3.5 text-primary fill-primary" />
+              ))}
+            </div>
+            <span className="text-xs text-muted-foreground font-medium">Loved by 2,000+ families</span>
+          </div>
+
           <h3 className="font-display text-lg font-bold leading-tight mb-2 group-hover:text-primary transition-colors">
             {product.node.title}
           </h3>
           <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
             {product.node.description}
           </p>
-          <div className="flex items-center justify-between">
-            <span className="text-xl font-bold text-primary">
-              ${parseFloat(price.amount).toFixed(2)}
-            </span>
-            <span className="inline-flex items-center gap-1 bg-primary text-primary-foreground font-display rounded-full px-4 py-2 text-sm font-medium group-hover:bg-primary/90 transition-colors">
+
+          {/* Mini feature ticks */}
+          <ul className="text-xs text-muted-foreground space-y-1 mb-4">
+            <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Your child as the hero</li>
+            <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Coloring pages included</li>
+          </ul>
+
+          <div className="mt-auto flex items-end justify-between gap-3">
+            <div className="flex flex-col">
+              <span className="text-[11px] text-muted-foreground line-through leading-none mb-0.5">
+                ${priceNum.toFixed(2)}
+              </span>
+              <span className="text-2xl font-extrabold text-primary leading-none">
+                ${discounted}
+              </span>
+              <span className="text-[10px] text-muted-foreground mt-0.5">with code WELCOME</span>
+            </div>
+            <span className="inline-flex items-center gap-1 bg-primary text-primary-foreground font-display rounded-full px-4 py-2.5 text-sm font-bold shadow-lg shadow-primary/30 group-hover:bg-primary/90 group-hover:scale-105 transition-all">
               <Sparkles className="h-4 w-4" />
-              Personalize Now
+              Personalize
             </span>
           </div>
         </div>

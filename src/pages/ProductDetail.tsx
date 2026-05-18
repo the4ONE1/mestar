@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles, ShieldCheck, Download, Clock, Heart } from "lucide-react";
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
 import { BASE_PRICE, SUPPORTING_CHARACTER_PRICE } from "@/lib/products";
@@ -248,15 +248,31 @@ const ProductDetail = () => {
 
           {/* Info + form */}
           <div className="flex flex-col">
+            {/* Badge row */}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1 bg-primary/15 text-primary text-[11px] font-bold uppercase tracking-wider rounded-full px-2.5 py-1">
+                <Sparkles className="h-3 w-3" /> Bestseller
+              </span>
+              <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wider rounded-full px-2.5 py-1">
+                <Download className="h-3 w-3" /> Instant PDF
+              </span>
+              <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wider rounded-full px-2.5 py-1">
+                <Heart className="h-3 w-3" /> Ages 1–11+
+              </span>
+            </div>
+
             <h1 className="font-display text-3xl font-bold mb-4">{node.title}</h1>
 
             {/* Live total */}
-            <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-3xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
-              <span className="text-sm text-muted-foreground">USD</span>
+            <div className="flex items-baseline gap-3 mb-2 flex-wrap">
+              <span className="text-3xl font-bold text-primary">${(totalPrice * 0.8).toFixed(2)}</span>
+              <span className="text-lg text-muted-foreground line-through">${totalPrice.toFixed(2)}</span>
+              <span className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-[11px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5">
+                Save 20%
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground mb-6">
-              One-time purchase — instant digital download. Story + illustrations + coloring pages included.
+            <p className="text-xs text-muted-foreground mb-4">
+              Use code <span className="font-bold text-primary">WELCOME</span> at checkout (orders $25+) • One-time purchase — instant digital download
             </p>
 
             <div className="flex items-center gap-2 mb-6">
@@ -264,6 +280,20 @@ const ProductDetail = () => {
                 <Star key={i} className="h-5 w-5 text-primary fill-primary" />
               ))}
               <span className="text-sm text-muted-foreground ml-1">Loved by 2,000+ families</span>
+            </div>
+
+            {/* Trust strip */}
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              {[
+                { icon: Download, label: "Instant download" },
+                { icon: ShieldCheck, label: "Secure checkout" },
+                { icon: Clock, label: "Ready in minutes" },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex flex-col items-center gap-1 bg-card border border-border rounded-xl p-2 text-center">
+                  <Icon className="h-4 w-4 text-primary" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground leading-tight">{label}</span>
+                </div>
+              ))}
             </div>
 
             {/* What's included */}
@@ -397,6 +427,12 @@ const ProductDetail = () => {
               <p className="text-xs text-muted-foreground mt-2 text-center">Fill in all personalization details to add to cart</p>
             )}
 
+            {/* Guarantee */}
+            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <span>Love it or your money back — 100% satisfaction guarantee</span>
+            </div>
+
             {/* Features */}
             <div className="mt-10 space-y-3 border-t border-border pt-8 text-sm text-muted-foreground">
               <p>✨ Personalized with your child's name & photo</p>
@@ -408,6 +444,25 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Sticky mobile add-to-cart bar */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur-md border-t border-border p-3 shadow-2xl">
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col leading-none">
+            <span className="text-[10px] text-muted-foreground line-through">${totalPrice.toFixed(2)}</span>
+            <span className="text-lg font-extrabold text-primary">${(totalPrice * 0.8).toFixed(2)}</span>
+          </div>
+          <Button
+            onClick={handleAddToCart}
+            disabled={isLoading || !variant?.availableForSale || !isFormValid}
+            className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-display rounded-full shadow-lg shadow-primary/25"
+          >
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (isFormValid ? "Add to Cart ⭐" : "Personalize below ↓")}
+          </Button>
+        </div>
+      </div>
+      {/* Spacer so sticky bar doesn't cover content */}
+      <div className="md:hidden h-20" aria-hidden="true" />
     </div>
   );
 };
