@@ -215,13 +215,54 @@ const ProductDetail = () => {
           name: node.title,
           description: node.description,
           image: node.images?.edges?.map((e: { node: { url: string } }) => e.node.url) || [],
+          sku: variant?.id?.split("/").pop() || node.handle,
+          mpn: node.handle,
+          productID: node.id,
+          category: "Media > Books > Digital Books",
           brand: { "@type": "Brand", name: "MESTAR" },
+          manufacturer: { "@type": "Organization", name: "MESTAR" },
+          audience: {
+            "@type": "PeopleAudience",
+            suggestedMinAge: 1,
+            suggestedMaxAge: 11,
+          },
           offers: {
             "@type": "Offer",
             price: node.priceRange?.minVariantPrice?.amount,
             priceCurrency: node.priceRange?.minVariantPrice?.currencyCode || "USD",
             availability: "https://schema.org/InStock",
+            itemCondition: "https://schema.org/NewCondition",
             url: `https://mestar.pro/product/${node.handle}`,
+            priceValidUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+              .toISOString()
+              .split("T")[0],
+            seller: { "@type": "Organization", name: "MESTAR" },
+            // Digital product — no physical shipping, instant download
+            shippingDetails: {
+              "@type": "OfferShippingDetails",
+              shippingRate: {
+                "@type": "MonetaryAmount",
+                value: "0",
+                currency: node.priceRange?.minVariantPrice?.currencyCode || "USD",
+              },
+              shippingDestination: {
+                "@type": "DefinedRegion",
+                geoMidpoint: { "@type": "GeoCoordinates" },
+              },
+              deliveryTime: {
+                "@type": "ShippingDeliveryTime",
+                handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 0, unitCode: "DAY" },
+                transitTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 0, unitCode: "DAY" },
+              },
+            },
+            hasMerchantReturnPolicy: {
+              "@type": "MerchantReturnPolicy",
+              applicableCountry: "US",
+              returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+              merchantReturnDays: 30,
+              returnMethod: "https://schema.org/ReturnByMail",
+              returnFees: "https://schema.org/FreeReturn",
+            },
           },
         }}
       />
