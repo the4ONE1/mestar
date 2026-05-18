@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles, ShieldCheck, Download, Clock, Heart } from "lucide-react";
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
 import { BASE_PRICE, SUPPORTING_CHARACTER_PRICE } from "@/lib/products";
