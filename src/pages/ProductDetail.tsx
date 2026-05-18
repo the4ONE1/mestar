@@ -43,6 +43,7 @@ const ProductDetail = () => {
   const [strength, setStrength] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isSamplePhoto, setIsSamplePhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Ref to scroll into the personalization form
@@ -70,6 +71,7 @@ const ProductDetail = () => {
       return;
     }
     setPhotoFile(file);
+    setIsSamplePhoto(false);
     const reader = new FileReader();
     reader.onloadend = () => setPhotoPreview(reader.result as string);
     reader.readAsDataURL(file);
@@ -103,6 +105,7 @@ const ProductDetail = () => {
       const blob = await res.blob();
       const file = new File([blob], "surprise-child.jpg", { type: blob.type || "image/jpeg" });
       setPhotoFile(file);
+      setIsSamplePhoto(true);
       const reader = new FileReader();
       reader.onloadend = () => setPhotoPreview(reader.result as string);
       reader.readAsDataURL(blob);
@@ -110,7 +113,7 @@ const ProductDetail = () => {
       console.error("Failed to load surprise photo", err);
     }
 
-    toast.success("Surprise picks loaded — just add your email and you're set!", {
+    toast.success("Sample loaded — upload your child's photo before checkout to make them the hero!", {
       position: "top-center",
     });
     scrollToPersonalization();
@@ -160,6 +163,16 @@ const ProductDetail = () => {
 
   const handleAddToCart = async () => {
     if (!variant || !isFormValid) return;
+
+    if (isSamplePhoto) {
+      const proceed = window.confirm(
+        "You're about to order with the sample photo (Leo). Your child won't appear as the hero unless you upload their photo first.\n\nContinue with the sample photo anyway?"
+      );
+      if (!proceed) {
+        fileInputRef.current?.click();
+        return;
+      }
+    }
 
     const personalizationData = {
       childName: childName.trim(),
@@ -315,23 +328,37 @@ const ProductDetail = () => {
             {/* Personalization Form */}
             <div ref={personalizationRef} className="bg-card rounded-2xl border border-border p-6 mb-6 space-y-5 scroll-mt-24">
               <div className="text-center">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  onClick={surpriseMe}
-                  className="border-primary/40 text-primary hover:bg-primary/10 hover:text-primary rounded-full font-display text-lg px-8 py-6 shadow-lg shadow-primary/20 hover:scale-105 transition-all"
-                >
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  Surprise Me
-                </Button>
-                <p className="text-[9px] text-muted-foreground/60 italic mt-2 mb-4 leading-tight">
-                  "I want one now, skip the personalization — just add your email below"
-                </p>
                 <h2 className="font-display text-lg font-bold flex items-center justify-center gap-2">
                   ✨ Personalize Your Story
                 </h2>
+                <p className="text-xs text-muted-foreground mt-1 mb-2">
+                  Just curious?{" "}
+                  <button
+                    type="button"
+                    onClick={surpriseMe}
+                    className="text-primary font-semibold underline-offset-2 hover:underline"
+                  >
+                    Try a sample first →
+                  </button>
+                </p>
               </div>
+
+              {isSamplePhoto && (
+                <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 text-xs text-foreground/80 flex items-start gap-2">
+                  <Sparkles className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span>
+                    You're previewing a sample (Leo).{" "}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-primary font-bold underline"
+                    >
+                      Upload your child's photo
+                    </button>{" "}
+                    to make them the hero of the story.
+                  </span>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label className="font-medium">Child's Photo *</Label>
