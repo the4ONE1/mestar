@@ -37,6 +37,24 @@ const WhyReadTogether = () => {
         title="Why Read Together — The Power of Bedtime Stories | MESTAR"
         description="Reading together builds bonds, sparks imagination, and grows confidence. Discover why personalized stories where your child is the hero matter most."
         canonical="/why-read-together"
+        type="article"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: "Why Reading Together Is the Best Gift for Your Child",
+          description:
+            "Reading together builds bonds, sparks imagination, and grows confidence. Discover why personalized stories where your child is the hero matter most.",
+          author: { "@type": "Organization", name: "MESTAR" },
+          publisher: {
+            "@type": "Organization",
+            name: "MESTAR",
+            logo: { "@type": "ImageObject", url: "https://mestar.pro/favicon.ico" },
+          },
+          mainEntityOfPage: {
+            "@type": "WebPage",
+            "@id": "https://mestar.pro/why-read-together",
+          },
+        }}
       />
       <div className="container max-w-3xl">
         {/* Hero */}

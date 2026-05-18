@@ -37,6 +37,32 @@ const Reviews = () => {
         title="Reviews — What Families Say About MESTAR Storybooks"
         description="Real reviews from parents and kids who received MESTAR personalized storybooks. See why families love making their child the hero of the story."
         canonical="/reviews"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: "MESTAR Personalized Storybook",
+          description:
+            "Personalized children's PDF storybook starring your child, with matching coloring pages.",
+          brand: { "@type": "Brand", name: "MESTAR" },
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: "5",
+            reviewCount: String(reviews.length),
+            bestRating: "5",
+            worstRating: "1",
+          },
+          review: reviews.map((r) => ({
+            "@type": "Review",
+            author: { "@type": "Person", name: r.name },
+            reviewRating: {
+              "@type": "Rating",
+              ratingValue: "5",
+              bestRating: "5",
+              worstRating: "1",
+            },
+            reviewBody: r.text,
+          })),
+        }}
       />
       <div className="container max-w-2xl">
         <div className="text-center mb-12">
