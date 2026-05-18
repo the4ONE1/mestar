@@ -136,8 +136,8 @@ const Index = () => {
       />
       {/* Announcement Bar */}
       <div className="bg-primary text-primary-foreground text-center py-2 px-4">
-        <p className="text-sm font-display font-bold animate-pulse">
-          ⚡ Instant Digital Download — Get Your Story in Minutes!
+        <p className="text-sm font-display font-bold">
+          ⭐ 20% off orders $25+ with code <span className="underline">WELCOME</span> — instant digital download
         </p>
       </div>
 
@@ -257,6 +257,29 @@ const Index = () => {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Reviews — empty state until real reviews exist */}
+      <section className="py-16 border-t border-border">
+        <div className="container max-w-3xl text-center">
+          <div className="flex items-center justify-center gap-1 mb-4">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="h-6 w-6 text-muted-foreground/40" />
+            ))}
+          </div>
+          <h2 className="font-display text-2xl font-bold mb-2">Be the first to leave a review</h2>
+          <p className="text-muted-foreground mb-6">
+            Your honest words help other families discover the magic. After your story is delivered,
+            we'd love to hear what you and your little one thought.
+          </p>
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-full border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
+          >
+            <Link to="/reviews">Share your story ⭐</Link>
+          </Button>
         </div>
       </section>
 
