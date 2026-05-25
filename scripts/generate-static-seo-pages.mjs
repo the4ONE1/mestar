@@ -3,8 +3,9 @@ import { dirname, resolve } from "node:path";
 
 const SITE_URL = "https://mestar.pro";
 const PRODUCT_PATH = "/product/my-star-stories-personalized-bedtime-story-5-coloring-pages";
-const SHELL = readFileSync(resolve("index.html"), "utf8");
-const OUT_DIR = resolve("public");
+const TARGET_DIR = process.argv[2] || "dist";
+const OUT_DIR = resolve(TARGET_DIR);
+const SHELL = readFileSync(resolve(OUT_DIR, "index.html"), "utf8");
 const DEFAULT_IMAGE =
   "https://storage.googleapis.com/gpt-engineer-file-uploads/hfdVpZRvZ4hMNWvlpFRlEdIJbxm2/social-images/social-1775247101557-576.webp";
 
@@ -160,13 +161,6 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
-function attrs(attributes) {
-  return Object.entries(attributes)
-    .filter(([, value]) => value !== undefined && value !== null && value !== false)
-    .map(([key, value]) => `${key}="${escapeHtml(value)}"`)
-    .join(" ");
-}
-
 function headFor(page) {
   const canonical = `${SITE_URL}${page.path}`;
   const type = page.type || "website";
@@ -222,11 +216,10 @@ function replaceHead(html, page) {
 }
 
 for (const page of pages) {
-  if (page.path === "/") continue;
   const filePath = page.path === "/" ? resolve(OUT_DIR, "index.html") : resolve(OUT_DIR, `.${page.path}/index.html`);
   const html = replaceHead(SHELL, page).replace(/<div id="root">[\s\S]*?<\/div>\s*<script type="module"/, `<div id="root">${crawlableBody(page)}</div>\n    <script type="module"`);
   mkdirSync(dirname(filePath), { recursive: true });
   writeFileSync(filePath, html);
 }
 
-console.log(`Generated ${pages.length} static SEO entry pages.`);
+console.log(`Generated ${pages.length} static SEO entry pages in ${TARGET_DIR}.`);
