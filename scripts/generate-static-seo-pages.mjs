@@ -222,6 +222,7 @@ function replaceHead(html, page) {
 }
 
 for (const page of pages) {
+  if (page.path === "/") continue;
   const filePath = page.path === "/" ? resolve(OUT_DIR, "index.html") : resolve(OUT_DIR, `.${page.path}/index.html`);
   const html = replaceHead(SHELL, page).replace(/<div id="root">[\s\S]*?<\/div>\s*<script type="module"/, `<div id="root">${crawlableBody(page)}</div>\n    <script type="module"`);
   mkdirSync(dirname(filePath), { recursive: true });
