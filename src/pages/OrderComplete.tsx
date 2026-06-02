@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, BookOpen, Download, ArrowLeft, Sparkles, CheckCircle2, Mail } from "lucide-react";
+import { Loader2, BookOpen, Download, ArrowLeft, Sparkles, CheckCircle2, Mail, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
 
@@ -30,6 +30,7 @@ const OrderComplete = () => {
   const [childName, setChildName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [customerEmail, setCustomerEmail] = useState<string>("");
+  const [hasAudiobook, setHasAudiobook] = useState<boolean>(false);
   const pdfOpenedRef = useRef(false);
 
   // Resolve which order id to poll
@@ -46,6 +47,7 @@ const OrderComplete = () => {
         if (parsed.orderId) {
           setOrderId(parsed.orderId);
           if (parsed.customerEmail) setCustomerEmail(parsed.customerEmail);
+          if (parsed.selectedAddons?.audiobook) setHasAudiobook(true);
         } else {
           setError("We couldn't find your order. If you just paid, check your email — your storybook will arrive there shortly.");
         }
@@ -161,6 +163,23 @@ const OrderComplete = () => {
               </a>
             </Button>
           </div>
+
+          {hasAudiobook && orderId && (
+            <div className="bg-card rounded-2xl border-2 border-primary/40 p-6 mb-6 text-center shadow-lg shadow-primary/10">
+              <Volume2 className="h-10 w-10 text-primary mx-auto mb-3" />
+              <h2 className="font-display text-lg font-bold mb-1">Your Karaoke Audiobook</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Listen along with word-by-word highlighting — great for early readers.
+                (Audio may take 1–2 extra minutes to finish recording.)
+              </p>
+              <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                <Link to={`/library/${orderId}`}>
+                  <Volume2 className="h-5 w-5 mr-2" />
+                  Listen Now
+                </Link>
+              </Button>
+            </div>
+          )}
 
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 mb-6">
             <div className="flex items-start gap-3">

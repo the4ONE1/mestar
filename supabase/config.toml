@@ -26,3 +26,7 @@ verify_jwt = false
 
 [functions.subscribe-email]
 verify_jwt = false
+
+[functions.get-audiobook]
+verify_jwt = false
+

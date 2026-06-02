@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles, ShieldCheck, Download, Clock, Heart } from "lucide-react";
+import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles, ShieldCheck, Download, Clock, Heart, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
-import { BASE_PRICE, SUPPORTING_CHARACTER_PRICE } from "@/lib/products";
+import { BASE_PRICE, SUPPORTING_CHARACTER_PRICE, AUDIOBOOK_PRICE, AUDIOBOOK_ADDON } from "@/lib/products";
 
 const STORY_THEMES = [
   "Fairy Tale",
@@ -44,6 +44,7 @@ const ProductDetail = () => {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSamplePhoto, setIsSamplePhoto] = useState(false);
+  const [wantsAudiobook, setWantsAudiobook] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Ref to scroll into the personalization form
@@ -119,7 +120,7 @@ const ProductDetail = () => {
     scrollToPersonalization();
   };
 
-  const totalPrice = BASE_PRICE;
+  const totalPrice = BASE_PRICE + (wantsAudiobook ? AUDIOBOOK_PRICE : 0);
 
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
   const isFormValid = childName.trim().length > 0 && childGender && childAge && theme && photoPreview && isEmailValid;
@@ -182,7 +183,7 @@ const ProductDetail = () => {
       strength,
       photoUrl: photoPreview!,
       customerEmail: customerEmail.trim(),
-      selectedAddons: { illustrations: true, coloring: true, character: false },
+      selectedAddons: { illustrations: true, coloring: true, character: false, audiobook: wantsAudiobook },
       isBundle: true,
       totalPrice,
     };
@@ -198,6 +199,31 @@ const ProductDetail = () => {
       selectedOptions: variant.selectedOptions || [],
       personalization: personalizationData,
     });
+
+    // If audiobook upgrade is selected, also add the audiobook variant to the cart
+    if (wantsAudiobook) {
+      const audiobookProduct = {
+        node: {
+          id: AUDIOBOOK_ADDON.variantId,
+          title: AUDIOBOOK_ADDON.title,
+          description: AUDIOBOOK_ADDON.description,
+          handle: "audiobook-add-on-karaoke-read-aloud",
+          priceRange: { minVariantPrice: { amount: AUDIOBOOK_ADDON.price.toFixed(2), currencyCode: "USD" } },
+          images: product.node.images,
+          variants: { edges: [] },
+          options: [],
+        },
+      };
+      await addItem({
+        product: audiobookProduct as typeof product,
+        variantId: AUDIOBOOK_ADDON.variantId,
+        variantTitle: AUDIOBOOK_ADDON.title,
+        price: { amount: AUDIOBOOK_ADDON.price.toFixed(2), currencyCode: "USD" },
+        quantity: 1,
+        selectedOptions: [],
+      });
+    }
+
     toast.success("Added to cart! ⭐", { position: "top-center" });
   };
 
@@ -476,7 +502,40 @@ const ProductDetail = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Audiobook upgrade */}
+              <label
+                htmlFor="audiobook-toggle"
+                className={`block cursor-pointer rounded-2xl border-2 p-4 transition-all ${
+                  wantsAudiobook
+                    ? "border-primary bg-primary/10 shadow-md"
+                    : "border-border bg-background hover:border-primary/40"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    id="audiobook-toggle"
+                    type="checkbox"
+                    checked={wantsAudiobook}
+                    onChange={(e) => setWantsAudiobook(e.target.checked)}
+                    className="mt-1 h-5 w-5 rounded border-2 border-primary text-primary focus:ring-primary cursor-pointer accent-primary"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Volume2 className="h-4 w-4 text-primary" />
+                      <span className="font-display font-bold text-sm">
+                        Add Karaoke Audiobook — +${AUDIOBOOK_PRICE.toFixed(2)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      A gentle female narrator reads the story aloud while each word lights up on screen —
+                      perfect for early readers learning to follow along. Plays right in the browser after purchase.
+                    </p>
+                  </div>
+                </div>
+              </label>
             </div>
+
 
             <Button
               onClick={handleAddToCart}
