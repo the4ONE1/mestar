@@ -502,7 +502,40 @@ const ProductDetail = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Audiobook upgrade */}
+              <label
+                htmlFor="audiobook-toggle"
+                className={`block cursor-pointer rounded-2xl border-2 p-4 transition-all ${
+                  wantsAudiobook
+                    ? "border-primary bg-primary/10 shadow-md"
+                    : "border-border bg-background hover:border-primary/40"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    id="audiobook-toggle"
+                    type="checkbox"
+                    checked={wantsAudiobook}
+                    onChange={(e) => setWantsAudiobook(e.target.checked)}
+                    className="mt-1 h-5 w-5 rounded border-2 border-primary text-primary focus:ring-primary cursor-pointer accent-primary"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Volume2 className="h-4 w-4 text-primary" />
+                      <span className="font-display font-bold text-sm">
+                        Add Karaoke Audiobook — +${AUDIOBOOK_PRICE.toFixed(2)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      A gentle female narrator reads the story aloud while each word lights up on screen —
+                      perfect for early readers learning to follow along. Plays right in the browser after purchase.
+                    </p>
+                  </div>
+                </div>
+              </label>
             </div>
+
 
             <Button
               onClick={handleAddToCart}
