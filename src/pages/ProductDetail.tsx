@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles, ShieldCheck, Download, Clock, Heart } from "lucide-react";
+import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles, ShieldCheck, Download, Clock, Heart, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
-import { BASE_PRICE, SUPPORTING_CHARACTER_PRICE } from "@/lib/products";
+import { BASE_PRICE, SUPPORTING_CHARACTER_PRICE, AUDIOBOOK_PRICE, AUDIOBOOK_ADDON } from "@/lib/products";
 
 const STORY_THEMES = [
   "Fairy Tale",
@@ -44,6 +44,7 @@ const ProductDetail = () => {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSamplePhoto, setIsSamplePhoto] = useState(false);
+  const [wantsAudiobook, setWantsAudiobook] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Ref to scroll into the personalization form
@@ -119,7 +120,7 @@ const ProductDetail = () => {
     scrollToPersonalization();
   };
 
-  const totalPrice = BASE_PRICE;
+  const totalPrice = BASE_PRICE + (wantsAudiobook ? AUDIOBOOK_PRICE : 0);
 
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
   const isFormValid = childName.trim().length > 0 && childGender && childAge && theme && photoPreview && isEmailValid;
@@ -182,7 +183,7 @@ const ProductDetail = () => {
       strength,
       photoUrl: photoPreview!,
       customerEmail: customerEmail.trim(),
-      selectedAddons: { illustrations: true, coloring: true, character: false },
+      selectedAddons: { illustrations: true, coloring: true, character: false, audiobook: wantsAudiobook },
       isBundle: true,
       totalPrice,
     };
@@ -198,6 +199,31 @@ const ProductDetail = () => {
       selectedOptions: variant.selectedOptions || [],
       personalization: personalizationData,
     });
+
+    // If audiobook upgrade is selected, also add the audiobook variant to the cart
+    if (wantsAudiobook) {
+      const audiobookProduct = {
+        node: {
+          id: AUDIOBOOK_ADDON.variantId,
+          title: AUDIOBOOK_ADDON.title,
+          description: AUDIOBOOK_ADDON.description,
+          handle: "audiobook-add-on-karaoke-read-aloud",
+          priceRange: { minVariantPrice: { amount: AUDIOBOOK_ADDON.price.toFixed(2), currencyCode: "USD" } },
+          images: product.node.images,
+          variants: { edges: [] },
+          options: [],
+        },
+      };
+      await addItem({
+        product: audiobookProduct as typeof product,
+        variantId: AUDIOBOOK_ADDON.variantId,
+        variantTitle: AUDIOBOOK_ADDON.title,
+        price: { amount: AUDIOBOOK_ADDON.price.toFixed(2), currencyCode: "USD" },
+        quantity: 1,
+        selectedOptions: [],
+      });
+    }
+
     toast.success("Added to cart! ⭐", { position: "top-center" });
   };
 
