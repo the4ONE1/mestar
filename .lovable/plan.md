@@ -1,44 +1,94 @@
-## Goal
-Stop forcing every story to have 5 illustrations + 5 coloring pages. Scale the count to match story length / age group, so younger kids get fewer scenes and older kids get more.
 
-## New scene counts per age group
+# Audiobook Edition v1 — Karaoke Read-Along
 
-| Age Group | Scenes (illustrations) | Coloring pages |
-|-----------|------------------------|----------------|
-| 1–3       | 1                      | 1              |
-| 4–7       | 2                      | 2              |
-| 8–10      | 3                      | 3              |
-| 11+       | 4                      | 4              |
+A brand-new product line that turns each personalized MESTAR story into an **interactive audiobook**: a professional AI narrator reads aloud while each word glows in sync — designed to help kids learn to read on iPads, tablets, and Kindle Fire. Customer also gets a clean MP3 download with step-by-step instructions for loading onto Yoto or Tonies devices.
 
-Coloring pages mirror illustration count so the same scenes appear in both formats (keeps character consistency clean — each coloring page is generated from its matching color illustration).
+---
 
-## Changes (all in `supabase/functions/generate-story/index.ts`)
+## What the customer experiences
 
-1. **Add a helper** `sceneCountForAge(childAge)` that returns 1 / 2 / 3 / 4 based on the age group string.
+1. On the homepage they see **two products side-by-side**:
+   - The classic **Personalized Storybook PDF** (existing)
+   - The new **Audiobook Edition** (PDF + interactive read-along + MP3 download)
+2. On the Audiobook product page they fill in the same personalization form, *plus* pick a **narrator voice** (4 options: warm female US, warm male US, gentle British female, friendly British male — using top ElevenLabs voices).
+3. After checkout, the story is generated, illustrated, **and narrated** with word-level timestamps.
+4. They receive an email with a link to their private "Reader" page where:
+   - The illustration fills the top of the screen
+   - The story text appears below
+   - Tap ▶ Play — narrator reads aloud, each word glows gold the instant it's spoken
+   - Tap any word to jump there, or replay a sentence
+   - Big touch targets, large legible font (sized for iPad/Kindle Fire/tablet first)
+5. Bonus tab: **"Listen Anywhere"** — download MP3 + visual step-by-step guides for loading onto a Yoto Make-Your-Own card or a Creative Tonie.
 
-2. **Update Layer 1 (story) prompt dynamically**:
-   - Inject the scene count into the system prompt: "Output exactly N SCENE_X_SUMMARY blocks."
-   - Update the OUTPUT FORMAT section so it only asks for N scenes instead of always 5.
+---
 
-3. **Update Layer 2 (coloring) prompt dynamically**:
-   - Inject N: "Generate exactly N coloring page prompts (COLOR_PAGE_1_PROMPT … COLOR_PAGE_N_PROMPT)."
-   - Update supporting-character distribution rule to scale (e.g. 1 scene = main only; 2 scenes = main + both; 3 scenes = main, both, supporting; 4 scenes = main, both, main, supporting).
+## What I'll build
 
-4. **Update Layer 3 (illustration) prompt dynamically**:
-   - Same as Layer 2 but for ILLUSTRATION_X_PROMPT blocks.
+### 1. Backend (edge function: `generate-audiobook`)
+- After story PDF is generated, call ElevenLabs `text-to-speech-with-timestamps` endpoint per page
+- Returns audio (MP3) + character-level timestamps which we convert to word timings
+- Store MP3 in `storybooks` bucket; save `audio_storage_path` + `word_timings` JSON in the existing `storybook_audio` table (already in your DB ✅)
+- Concatenate all page MP3s into a single full-book MP3 for download/Yoto/Tonies
 
-5. **Update parsing loops**:
-   - Replace the hard-coded `for (let i = 1; i <= 5; i++)` loops with `for (let i = 1; i <= sceneCount; i++)` for scenes, coloring prompts, and illustration prompts.
+### 2. New product flow
+- New product handle `audiobook-edition` (I'll scaffold the frontend; you'll create the Shopify product with your chosen price)
+- Voice selection dropdown added to the personalization form (only shows on audiobook product)
+- `selected_addons.audiobook = true` already exists in your schema ✅ — just wire it up
 
-## Downstream effects (no code change needed)
-- `create-storybook/index.ts` already iterates over the prompt arrays it receives — if the array has 2 entries, it generates 2 illustrations + 2 coloring pages. So shrinking the arrays automatically shrinks the job.
-- PDF assembly already loops over whatever pages exist.
+### 3. New Reader page: `/read/:orderId?token=...`
+- Token-gated (signed URL emailed to customer) so non-buyers can't access
+- Karaoke player component:
+  - Audio element + `timeupdate` listener
+  - Tokenized text → each word wrapped in a `<span>` with start/end timestamps
+  - CSS glow animation on the active word (uses existing gold `--primary` token)
+  - Big touch-friendly Play / Pause / Page Back / Page Forward / Replay Sentence buttons
+  - Auto-scroll keeps the active word centered
+  - "Slower" / "Normal" / "Faster" playback speed toggle (great for early readers)
 
-## What stays the same
-- Story word counts per age group (already defined in Layer 1).
-- Image style, character consistency rules, photo-as-reference pipeline.
-- Add-on toggles (coloring on/off, etc.).
+### 4. "Listen Anywhere" tab
+- Download Full Book MP3 button
+- Two clear visual guides:
+  - **Yoto**: Open Yoto app → My Cards → Make Your Own → Upload audio → tap the blank card
+  - **Tonies**: Open my.tonies app → pick a Creative Tonie → Upload audio file
+- Honest note: "Yoto and Tonies require a blank card / Creative figurine you already own — we can't ship one to you."
 
-## Out of scope
-- No UI/frontend changes — the customer doesn't pick scene count; it's derived from the child's age they already enter.
-- No pricing changes.
+### 5. Order-complete & email updates
+- Order-complete page shows "Your audiobook is being narrated…" while audio generates
+- Story-delivery email includes the Reader link + MP3 download link
+
+---
+
+## What I need from you
+
+- **One secret**: your **ElevenLabs API key** (free tier gives ~10 min of audio/month; Starter plan is $5/month and covers ~30 min — enough for a few books while you test). I'll show you exactly where to get it once you approve this plan.
+- After build is live, you'll create the **"Audiobook Edition" Shopify product** (I'll tell you exact title/description/price suggestions — likely $9.99 vs $4.99 for the PDF-only, a +$5 upgrade).
+
+---
+
+## What this does NOT include (deliberately — v1 scope)
+
+- ❌ Child-reads-aloud / voice listening mode (deferred to v2)
+- ❌ Auto-push to Yoto/Tonies (their APIs don't allow this for resellers — customer uploads themselves)
+- ❌ Parent-records-their-own-voice (could be a future $$ upgrade)
+
+---
+
+## Estimated cost per audiobook sold
+
+- ElevenLabs narration: **~$0.20–0.35** per book (200-500 words × 4 voice option choice)
+- Storage: negligible
+- At a +$5 upsell over the PDF, **gross margin ≈ 93%**
+
+---
+
+## Technical details (for reference)
+
+- Voices: `EXAVITQu4vr4xnSDxMaL` (Sarah), `JBFqnCBsd6RMkjVDRZzb` (George), `Xb7hH8MSUJpSbSDYk0k2` (Alice), `bIHbv24MWmeRgasZH58o` (Will)
+- Model: `eleven_turbo_v2_5` for speed + cost; word-level alignment via `/v1/text-to-speech/{voice_id}/with-timestamps`
+- New table column: add `voice_id` to `storybook_orders` (text, nullable)
+- Public download token: store in `storybook_orders.audio_download_token` (uuid)
+- Reader page is unauthenticated but requires matching `order_id + token` checked via edge function
+
+---
+
+After you approve, I'll request the ElevenLabs API key, then build it end-to-end and you'll just need to add the Shopify product.
