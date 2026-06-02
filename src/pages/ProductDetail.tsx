@@ -319,14 +319,10 @@ const ProductDetail = () => {
 
             {/* Live total */}
             <div className="flex items-baseline gap-3 mb-2 flex-wrap">
-              <span className="text-3xl font-bold text-primary">${(totalPrice * 0.8).toFixed(2)}</span>
-              <span className="text-lg text-muted-foreground line-through">${totalPrice.toFixed(2)}</span>
-              <span className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-[11px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5">
-                Save 20%
-              </span>
+              <span className="text-3xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
             </div>
             <p className="text-xs text-muted-foreground mb-4">
-              Use code <span className="font-bold text-primary">WELCOME</span> at checkout (orders $25+) • One-time purchase — instant digital download
+              One-time purchase — no subscription required — instant digital download
             </p>
 
             <div className="flex items-center gap-2 mb-6">
@@ -517,8 +513,8 @@ const ProductDetail = () => {
       <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur-md border-t border-border p-3 shadow-2xl">
         <div className="flex items-center gap-3">
           <div className="flex flex-col leading-none">
-            <span className="text-[10px] text-muted-foreground line-through">${totalPrice.toFixed(2)}</span>
-            <span className="text-lg font-extrabold text-primary">${(totalPrice * 0.8).toFixed(2)}</span>
+            <span className="text-lg font-extrabold text-primary">${totalPrice.toFixed(2)}</span>
+            <span className="text-[10px] text-muted-foreground">one-time payment</span>
           </div>
           <Button
             onClick={handleAddToCart}
