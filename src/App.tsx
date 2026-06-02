@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { WelcomePopup } from "@/components/WelcomePopup";
 import { useCartSync } from "@/hooks/useCartSync";
 import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
@@ -42,7 +41,6 @@ const AppContent = () => {
         </Routes>
       </main>
       <Footer />
-      <WelcomePopup />
     </div>
   );
 };
