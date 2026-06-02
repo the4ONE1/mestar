@@ -10,7 +10,6 @@ const ProductCard = ({ product }: { product: ShopifyProduct }) => {
   const image = product.node.images.edges[0]?.node;
   const price = product.node.priceRange.minVariantPrice;
   const priceNum = parseFloat(price.amount);
-  const discounted = (priceNum * 0.8).toFixed(2);
 
   return (
     <Link to={`/product/${product.node.handle}`} className="group block h-full">
@@ -60,13 +59,10 @@ const ProductCard = ({ product }: { product: ShopifyProduct }) => {
 
           <div className="mt-auto flex items-end justify-between gap-3">
             <div className="flex flex-col">
-              <span className="text-[11px] text-muted-foreground line-through leading-none mb-0.5">
+              <span className="text-2xl font-extrabold text-primary leading-none">
                 ${priceNum.toFixed(2)}
               </span>
-              <span className="text-2xl font-extrabold text-primary leading-none">
-                ${discounted}
-              </span>
-              <span className="text-[10px] text-muted-foreground mt-0.5">with code WELCOME</span>
+              <span className="text-[10px] text-muted-foreground mt-0.5">one-time payment</span>
             </div>
             <span className="inline-flex items-center gap-1 bg-primary text-primary-foreground font-display rounded-full px-4 py-2.5 text-sm font-bold shadow-lg shadow-primary/30 group-hover:bg-primary/90 group-hover:scale-105 transition-all">
               <Sparkles className="h-4 w-4" />
@@ -172,7 +168,7 @@ const Index = () => {
       {/* Announcement Bar */}
       <div className="bg-primary text-primary-foreground text-center py-2 px-4">
         <p className="text-sm font-display font-bold">
-          ⭐ 20% off orders $25+ with code <span className="underline">WELCOME</span> — instant digital download
+          ⭐ Personalized digital storybooks — $19.99 one-time payment — instant digital download
         </p>
       </div>
 
