@@ -392,8 +392,8 @@ serve(async (req) => {
       illustrations: true,
       coloring: false,
       character: false,
+      audiobook: false,
       ...(selectedAddons || {}),
-      audiobook: false, // audiobook deferred to separate app
     };
 
     // If we were given an existing pending order, update it. Otherwise create new (legacy in-browser flow).
@@ -548,7 +548,8 @@ serve(async (req) => {
       addons.coloring
     );
 
-    // If audiobook purchased, seed the storybook_audio table with page text (audio comes later)
+    // If audiobook purchased, seed the storybook_audio table with page text and
+    // fire the generate-audiobook function (non-blocking background task)
     if (orderId && addons.audiobook && pageTexts.length) {
       const audioRows = pageTexts.map((text, i) => ({
         order_id: orderId,
@@ -556,7 +557,20 @@ serve(async (req) => {
         page_text: text,
       }));
       const { error: audioErr } = await supabase.from("storybook_audio").insert(audioRows);
-      if (audioErr) console.error("Audio seed failed:", audioErr);
+      if (audioErr) {
+        console.error("Audio seed failed:", audioErr);
+      } else {
+        // Kick off ElevenLabs TTS generation in the background — do not await.
+        // The Library page polls until pages become ready.
+        fetch(`${SUPABASE_URL}/functions/v1/generate-audiobook`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          },
+          body: JSON.stringify({ orderId }),
+        }).catch((e) => console.error("generate-audiobook trigger failed:", e));
+      }
     }
 
     // Upload PDF
