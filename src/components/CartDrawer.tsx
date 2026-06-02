@@ -26,14 +26,35 @@ export const CartDrawer = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const handleCheckout = async () => {
+    // CRITICAL: open the new tab SYNCHRONOUSLY inside the click handler.
+    // If we open it after awaits, browsers (especially mobile Safari) block it
+    // as a non-user-initiated popup, and clicking checkout appears to "do nothing".
+    const checkoutTab = window.open("about:blank", "_blank");
+
     setCheckoutLoading(true);
     try {
-      const checkoutUrl = await ensureCheckoutUrl();
+      const cachedCheckoutUrl = useCartStore.getState().checkoutUrl;
+      // Navigate the popup immediately to the cached URL so it doesn't sit empty.
+      if (checkoutTab && cachedCheckoutUrl) {
+        checkoutTab.location.href = cachedCheckoutUrl;
+      }
+
+      const checkoutUrl = (await ensureCheckoutUrl()) || cachedCheckoutUrl;
       if (!checkoutUrl) {
+        if (checkoutTab) checkoutTab.close();
         toast.error("Checkout needs a fresh session", {
           description: "Please tap checkout again. Your cart is safe and we'll refresh it automatically.",
           position: "top-center",
         });
+        return;
+      }
+
+      // Make sure the popup ends up at the most current checkout URL
+      if (checkoutTab) {
+        checkoutTab.location.href = checkoutUrl;
+      } else {
+        // Popup was blocked — fall back to navigating the current tab
+        window.location.href = checkoutUrl;
         return;
       }
 
@@ -102,8 +123,6 @@ export const CartDrawer = () => {
         }
       }
 
-      // Open Shopify checkout in new tab
-      window.open(checkoutUrl, '_blank');
       setIsOpen(false);
       // Send user to order-complete page with order id so it can poll
       if (internalOrderId) {
@@ -113,6 +132,7 @@ export const CartDrawer = () => {
       }
     } catch (err) {
       console.error("Checkout error:", err);
+      if (checkoutTab) checkoutTab.close();
       toast.error("Something went wrong. Please try again.", { position: "top-center" });
     } finally {
       setCheckoutLoading(false);
