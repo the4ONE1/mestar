@@ -34,6 +34,13 @@ export const WelcomePopup = () => {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <NewsletterForm source="popup" variant="popup" />
+        <button
+          type="button"
+          onClick={() => handleOpenChange(false)}
+          className="mt-2 mx-auto block text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+        >
+          No thanks, continue shopping
+        </button>
       </DialogContent>
     </Dialog>
   );
