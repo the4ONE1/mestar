@@ -189,7 +189,7 @@ const Library = () => {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <SEO title="Audiobook | MESTAR" noindex />
+        <SEO title="Audiobook | MESTAR" description="Listen to your personalized storybook with karaoke-style word highlighting." noindex />
         <div className="text-center max-w-md">
           <p className="text-5xl mb-4">🎧</p>
           <h1 className="font-display text-2xl font-bold mb-2">Can't open this audiobook</h1>
@@ -207,7 +207,7 @@ const Library = () => {
   if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <SEO title="Audiobook | MESTAR" noindex />
+        <SEO title="Audiobook | MESTAR" description="Listen to your personalized storybook with karaoke-style word highlighting." noindex />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -217,7 +217,7 @@ const Library = () => {
   if (data.status === "pending" || data.totalPages === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <SEO title="Audiobook | MESTAR" noindex />
+        <SEO title="Audiobook | MESTAR" description="Listen to your personalized storybook with karaoke-style word highlighting." noindex />
         <div className="text-center max-w-md">
           <Volume2 className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
           <h1 className="font-display text-2xl font-bold mb-2">Recording your audiobook…</h1>
