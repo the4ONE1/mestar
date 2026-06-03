@@ -28,6 +28,7 @@ export interface Personalization {
     illustrations: boolean;
     coloring: boolean;
     character: boolean;
+    audiobook?: boolean;
   };
   isBundle?: boolean;
   totalPrice?: number;
