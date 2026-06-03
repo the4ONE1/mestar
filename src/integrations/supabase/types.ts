@@ -317,6 +317,8 @@ export type Database = {
         Args: { _order_id: string }
         Returns: {
           child_name: string
+          customer_email: string
+          has_audiobook: boolean
           has_error: boolean
           id: string
           pdf_url: string
