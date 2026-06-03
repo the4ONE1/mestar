@@ -30,3 +30,9 @@ verify_jwt = false
 [functions.get-audiobook]
 verify_jwt = false
 
+[functions.create-pending-order]
+verify_jwt = false
+
+[functions.get-order-status]
+verify_jwt = false
+
