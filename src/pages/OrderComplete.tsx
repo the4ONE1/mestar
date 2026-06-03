@@ -69,17 +69,24 @@ const OrderComplete = () => {
     const poll = async () => {
       if (cancelled) return;
 
-      const { data, error: rpcError } = await supabase.rpc("get_order_status", { _order_id: orderId });
+      const { data, error: statusError } = await supabase.functions.invoke("get-order-status", {
+        method: "GET",
+        body: undefined,
+        headers: {},
+        query: { orderId },
+      });
 
       if (cancelled) return;
 
-      if (rpcError) {
-        console.error("Polling error:", rpcError);
-      } else if (data && data.length > 0) {
-        const row = data[0];
+      if (statusError) {
+        console.error("Polling error:", statusError);
+      } else if (data) {
+        const row = data;
         setStatus(row.status);
         if (row.story_title) setStoryTitle(row.story_title);
         if (row.child_name) setChildName(row.child_name);
+        if (row.customer_email) setCustomerEmail(row.customer_email);
+        setHasAudiobook(!!row.has_audiobook);
 
         if (row.status === "complete" && row.pdf_url) {
           setPdfUrl(row.pdf_url);
