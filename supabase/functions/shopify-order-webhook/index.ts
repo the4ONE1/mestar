@@ -10,6 +10,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-shopify-hmac-sha256, x-shopify-topic, x-shopify-shop-domain",
 };
 
+const AUDIOBOOK_SHOPIFY_VARIANT_ID = "46302514806981";
+
 async function verifyShopifyHmac(rawBody: string, hmacHeader: string, secret: string): Promise<boolean> {
   try {
     const key = await crypto.subtle.importKey(
@@ -69,6 +71,10 @@ serve(async (req) => {
 
   const shopifyOrderId = String(payload.id || payload.order_id || "");
   const customerEmail = payload.email || payload.contact_email || payload.customer?.email || null;
+  const hasPaidAudiobookLine = (payload.line_items || []).some((item: any) => {
+    const variantId = String(item.variant_id || item.variant?.id || item.admin_graphql_api_id || "");
+    return variantId === AUDIOBOOK_SHOPIFY_VARIANT_ID || variantId.endsWith(`/${AUDIOBOOK_SHOPIFY_VARIANT_ID}`);
+  });
 
   // Find our internal order id from Shopify cart attributes (note_attributes on order)
   const noteAttrs: Array<{ name: string; value: string }> = payload.note_attributes || [];
@@ -112,6 +118,11 @@ serve(async (req) => {
     });
   }
 
+  const selectedAddons = {
+    ...((order.selected_addons as Record<string, boolean>) || {}),
+    audiobook: Boolean(((order.selected_addons as Record<string, boolean>) || {}).audiobook || hasPaidAudiobookLine),
+  };
+
   // Mark as paid + record Shopify order id + update email if Shopify has a better one
   await supabase
     .from("storybook_orders")
@@ -119,6 +130,7 @@ serve(async (req) => {
       shopify_order_id: shopifyOrderId,
       status: "queued",
       customer_email: customerEmail || order.customer_email,
+      selected_addons: selectedAddons,
     })
     .eq("id", internalOrderId);
 
@@ -135,7 +147,7 @@ serve(async (req) => {
     customerEmail: customerEmail || order.customer_email || "",
     hasSupportingCharacter: !!order.has_supporting_character,
     supportingCharacterName: order.supporting_character_name || "",
-    selectedAddons: order.selected_addons || {},
+    selectedAddons,
   };
 
   // Background task: generate story → create storybook
@@ -155,7 +167,7 @@ serve(async (req) => {
           strength: order.strength || "",
           hasSupportingCharacter: !!order.has_supporting_character,
           supportingCharacterName: order.supporting_character_name || "",
-          selectedAddons: order.selected_addons || {},
+          selectedAddons,
         }),
       });
 
