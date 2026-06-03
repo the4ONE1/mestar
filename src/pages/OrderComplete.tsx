@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, BookOpen, Download, ArrowLeft, Sparkles, CheckCircle2, Mail, Volume2 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +16,7 @@ const PROGRESS_STAGES = [
 
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const SUPABASE_FN_BASE = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1`;
 
 const OrderComplete = () => {
   const navigate = useNavigate();
@@ -69,17 +69,13 @@ const OrderComplete = () => {
     const poll = async () => {
       if (cancelled) return;
 
-      const { data, error: statusError } = await supabase.functions.invoke("get-order-status", {
-        method: "GET",
-        body: undefined,
-        headers: {},
-        query: { orderId },
-      });
+      const res = await fetch(`${SUPABASE_FN_BASE}/get-order-status?orderId=${encodeURIComponent(orderId)}`);
+      const data = await res.json().catch(() => null);
 
       if (cancelled) return;
 
-      if (statusError) {
-        console.error("Polling error:", statusError);
+      if (!res.ok) {
+        console.error("Polling error:", data?.error || res.statusText);
       } else if (data) {
         const row = data;
         setStatus(row.status);
