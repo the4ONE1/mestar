@@ -92,23 +92,25 @@ export const CartDrawer = () => {
           ? await uploadDataUrl(p.supportingCharacterPhotoUrl, "supporting")
           : null;
 
-        const { data: orderId, error: orderError } = await supabase.rpc("create_pending_order", {
-          _child_name: p.childName,
-          _child_age: p.childAge,
-          _theme: p.theme,
-          _strength: p.strength || "",
-          _supporting_character_name: p.supportingCharacterName || "",
-          _has_supporting_character: !!p.supportingCharacterPhotoUrl,
-          _selected_addons: (p.selectedAddons as never) || {},
-          _customer_email: p.customerEmail || "",
-          _child_photo_path: childPhotoPath,
-          _supporting_character_photo_path: supportingPhotoPath,
-        });
+          const { data: orderData, error: orderError } = await supabase.functions.invoke("create-pending-order", {
+            body: {
+              childName: p.childName,
+              childAge: p.childAge,
+              theme: p.theme,
+              strength: p.strength || "",
+              supportingCharacterName: p.supportingCharacterName || "",
+              hasSupportingCharacter: !!p.supportingCharacterPhotoUrl,
+              selectedAddons: p.selectedAddons || {},
+              customerEmail: p.customerEmail || "",
+              childPhotoPath,
+              supportingCharacterPhotoPath: supportingPhotoPath,
+            },
+          });
 
         if (orderError) {
           console.error("Failed to create pending order:", orderError);
-        } else if (orderId) {
-          internalOrderId = orderId as string;
+        } else if (orderData?.orderId) {
+          internalOrderId = orderData.orderId as string;
 
           // Attach order id to Shopify cart so the webhook can match payment back
           const cartId = useCartStore.getState().cartId;

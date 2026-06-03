@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, BookOpen, Download, ArrowLeft, Sparkles, CheckCircle2, Mail, Volume2 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +16,7 @@ const PROGRESS_STAGES = [
 
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const SUPABASE_FN_BASE = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1`;
 
 const OrderComplete = () => {
   const navigate = useNavigate();
@@ -69,17 +69,20 @@ const OrderComplete = () => {
     const poll = async () => {
       if (cancelled) return;
 
-      const { data, error: rpcError } = await supabase.rpc("get_order_status", { _order_id: orderId });
+      const res = await fetch(`${SUPABASE_FN_BASE}/get-order-status?orderId=${encodeURIComponent(orderId)}`);
+      const data = await res.json().catch(() => null);
 
       if (cancelled) return;
 
-      if (rpcError) {
-        console.error("Polling error:", rpcError);
-      } else if (data && data.length > 0) {
-        const row = data[0];
+      if (!res.ok) {
+        console.error("Polling error:", data?.error || res.statusText);
+      } else if (data) {
+        const row = data;
         setStatus(row.status);
         if (row.story_title) setStoryTitle(row.story_title);
         if (row.child_name) setChildName(row.child_name);
+        if (row.customer_email) setCustomerEmail(row.customer_email);
+        setHasAudiobook(!!row.has_audiobook);
 
         if (row.status === "complete" && row.pdf_url) {
           setPdfUrl(row.pdf_url);
