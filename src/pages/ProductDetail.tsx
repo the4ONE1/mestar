@@ -580,7 +580,7 @@ const ProductDetail = () => {
             disabled={isLoading || !variant?.availableForSale || !isFormValid}
             className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-display rounded-full shadow-lg shadow-primary/25"
           >
-            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (isFormValid ? "Add to Cart ⭐" : "Personalize below ↓")}
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (isFormValid ? "Add to Cart ⭐" : "Personalize above ↑")}
           </Button>
         </div>
       </div>
