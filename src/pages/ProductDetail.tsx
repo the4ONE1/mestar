@@ -503,37 +503,32 @@ const ProductDetail = () => {
                 </Select>
               </div>
 
-              {/* Audiobook upgrade */}
-              <label
-                htmlFor="audiobook-toggle"
-                className={`block cursor-pointer rounded-2xl border-2 p-4 transition-all ${
-                  wantsAudiobook
-                    ? "border-primary bg-primary/10 shadow-md"
-                    : "border-border bg-background hover:border-primary/40"
-                }`}
+              {/* Audiobook upgrade — temporarily under construction */}
+              <div
+                className="block rounded-2xl border-2 border-dashed border-border bg-muted/40 p-4"
+                aria-disabled="true"
               >
                 <div className="flex items-start gap-3">
-                  <input
-                    id="audiobook-toggle"
-                    type="checkbox"
-                    checked={wantsAudiobook}
-                    onChange={(e) => setWantsAudiobook(e.target.checked)}
-                    className="mt-1 h-5 w-5 rounded border-2 border-primary text-primary focus:ring-primary cursor-pointer accent-primary"
-                  />
+                  <div className="mt-1 h-5 w-5 rounded border-2 border-muted-foreground/30 bg-background flex items-center justify-center">
+                    <Volume2 className="h-3 w-3 text-muted-foreground/60" />
+                  </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Volume2 className="h-4 w-4 text-primary" />
-                      <span className="font-display font-bold text-sm">
-                        Add Karaoke Audiobook — +${AUDIOBOOK_PRICE.toFixed(2)}
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="font-display font-bold text-sm text-foreground/80">
+                        Karaoke Audiobook Add-On
+                      </span>
+                      <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">
+                        Under construction
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      A gentle female narrator reads the story aloud while each word lights up on screen —
-                      perfect for early readers learning to follow along. Plays right in the browser after purchase.
+                      Our narrated read-aloud feature is getting a little tune-up right now so it sounds
+                      just right for your little one. It's temporarily unavailable — thanks so much for
+                      your patience while we polish it. We'll have it back online very soon.
                     </p>
                   </div>
                 </div>
-              </label>
+              </div>
             </div>
 
 
