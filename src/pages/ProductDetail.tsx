@@ -559,6 +559,21 @@ const ProductDetail = () => {
               <p>💝 Age-appropriate & non-violent</p>
               <p>⚡ Instant download after purchase</p>
             </div>
+
+            {/* Paperback coming soon — separate announcement, not an add-on */}
+            <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-4 text-center">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">
+                On the way
+              </p>
+              <p className="text-sm font-display font-bold text-foreground mb-1">
+                📬 Printed paperback storybooks, mailed to your home
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                We're working with a trusted print partner to bring your child's story to life as a
+                beautifully bound paperback keepsake, shipped right to your door. Coming soon — keep
+                an eye on your inbox for the launch.
+              </p>
+            </div>
           </div>
         </div>
       </div>
