@@ -518,14 +518,15 @@ const ProductDetail = () => {
                         Karaoke Audiobook Add-On
                       </span>
                       <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">
-                        Under construction
+                        Coming soon
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      Our narrated read-aloud feature is getting a little tune-up right now so it sounds
-                      just right for your little one. It's temporarily unavailable — thanks so much for
-                      your patience while we polish it. We'll have it back online very soon.
+                      A gentle narrated read-aloud with karaoke-style word highlighting — perfect for
+                      little ones learning to follow along. We're putting the finishing touches on it now
+                      and it'll be ready for your family very soon.
                     </p>
+
                   </div>
                 </div>
               </div>
