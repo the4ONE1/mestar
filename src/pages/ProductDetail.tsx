@@ -517,9 +517,14 @@ const ProductDetail = () => {
                       <span className="font-display font-bold text-sm text-foreground/80">
                         Karaoke Audiobook Add-On
                       </span>
-                      <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">
-                        Coming soon
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">
+                          Coming soon
+                        </span>
+                        <span className="text-[9px] text-muted-foreground/70 tracking-wide lowercase mt-0.5">
+                          under construction
+                        </span>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       A gentle narrated read-aloud with karaoke-style word highlighting — perfect for
