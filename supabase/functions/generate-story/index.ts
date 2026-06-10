@@ -484,6 +484,17 @@ serve(async (req) => {
       ? { subject: "she", object: "her", possessive: "her", child: "girl" }
       : { subject: "he", object: "him", possessive: "his", child: "boy" };
 
+    // Word-count target per age group (must match LAYER_1_SYSTEM_PROMPT)
+    const wordRangeForAge = (age: string): { min: number; max: number } => {
+      const a = String(age || "").toLowerCase();
+      if (a.includes("1-3") || a.includes("1–3") || a.includes("1 to 3")) return { min: 350, max: 500 };
+      if (a.includes("4-7") || a.includes("4–7") || a.includes("4 to 7")) return { min: 700, max: 900 };
+      if (a.includes("8-10") || a.includes("8–10") || a.includes("8 to 10")) return { min: 1100, max: 1400 };
+      if (a.includes("11")) return { min: 1600, max: 2000 };
+      return { min: 700, max: 900 };
+    };
+    const { min: minWords, max: maxWords } = wordRangeForAge(childAge);
+
     const layer1Input = `Loved One Name: ${childName}
 Gender: ${pronouns.child} (use ${pronouns.subject}/${pronouns.object}/${pronouns.possessive} pronouns)
 Age Group: ${childAge}
@@ -491,6 +502,14 @@ Theme: ${theme}
 Supporting Character Included: ${hasSupportingCharacter ? "Yes" : "No"}
 Supporting Character Name: ${hasSupportingCharacter && supportingCharacterName ? supportingCharacterName : "N/A"}
 Desired Strength to Nurture: ${strength || "organic positive growth"}
+
+WORD COUNT REQUIREMENT (HARD — DO NOT IGNORE):
+The STORY section MUST be between ${minWords} and ${maxWords} words.
+MINIMUM ${minWords} words is a hard floor — outputs under ${minWords} words are unacceptable.
+Before finalizing, silently count the words in your STORY. If under ${minWords},
+keep writing: expand scenes, add sensory description, deepen dialogue, lengthen
+the resolution and bedtime closing — until you are within ${minWords}–${maxWords}.
+Do NOT shorten to "wrap up" early. Word count is measured on the STORY section only.
 
 SCENE COUNT OVERRIDE (CRITICAL):
 Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"} (SCENE_1_SUMMARY${
