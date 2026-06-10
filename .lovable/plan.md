@@ -1,44 +1,39 @@
-## What I found (the diagnosis)
+## Goal
 
-Pulled Jaedan's actual stories from the database:
+Run one end-to-end paid-order bypass test on an 11+ child and confirm the new story lands in the 1,600–2,000 word target range.
 
-| Story | Age group | Spec says | Actual | Gap |
-|---|---|---|---|---|
-| Jaedan's Ocean Adventure & Pirates (Jun 3) | 11+ | 800–900 | **570 words** | ~30% short |
-| jaedan's Outer Space (May 14) | 11+ | 800–900 | **729 words** | ~10% short |
+## Steps
 
-**Verdict:** Gemini is undershooting the word target — sometimes badly. The spec itself is fine; the model just doesn't reliably hit it. So bumping the spec alone won't be enough — we also need to make the word-count instruction harder to ignore.
+1. **Pick a test order**
+  Use the existing pending 11+ test order `d696aab7-c3a2-42a6-a00f-da7cf8af7eed` (Jaedan, 11+, 0
+  - Switch its `customer_email` to a mailbox you can actually check (please tell me which inbox — e.g. `mestar.orders@gmail.com`) so the delivery email lands somewhere visible.
+  - Keep its existing add-ons (illustrations + coloring). Skip audiobook for this test so we isolate the story-length fix and don't burn extra time/credits.
+2. &nbsp;
+3. &nbsp;
+  [fieldgar369@gmail.com](mailto:fieldgar369@gmail.com)).
+4. **Trigger generation**
+  Call the `create-storybook` edge function with that order ID — the same function the Shopify webhook calls on `orders/paid`. This runs story → illustrations → coloring → PDF → email and flips status to `complete`.
+5. **Watch the run**
+  Tail the `create-storybook` and `generate-story` edge function logs in real time so we catch any failure as it happens.
+6. **Measure the result**
+  Once status = `complete`, query the database for the new `story_text` and count the words. Report:
+  - Actual word count
+  - Whether it hit the 1,600–2,000 target
+  - Story title
+7. **Verify customer-facing output**
+  - PDF download link works
+  - Delivery email arrived
+  - Order row shows `status = complete`, `pdf_url` populated
+8. **Report back**
+  Plain-English summary: "✅ Hit target at N words" or "❌ Came in at N words — here's what I'll tighten next."
 
-## What I'll change
+## What this WON'T do
 
-### 1. Raise the targets (1–3 stays put, per your call)
+- No real Shopify charge, no customer impact
+- No production code changes during the test (the prompt fix is already deployed)
+- No audiobook generation this run
 
-Edit the `LAYER_1_SYSTEM_PROMPT` in `supabase/functions/generate-story/index.ts`:
+## What I need from you
 
-| Age | Current | New |
-|---|---|---|
-| 1–3 | 350–500 | **unchanged** |
-| 4–7 | 500–635 | **700–900** |
-| 8–10 | 650–770 | **1,100–1,400** |
-| 11+ | 800–900 | **1,600–2,000** |
-
-### 2. Make Gemini actually hit the target
-
-Two reinforcements so the model stops undershooting:
-- Add a **MANDATORY MINIMUM WORD COUNT** rule near the top of the prompt, stated as a hard requirement (not a soft range), with an instruction to count and expand if under the minimum before outputting.
-- Pass the exact min/max into the per-request user message (the same place we already inject the scene-count override), so it's reinforced at request time, not just buried in the system prompt.
-
-### 3. Verify it worked
-
-After deploying, re-run the paid-order test (the same bypass flow from the earlier plan) for an 11+ child and check the actual word count in the DB. If it lands in the new range, we're done. If it's still short, we tighten the prompt again (e.g. "If under N words, continue writing additional scenes/dialogue until you reach N").
-
-## What this WON'T touch
-
-- Coloring engine (Layer 2) and illustration engine (Layer 3) — unchanged
-- Scene counts per age group — unchanged
-- 1–3 word count — unchanged, per your decision
-- Frontend, pricing, cart, checkout — untouched
-
-## What you need to do
-
-Just approve. After implementation I'll run one 11+ test order end-to-end and report the actual word count back to you.
+1. **Which email address** should receive the delivery email so you can check it? (Or just say "skip the email check" and I'll only verify the DB + PDF.)
+2. Approve and I'll run it. Generation typically takes ~2–4 minutes.
