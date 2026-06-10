@@ -63,8 +63,17 @@ This story must:
 AGE GROUP STRUCTURE RULES
 ----------------------------------------
 
+MANDATORY MINIMUM WORD COUNT (HARD REQUIREMENT):
+The STORY section MUST meet the minimum word count for the age group.
+This is NOT a soft target. Before outputting, silently count the words
+in your STORY section. If it is below the minimum, KEEP WRITING —
+expand scenes, add sensory detail, deepen dialogue, extend the
+resolution — until you are within the range. Do NOT output a story
+that is under the minimum. Word counts apply to the STORY section
+only (not TITLE or SCENE summaries).
+
 Age Group 1–3:
-- 350–500 words
+- 350–500 words (MINIMUM 350)
 - Gentle rhythm
 - Simple sensory imagery
 - Minimal conflict
@@ -73,21 +82,21 @@ Age Group 1–3:
 - Very basic vocabulary
 
 Age Group 4–7:
-- 500–635 words
+- 700–900 words (MINIMUM 700)
 - Clear beginning → challenge → resolution
 - One decision moment
 - Light dialogue allowed
 - Slightly richer vocabulary and sentence structure
 
 Age Group 8–10:
-- 650–770 words
+- 1100–1400 words (MINIMUM 1100)
 - Clear problem with cause-and-effect progression
 - Emotional growth moment
 - More descriptive language and varied sentence structure
 - Can include mild tension
 
 Age Group 11+:
-- 800–900 words
+- 1600–2000 words (MINIMUM 1600)
 - Multi-step challenge
 - Clear internal decision and reflective growth
 - Sophisticated vocabulary and narrative depth
