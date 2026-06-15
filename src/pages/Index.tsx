@@ -127,25 +127,41 @@ const Index = () => {
         />
         <h1 className="sr-only">MESTAR — Personalized Storybooks Starring Your Child</h1>
         <div
-          className="fixed inset-0 z-50 bg-black flex items-center justify-center cursor-pointer"
+          className="fixed inset-0 z-50 bg-black flex items-center justify-center cursor-pointer overflow-hidden"
           onClick={handleVideoEnd}
         >
+          {/* Blurred backdrop fill so portrait video doesn't leave black bars on desktop */}
+          <video
+            src="/videos/promo-ad.mp4"
+            playsInline
+            muted
+            autoPlay
+            loop
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50 pointer-events-none"
+          />
           <video
             ref={videoRef}
             src="/videos/promo-ad.mp4"
             playsInline
             onEnded={handleVideoEnd}
-            className="w-full h-full object-contain"
+            className="relative w-full h-full object-contain"
           />
           {isMuted && (
             <button
               onClick={handleUnmute}
-              className="absolute bottom-8 right-8 bg-cream/20 backdrop-blur-sm text-cream rounded-full p-4 hover:bg-cream/30 transition-colors"
+              className="absolute bottom-8 right-8 bg-cream/20 backdrop-blur-sm text-cream rounded-full p-4 hover:bg-cream/30 transition-colors z-10"
             >
               <Volume2 className="h-6 w-6" />
               <span className="sr-only">Tap for sound</span>
             </button>
           )}
+          <button
+            onClick={(e) => { e.stopPropagation(); handleVideoEnd(); }}
+            className="absolute top-6 right-6 bg-white/10 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full hover:bg-white/20 transition-colors z-10"
+          >
+            Skip intro →
+          </button>
         </div>
       </>
     );
