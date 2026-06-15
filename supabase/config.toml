@@ -38,3 +38,5 @@ verify_jwt = false
 
 
 
+[functions.dev-trigger-order]
+verify_jwt = false
