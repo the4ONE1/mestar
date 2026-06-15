@@ -1,35 +1,55 @@
-## What I already know
+## Goal
 
-- The audiobook code path is wired correctly: `create-storybook` → seeds `storybook_audio` rows → fires `generate-audiobook` → ElevenLabs TTS → uploads MP3 + word timings → Library page polls and plays.
-- The last real **paid** audiobook order (May 14, "jaedan's Outer Space") has all 5 pages fully generated with audio + word timings. That order plays fine.
-- Yesterday's 11+ word-count **test order** (`d696aab7…`) has 5 audio rows seeded but no audio files. That's because the test used a one-off dev trigger that called `generate-story` directly and bypassed `create-storybook`, so `generate-audiobook` was never fired. It's not broken — it just wasn't run.
-- `generate-audiobook` has no recent logs (nothing has called it since May 14).
+Add a permanent, reusable dev-only test trigger that simulates a fully paid order end-to-end — including audiobook generation — so test runs match real customer behavior.
 
-So nothing in the data currently proves the audiobook feature is broken. To be sure, the safest move is to actually run the audiobook pipeline now on the test order and watch what happens end-to-end.
+## What I'll build
 
-## Plan
+A new edge function **`dev-trigger-order`** that mirrors what the Shopify "order paid" webhook does, but skips Shopify entirely. You pass it the same personalization details you'd type in the form, and it runs the complete pipeline:
 
-1. **Trigger `generate-audiobook` directly** for the test order `d696aab7-c3a2-42a6-a00f-da7cf8af7eed` using its existing 5 seeded page rows. No code changes, no new functions, no customer impact, no Shopify charge.
-2. **Tail the edge function logs** in real time to catch any ElevenLabs error, auth error, or storage upload error.
-3. **Re-check the database** after it finishes — confirm all 5 rows now have `audio_storage_path` and `word_timings` populated.
-4. **Open the Library page** for that order (`/library/d696aab7-…`) in the preview and confirm the karaoke player loads, plays audio, and highlights words.
-5. **Report back in plain English** with one of three outcomes:
-   - ✅ Works end-to-end → the feature is fine; what you saw was just the test order missing its audiobook step. No fix needed.
-   - ⚠️ Works partially (e.g. some pages fail) → identify which step is flaky and propose a targeted fix.
-   - ❌ Fails outright → share the exact error from the logs and propose a fix (most likely ElevenLabs API key, quota, or storage permissions).
+```text
+dev-trigger-order
+   ├─ create pending order row in DB (forces audiobook = true)
+   ├─ call generate-story
+   ├─ call create-storybook (PDF + illustrations)
+   └─ create-storybook auto-fires generate-audiobook
+```
 
-## What this will NOT do
+By the time it returns, the order has: story, PDF, illustrations, and audiobook (audio files + word-by-word timings on all pages) — exactly like a real paid order.
 
-- No edits to any code, prompts, or config.
-- No new edge functions, no cleanup needed afterward.
-- No real customer affected; no Shopify order created or charged.
-- No audiobook regeneration for the May 14 order — it's already complete.
+## Inputs (with sensible defaults)
 
-## Technical detail (for reference)
+You send a small JSON body, all optional:
+- `childName` (default: "Test Kid")
+- `childAge` (default: "8-10")
+- `theme` (default: "space adventure")
+- `strength` (default: "courage")
+- `hasSupportingCharacter` / `supportingCharacterName` (default: false / none)
+- `customerEmail` (default: your account email)
+- `forceAudiobook` (default: **true**)
 
-- Call: `POST /functions/v1/generate-audiobook` with `{ "orderId": "d696aab7-c3a2-42a6-a00f-da7cf8af7eed" }` and `Authorization: Bearer <service role>`.
-- Expected duration: ~30–60 seconds for 5 pages (sequential ElevenLabs calls).
-- Verification query: `SELECT page_number, audio_storage_path IS NOT NULL FROM storybook_audio WHERE order_id = 'd696aab7-…' ORDER BY page_number`.
-- Visual check: load `/library/d696aab7-c3a2-42a6-a00f-da7cf8af7eed` in the preview pane.
+Returns: `{ orderId, libraryUrl }` so you can open `/library/<orderId>` immediately to hear the audiobook.
 
-Approve and I'll run it.
+## Security
+
+- Server-to-server auth only: requires `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>` (same pattern as `generate-story` and `create-storybook`).
+- Cannot be called from the browser without the service-role key, so no risk of customers triggering free test orders.
+- Marked with a `status: "dev_test"` order tag in the DB so test orders are easy to spot and exclude from reports later.
+
+## What this changes vs. doesn't
+
+Changes:
+- New file: `supabase/functions/dev-trigger-order/index.ts`
+
+Doesn't change:
+- No edits to `generate-story`, `create-storybook`, `generate-audiobook`, or the Shopify webhook.
+- No DB schema migration.
+- Real paid orders behave exactly as before.
+
+## How you'll use it
+
+After it's deployed, I can trigger a test run for you on demand (any age, any theme) and confirm the audiobook plays at `/library/<orderId>`. No more one-off shortcut scripts; this becomes the standard way we test.
+
+## Out of scope
+
+- A UI button to trigger test orders (can add later if useful).
+- Auto-cleanup of old test orders (can add a scheduled purge later).
