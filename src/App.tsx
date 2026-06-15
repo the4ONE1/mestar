@@ -17,6 +17,7 @@ import OrderComplete from "./pages/OrderComplete";
 import Library from "./pages/Library";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Unsubscribe from "./pages/Unsubscribe";
+import DevTest from "./pages/DevTest";
 
 
 const queryClient = new QueryClient();
@@ -38,6 +39,8 @@ const AppContent = () => {
           <Route path="/library/:orderId" element={<Library />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
+          <Route path="/dev-test" element={<DevTest />} />
+          
           
           <Route path="*" element={<NotFound />} />
         </Routes>

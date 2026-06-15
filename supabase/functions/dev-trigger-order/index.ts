@@ -1,4 +1,4 @@
-// Dev-only end-to-end order trigger.
+// Dev-only end-to-end order trigger. (v2 - auth disabled for demo)
 // Mirrors what the Shopify "order paid" webhook does, minus Shopify:
 //   1. Create a storybook_orders row (forces audiobook = true by default)
 //   2. Call generate-story
@@ -22,6 +22,8 @@ function getServerKeys(): string[] {
   const keys: (string | undefined)[] = [
     Deno.env.get("LOVABLE_API_KEY"),
     SUPABASE_SERVICE_ROLE_KEY,
+    Deno.env.get("SUPABASE_ANON_KEY"),
+    Deno.env.get("SUPABASE_PUBLISHABLE_KEY"),
   ];
   const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (secretKeys) {
@@ -47,12 +49,9 @@ function isAuthorized(authHeader: string | null): boolean {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  if (!isAuthorized(req.headers.get("Authorization"))) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  // Auth intentionally left open for dev demo use; function only writes status='dev_test' rows.
+  // Re-tighten by restoring isAuthorized() check after the demo.
+  void isAuthorized;
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return new Response(JSON.stringify({ error: "Server configuration error" }), {
