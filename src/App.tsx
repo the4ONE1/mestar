@@ -17,6 +17,7 @@ import OrderComplete from "./pages/OrderComplete";
 import Library from "./pages/Library";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Unsubscribe from "./pages/Unsubscribe";
+import DevTest from "./pages/DevTest";
 
 
 const queryClient = new QueryClient();
