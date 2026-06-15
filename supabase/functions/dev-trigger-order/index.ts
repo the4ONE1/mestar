@@ -1,4 +1,4 @@
-// Dev-only end-to-end order trigger.
+// Dev-only end-to-end order trigger. (v2 - auth disabled for demo)
 // Mirrors what the Shopify "order paid" webhook does, minus Shopify:
 //   1. Create a storybook_orders row (forces audiobook = true by default)
 //   2. Call generate-story
