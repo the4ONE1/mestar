@@ -39,6 +39,8 @@ const AppContent = () => {
           <Route path="/library/:orderId" element={<Library />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
+          <Route path="/dev-test" element={<DevTest />} />
+          
           
           <Route path="*" element={<NotFound />} />
         </Routes>
