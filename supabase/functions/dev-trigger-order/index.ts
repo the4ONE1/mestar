@@ -22,8 +22,6 @@ function getServerKeys(): string[] {
   const keys: (string | undefined)[] = [
     Deno.env.get("LOVABLE_API_KEY"),
     SUPABASE_SERVICE_ROLE_KEY,
-    Deno.env.get("SUPABASE_ANON_KEY"),
-    Deno.env.get("SUPABASE_PUBLISHABLE_KEY"),
   ];
   const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (secretKeys) {
@@ -43,15 +41,19 @@ function getServerKeys(): string[] {
 function isAuthorized(authHeader: string | null): boolean {
   if (!authHeader?.startsWith("Bearer ")) return false;
   const token = authHeader.slice("Bearer ".length).trim();
-  return getServerKeys().includes(token);
+  const keys = getServerKeys();
+  return keys.length > 0 && keys.includes(token);
 }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  // Auth intentionally left open for dev demo use; function only writes status='dev_test' rows.
-  // Re-tighten by restoring isAuthorized() check after the demo.
-  void isAuthorized;
+  if (!isAuthorized(req.headers.get("Authorization"))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return new Response(JSON.stringify({ error: "Server configuration error" }), {
