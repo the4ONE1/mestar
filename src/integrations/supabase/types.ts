@@ -326,6 +326,7 @@ export type Database = {
           story_title: string
         }[]
       }
+      is_pending_order: { Args: { _order_id: string }; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string
