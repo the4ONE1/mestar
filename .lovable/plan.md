@@ -1,39 +1,60 @@
-## Goal
-Fire one end-to-end test story per age group to surface any remaining issues (illustration parsing, coloring page generation, story length, supporting-character rule, PDF assembly) before we ship.
+# Goal
 
-## Test matrix
+Fix the four reliability issues uncovered in the age 11+ test run without changing any customer-facing behavior, UI, pricing, story content, or the happy-path flow. Every change is defensive: it only kicks in when something is already going wrong.
 
-| # | Age group | Expected scenes | Supporting char? | Theme | Strength |
-|---|-----------|-----------------|------------------|-------|----------|
-| 1 | 1-3   | 1 illustration + 1 coloring | No  | "playing in the backyard and meeting a friendly butterfly" | kindness |
-| 2 | 4-7   | 2 illustrations + 2 coloring | Yes ("Bramble the bunny") | "lost mitten in the snowy park" | perseverance |
-| 3 | 8-10  | 3 illustrations + 3 coloring | Yes ("Captain Luma the owl") | "broken telescope on the night of the meteor shower" | curiosity |
-| 4 | 11+   | 4 illustrations + 4 coloring | No  | "first day volunteering at the animal shelter" | empathy |
+# Safety guarantees
 
-Each run uses `dev-trigger-order` with `forceIllustrations: true` and `forceColoring: true`.
+- No UI changes.
+- No changes to story text, illustration art style, coloring rules, or prompts.
+- No changes to the order flow, cart, checkout, Shopify integration, or email sending.
+- No database schema changes (no new columns, no migrations). The `needs_review` status is just a string written into the existing `status` field — already a free-text column.
+- No changes to function signatures or how the frontend calls anything.
+- All retries have hard caps so a function can never loop forever or blow past Supabase's execution time limit.
+- If every retry still fails, behavior is the same as today (the call returns null / the illustration is skipped) — just with logs and a status flag so we can see it.
 
-## Per-test checks
+# What changes (4 small, isolated edits)
 
-For every order I will verify:
-1. **Status** reaches `complete` (not `failed`, not stuck `processing`).
-2. **Scene count** matches the age-group rule above (illustrations + coloring).
-3. **Storage paths** are populated for every page (`illustration_storage_paths` and `coloring_storage_paths` arrays full, no nulls).
-4. **Supporting-character rule** (tests 2 & 3 only): the second character actively helps and the child still makes the final decision — read the story text.
-5. **PDF assembly** completes and `pdf_url` is set.
-6. **Edge function logs**: scan `generate-story` and `create-storybook` for any warnings or retries even when the run succeeded.
+### 1. `generate-story` — stop silently swallowing Layer 2 / Layer 3 errors
+Today: `r.ok ? r.json() : null` — if the AI call fails, we get `null` and move on with no log.
+Change: wrap each of the two chat calls in a small helper that
+- logs the HTTP status + first 500 chars of the error body when non-OK,
+- retries up to 2 times on 429 / 5xx with waits of 2s then 5s,
+- still returns `null` after final failure (same as today) so nothing downstream breaks.
 
-## Reporting
+### 2. `create-storybook` — stronger retry on image generation 429s
+Today: one retry after 1.5s, then gives up.
+Change: up to 3 retries with waits of 1.5s → 4s → 10s. Still sequential, still gives up gracefully after the last attempt (same fallback path as today: scene is skipped, PDF still builds).
 
-I'll deliver a single summary table:
-- Order ID + library link per age group
-- Pass/fail for each of the 6 checks
-- Any anomalies found (with the exact log line) + a proposed fix for each
+### 3. `create-storybook` — add a "needs_review" safety net
+After all illustrations are attempted, compare rendered count vs expected scene count.
+- If rendered < expected (or coloring pages were purchased but zero coloring prompts came back) → set `status = 'needs_review'` instead of `'complete'`.
+- PDF, storage upload, and email all still happen exactly as today, so the customer is not blocked. This is purely an internal flag so you can spot broken orders in the dashboard instead of them looking fine.
 
-No code changes in this plan — purely diagnostic. If a test fails I'll stop and come back with a fix plan rather than patching mid-run.
+### 4. `create-storybook` — trim `illustration_storage_paths` to actual scene count
+Today: array is always padded to length 5, making diagnostics confusing.
+Change: store only the real slots (length = expected scene count for that age). Pure cosmetic; nothing reads the trailing nulls.
 
-## Cost
-4 stories × ~10 image calls each ≈ $0.50–0.80 in AI credits total.
+# What is explicitly NOT changing
 
-## Out of scope
-- No changes to story rules, pricing, checkout, or UI.
-- No re-test of the supporting-character rule beyond the two runs above (already validated in the prior Mia/Pip test).
+- The "MESTAR ILLUSTRATION ENGINE" prompt, art style, likeness-lock text.
+- The age-band scene counts (1/2/3/4).
+- Coloring page logic, Layer 1 story rules, second-character rules.
+- `dev-trigger-order`, the Shopify webhook, the order-status endpoint, the customer email.
+- Anything in `src/` (frontend untouched).
+
+# Files touched
+
+- `supabase/functions/generate-story/index.ts` — add `callChatWithRetry` helper, swap two call sites.
+- `supabase/functions/create-storybook/index.ts` — extend image retry loop, add post-loop count check that sets `needs_review`, trim storage-paths array.
+
+# Verification after deploy
+
+1. Re-run all 4 age-band test orders via `dev-trigger-order` with `forceIllustrations: true` + `forceColoring: true`.
+2. Confirm: all 4 finish with rendered count == expected, status = `complete`, storage paths length matches scene count.
+3. Check edge function logs for the new retry log lines (should be quiet on a clean run).
+4. As a negative test, temporarily lower the image-gen retry cap in a one-off run to confirm the `needs_review` flag actually fires when illustrations are missing (then revert).
+
+# Risk assessment
+
+- Worst case if a retry helper has a bug: a chat/image call fails the same way it does today (returns null, scene skipped). No regression vs current behavior.
+- Worst case for `needs_review`: an order that would have been marked `complete` is marked `needs_review` instead — still delivered to the customer, just flagged for your review. No customer-visible difference unless you wire up an alert later.
