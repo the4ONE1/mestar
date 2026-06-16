@@ -58,12 +58,17 @@ async function generateImage(
   };
 
   try {
+    // Up to 3 retries on 429 with backoff 1.5s → 4s → 10s, then give up gracefully (returns null).
+    const retryWaits = [1500, 4000, 10000];
     let result = await attempt();
-    if (result === "RETRY") {
-      console.log(`[${label}] retrying after 429...`);
-      await new Promise((r) => setTimeout(r, 1500));
+    for (let i = 0; i < retryWaits.length && result === "RETRY"; i++) {
+      console.log(`[${label}] 429 — retrying in ${retryWaits[i]}ms (attempt ${i + 2}/${retryWaits.length + 1})...`);
+      await new Promise((r) => setTimeout(r, retryWaits[i]));
       result = await attempt();
-      if (result === "RETRY") return null;
+    }
+    if (result === "RETRY") {
+      console.error(`[${label}] still rate-limited after ${retryWaits.length + 1} attempts, giving up`);
+      return null;
     }
     console.log(`[${label}] ${result ? "ok" : "failed"}`);
     return result as Uint8Array | null;
@@ -72,6 +77,7 @@ async function generateImage(
     return null;
   }
 }
+
 
 // Fetch a private photo from storage and convert to a base64 data URL the AI can use as reference
 async function photoPathToDataUrl(
