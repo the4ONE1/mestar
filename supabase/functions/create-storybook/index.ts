@@ -58,12 +58,17 @@ async function generateImage(
   };
 
   try {
+    // Up to 3 retries on 429 with backoff 1.5s → 4s → 10s, then give up gracefully (returns null).
+    const retryWaits = [1500, 4000, 10000];
     let result = await attempt();
-    if (result === "RETRY") {
-      console.log(`[${label}] retrying after 429...`);
-      await new Promise((r) => setTimeout(r, 1500));
+    for (let i = 0; i < retryWaits.length && result === "RETRY"; i++) {
+      console.log(`[${label}] 429 — retrying in ${retryWaits[i]}ms (attempt ${i + 2}/${retryWaits.length + 1})...`);
+      await new Promise((r) => setTimeout(r, retryWaits[i]));
       result = await attempt();
-      if (result === "RETRY") return null;
+    }
+    if (result === "RETRY") {
+      console.error(`[${label}] still rate-limited after ${retryWaits.length + 1} attempts, giving up`);
+      return null;
     }
     console.log(`[${label}] ${result ? "ok" : "failed"}`);
     return result as Uint8Array | null;
@@ -72,6 +77,7 @@ async function generateImage(
     return null;
   }
 }
+
 
 // Fetch a private photo from storage and convert to a base64 data URL the AI can use as reference
 async function photoPathToDataUrl(
@@ -526,12 +532,21 @@ serve(async (req) => {
 
     const illustrationCount = illustrationImages.filter(Boolean).length;
     const coloringCount = coloringImages.filter(Boolean).length;
-    console.log(`Generated ${illustrationCount}/5 illustrations, ${coloringCount}/5 coloring pages`);
 
-    // Upload illustrations to storage so the audiobook reader can show them
+    // Expected counts come from the prompt arrays returned by generate-story (age-band aware).
+    const expectedIllustrations = addons.illustrations ? (illustrationPrompts?.length || 0) : 0;
+    const expectedColoring = addons.coloring ? (coloringPrompts?.length || 0) : 0;
+    console.log(
+      `Generated ${illustrationCount}/${expectedIllustrations || 5} illustrations, ` +
+        `${coloringCount}/${expectedColoring || 5} coloring pages`
+    );
+
+    // Upload illustrations to storage so the audiobook reader can show them.
+    // Trim to the actual expected scene count so diagnostics aren't padded with empty slots.
     const illustrationPaths: string[] = [];
     if (orderId && addons.illustrations) {
-      for (let i = 0; i < illustrationImages.length; i++) {
+      const uploadCount = expectedIllustrations || illustrationImages.length;
+      for (let i = 0; i < uploadCount; i++) {
         const img = illustrationImages[i];
         if (!img) {
           illustrationPaths.push("");
@@ -559,6 +574,7 @@ serve(async (req) => {
         })
         .eq("id", orderId);
     }
+
 
     // Build PDF
     console.log("Assembling PDF...");
@@ -615,16 +631,27 @@ serve(async (req) => {
     const pdfUrl = signedUrlData.signedUrl;
 
     if (orderId) {
+      // Safety net: if we didn't render the full expected count, flag the order for review
+      // instead of silently marking it complete. PDF + email still go through as today.
+      const illustrationsShort = addons.illustrations && illustrationCount < expectedIllustrations;
+      const coloringShort = addons.coloring && coloringCount < expectedColoring;
+      const finalStatus = illustrationsShort || coloringShort ? "needs_review" : "complete";
+      if (finalStatus === "needs_review") {
+        console.error(
+          `Order ${orderId} flagged needs_review: illustrations ${illustrationCount}/${expectedIllustrations}, coloring ${coloringCount}/${expectedColoring}`
+        );
+      }
       await supabase
         .from("storybook_orders")
         .update({
-          status: "complete",
+          status: finalStatus,
           pdf_storage_path: fileName,
           pdf_url: pdfUrl,
           completed_at: new Date().toISOString(),
         })
         .eq("id", orderId);
     }
+
 
     console.log("Storybook complete!", pdfUrl);
 
