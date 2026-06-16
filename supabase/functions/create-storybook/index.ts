@@ -631,16 +631,27 @@ serve(async (req) => {
     const pdfUrl = signedUrlData.signedUrl;
 
     if (orderId) {
+      // Safety net: if we didn't render the full expected count, flag the order for review
+      // instead of silently marking it complete. PDF + email still go through as today.
+      const illustrationsShort = addons.illustrations && illustrationCount < expectedIllustrations;
+      const coloringShort = addons.coloring && coloringCount < expectedColoring;
+      const finalStatus = illustrationsShort || coloringShort ? "needs_review" : "complete";
+      if (finalStatus === "needs_review") {
+        console.error(
+          `Order ${orderId} flagged needs_review: illustrations ${illustrationCount}/${expectedIllustrations}, coloring ${coloringCount}/${expectedColoring}`
+        );
+      }
       await supabase
         .from("storybook_orders")
         .update({
-          status: "complete",
+          status: finalStatus,
           pdf_storage_path: fileName,
           pdf_url: pdfUrl,
           completed_at: new Date().toISOString(),
         })
         .eq("id", orderId);
     }
+
 
     console.log("Storybook complete!", pdfUrl);
 
