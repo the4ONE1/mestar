@@ -1,38 +1,39 @@
 ## Goal
-Find out why the last test produced 0 illustrations and 0 coloring pages, and make sure the next real order doesn't ship a text-only PDF.
+Fire one end-to-end test story per age group to surface any remaining issues (illustration parsing, coloring page generation, story length, supporting-character rule, PDF assembly) before we ship.
 
-## What we know
-- Order `ceebdd24…` finished with status `complete` and a PDF URL.
-- `selected_addons` = `{ illustrations: true, coloring: false, audiobook: false }` — so **coloring was off on purpose** (the dev harness defaults it to false; real customers toggle it at checkout).
-- `illustration_storage_paths` = 5 empty strings → every call to the Lovable AI image model returned null.
-- Logs for that run are no longer in the window, so the exact failure is unknown.
+## Test matrix
 
-## Plan
+| # | Age group | Expected scenes | Supporting char? | Theme | Strength |
+|---|-----------|-----------------|------------------|-------|----------|
+| 1 | 1-3   | 1 illustration + 1 coloring | No  | "playing in the backyard and meeting a friendly butterfly" | kindness |
+| 2 | 4-7   | 2 illustrations + 2 coloring | Yes ("Bramble the bunny") | "lost mitten in the snowy park" | perseverance |
+| 3 | 8-10  | 3 illustrations + 3 coloring | Yes ("Captain Luma the owl") | "broken telescope on the night of the meteor shower" | curiosity |
+| 4 | 11+   | 4 illustrations + 4 coloring | No  | "first day volunteering at the animal shelter" | empathy |
 
-1. **Patch the dev harness** (`supabase/functions/dev-trigger-order/index.ts`) so we can flip `coloring` and `illustrations` from the request body instead of having them hardcoded. Defaults stay the same; we just stop being forced to edit code to test.
+Each run uses `dev-trigger-order` with `forceIllustrations: true` and `forceColoring: true`.
 
-2. **Add clearer logging** in `supabase/functions/create-storybook/index.ts` around `generateImage`:
-   - Log the HTTP status + first 200 chars of the error body when the image model fails.
-   - Log a one-line summary per page: `illustration 3/5: ok` or `illustration 3/5: failed (status 429)`.
-   This way the next failed run tells us exactly what happened (rate limit vs. content filter vs. timeout).
+## Per-test checks
 
-3. **Re-run a fresh test order** with the same Mia + Pip setup but with `illustrations: true` AND `coloring: true`, then immediately pull the create-storybook logs and report:
-   - How many of 5 illustrations rendered
-   - How many of 5 coloring pages rendered
-   - Any error pattern (all fail = systemic; some fail = content/prompt issue)
+For every order I will verify:
+1. **Status** reaches `complete` (not `failed`, not stuck `processing`).
+2. **Scene count** matches the age-group rule above (illustrations + coloring).
+3. **Storage paths** are populated for every page (`illustration_storage_paths` and `coloring_storage_paths` arrays full, no nulls).
+4. **Supporting-character rule** (tests 2 & 3 only): the second character actively helps and the child still makes the final decision — read the story text.
+5. **PDF assembly** completes and `pdf_url` is set.
+6. **Edge function logs**: scan `generate-story` and `create-storybook` for any warnings or retries even when the run succeeded.
 
-4. **Fix based on what the logs show.** Most likely fixes, in order of probability:
-   - **Rate limiting** → add a small delay between image calls (we already serialize them, may need 500ms gap) and a single automatic retry on 429.
-   - **Content-filter rejection** → soften the prompt template (e.g. remove any wording the safety filter dislikes) and retry once.
-   - **Bad data URL from the child photo** → fall back to a text-only prompt for that page instead of failing.
+## Reporting
 
-5. **Add a safety net for customers**: if fewer than, say, 3 of 5 illustrations succeed on a paid order, mark the order `needs_review` instead of `complete` so we can regenerate before the customer downloads a half-empty book. (No change to the customer-facing UI — purely a backend guardrail.)
+I'll deliver a single summary table:
+- Order ID + library link per age group
+- Pass/fail for each of the 6 checks
+- Any anomalies found (with the exact log line) + a proposed fix for each
+
+No code changes in this plan — purely diagnostic. If a test fails I'll stop and come back with a fix plan rather than patching mid-run.
+
+## Cost
+4 stories × ~10 image calls each ≈ $0.50–0.80 in AI credits total.
 
 ## Out of scope
-- No change to the story text engine or the new supporting-character rule.
-- No change to pricing, checkout, or the customer-facing form.
-
-## Technical notes
-- Files touched: `supabase/functions/dev-trigger-order/index.ts`, `supabase/functions/create-storybook/index.ts`.
-- No DB schema changes; `needs_review` is just a new value for the existing `status` text column.
-- Cost: one extra test story generation (~$0.10–0.20 in image credits).
+- No changes to story rules, pricing, checkout, or UI.
+- No re-test of the supporting-character rule beyond the two runs above (already validated in the prior Mia/Pip test).
