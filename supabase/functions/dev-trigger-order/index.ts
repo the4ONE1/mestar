@@ -74,11 +74,13 @@ serve(async (req) => {
       supportingCharacterName = "",
       customerEmail = "dev-test@mestar.pro",
       forceAudiobook = true,
+      forceIllustrations = true,
+      forceColoring = false,
     } = body || {};
 
     const selectedAddons = {
-      illustrations: true,
-      coloring: false,
+      illustrations: !!forceIllustrations,
+      coloring: !!forceColoring,
       character: false,
       audiobook: !!forceAudiobook,
     };
