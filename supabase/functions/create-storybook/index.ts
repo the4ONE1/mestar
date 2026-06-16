@@ -532,12 +532,21 @@ serve(async (req) => {
 
     const illustrationCount = illustrationImages.filter(Boolean).length;
     const coloringCount = coloringImages.filter(Boolean).length;
-    console.log(`Generated ${illustrationCount}/5 illustrations, ${coloringCount}/5 coloring pages`);
 
-    // Upload illustrations to storage so the audiobook reader can show them
+    // Expected counts come from the prompt arrays returned by generate-story (age-band aware).
+    const expectedIllustrations = addons.illustrations ? (illustrationPrompts?.length || 0) : 0;
+    const expectedColoring = addons.coloring ? (coloringPrompts?.length || 0) : 0;
+    console.log(
+      `Generated ${illustrationCount}/${expectedIllustrations || 5} illustrations, ` +
+        `${coloringCount}/${expectedColoring || 5} coloring pages`
+    );
+
+    // Upload illustrations to storage so the audiobook reader can show them.
+    // Trim to the actual expected scene count so diagnostics aren't padded with empty slots.
     const illustrationPaths: string[] = [];
     if (orderId && addons.illustrations) {
-      for (let i = 0; i < illustrationImages.length; i++) {
+      const uploadCount = expectedIllustrations || illustrationImages.length;
+      for (let i = 0; i < uploadCount; i++) {
         const img = illustrationImages[i];
         if (!img) {
           illustrationPaths.push("");
@@ -565,6 +574,7 @@ serve(async (req) => {
         })
         .eq("id", orderId);
     }
+
 
     // Build PDF
     console.log("Assembling PDF...");
