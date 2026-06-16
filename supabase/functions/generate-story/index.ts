@@ -629,23 +629,26 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
       sceneMatches.push(match?.[1]?.trim() || "");
     }
 
-    // Parse coloring prompts
+    // Parse coloring prompts (tolerant of markdown/spacing)
     const coloringPrompts: string[] = [];
     if (coloringOutput) {
       for (let i = 1; i <= sceneCount; i++) {
-        const regex = new RegExp(`COLOR_PAGE_${i}_PROMPT:\\s*\\n([\\s\\S]*?)(?=COLOR_PAGE_${i + 1}_PROMPT:|$)`);
+        const regex = new RegExp(`\\*{0,2}COLOR_PAGE_${i}_PROMPT\\*{0,2}:\\s*\\n?([\\s\\S]*?)(?=\\*{0,2}COLOR_PAGE_${i + 1}_PROMPT\\*{0,2}:|$)`, "i");
         const match = coloringOutput.match(regex);
         coloringPrompts.push(match?.[1]?.trim() || "");
       }
     }
 
-    // Parse illustration prompts
+    // Parse illustration prompts (tolerant of markdown/spacing)
     const illustrationPrompts: string[] = [];
     if (illustrationOutput) {
       for (let i = 1; i <= sceneCount; i++) {
-        const regex = new RegExp(`ILLUSTRATION_${i}_PROMPT:\\s*\\n([\\s\\S]*?)(?=ILLUSTRATION_${i + 1}_PROMPT:|$)`);
+        const regex = new RegExp(`\\*{0,2}ILLUSTRATION_${i}_PROMPT\\*{0,2}:\\s*\\n?([\\s\\S]*?)(?=\\*{0,2}ILLUSTRATION_${i + 1}_PROMPT\\*{0,2}:|$)`, "i");
         const match = illustrationOutput.match(regex);
         illustrationPrompts.push(match?.[1]?.trim() || "");
+      }
+      if (illustrationPrompts.every((p) => !p)) {
+        console.error("Illustration parse yielded 0 prompts. Raw output head:", illustrationOutput.slice(0, 800));
       }
     }
 
