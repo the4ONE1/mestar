@@ -486,9 +486,11 @@ serve(async (req) => {
         const img = await generateImage(
           withLikenessLock(prompts[i], refs.length > 0),
           LOVABLE_API_KEY,
-          refs
+          refs,
+          `illustration ${i + 1}/5`
         );
         out.push(img);
+        await new Promise((r) => setTimeout(r, 400));
       }
       while (out.length < 5) out.push(null);
       return out;
@@ -509,9 +511,11 @@ serve(async (req) => {
         const img = await generateImage(
           withColoringLock(prompts[i], refs.length > 0),
           LOVABLE_API_KEY,
-          refs
+          refs,
+          `coloring ${i + 1}/5`
         );
         out.push(img);
+        await new Promise((r) => setTimeout(r, 400));
       }
       while (out.length < 5) out.push(null);
       return out;
