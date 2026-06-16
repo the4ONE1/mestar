@@ -146,10 +146,25 @@ If no trait provided:
 SUPPORTING CHARACTER RULES
 ----------------------------------------
 
-If included:
-- They encourage but do not solve.
-- Loved one makes the key decision.
-- Loved one receives credit for resolution.
+If a supporting character is included (including a pet or animal companion):
+- They MUST actively help the main character in a meaningful way.
+- Their help must take the form of either:
+    (a) positive advice, encouragement, or a key insight, OR
+    (b) a concrete helpful action (sharing a tool, showing the way,
+        offering a clue, lending a hand or paw).
+  Pets and animals that cannot speak help through action, gesture,
+  or by drawing attention to a clue — never through dialogue.
+- Their contribution must be CRITICAL to the main character reaching
+  the solution — without it, the main character could not have solved
+  the challenge as they did.
+- HOWEVER, the main character is still the hero:
+    * The main character makes the final key decision.
+    * The main character performs the resolving action.
+    * The main character receives the credit for the resolution.
+- The supporting character never solves the problem for them,
+  never takes over, and never overshadows the main character.
+- The supporting character is never a villain, obstacle, rival,
+  or source of conflict.
 
 If not included:
 - Loved one stands independently as hero.
