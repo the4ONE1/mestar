@@ -13,9 +13,10 @@ const corsHeaders = {
 async function generateImage(
   prompt: string,
   apiKey: string,
-  referenceImages: string[] = []
+  referenceImages: string[] = [],
+  label: string = "image"
 ): Promise<Uint8Array | null> {
-  try {
+  const attempt = async (): Promise<Uint8Array | null | "RETRY"> => {
     const userContent: any[] = [{ type: "text", text: prompt }];
     for (const refUrl of referenceImages) {
       if (refUrl) userContent.push({ type: "image_url", image_url: { url: refUrl } });
@@ -35,21 +36,39 @@ async function generateImage(
     });
 
     if (!res.ok) {
-      console.error("Image gen failed:", res.status, await res.text());
-      return null;
+      const body = await res.text().catch(() => "");
+      console.error(`[${label}] image gen HTTP ${res.status}: ${body.slice(0, 300)}`);
+      return res.status === 429 ? "RETRY" : null;
     }
 
     const data = await res.json();
     const dataUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url as string | undefined;
-    if (!dataUrl) return null;
+    if (!dataUrl) {
+      const finish = data.choices?.[0]?.finish_reason;
+      const textOut = data.choices?.[0]?.message?.content;
+      console.error(`[${label}] no image in response. finish_reason=${finish} text=${String(textOut).slice(0, 200)}`);
+      return null;
+    }
 
     const base64 = dataUrl.split(",")[1];
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
     return bytes;
+  };
+
+  try {
+    let result = await attempt();
+    if (result === "RETRY") {
+      console.log(`[${label}] retrying after 429...`);
+      await new Promise((r) => setTimeout(r, 1500));
+      result = await attempt();
+      if (result === "RETRY") return null;
+    }
+    console.log(`[${label}] ${result ? "ok" : "failed"}`);
+    return result as Uint8Array | null;
   } catch (e) {
-    console.error("Image gen error:", e);
+    console.error(`[${label}] image gen error:`, e);
     return null;
   }
 }
