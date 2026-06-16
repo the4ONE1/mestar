@@ -571,15 +571,43 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
 
     console.log("Story generated. Running Layer 2 + Layer 3 in parallel...");
 
+    // Helper: call the chat completions endpoint with logging + bounded retry on 429/5xx.
+    // Returns parsed JSON on success, or null after the final failure (same fallback as before).
+    const callChatWithRetry = async (
+      body: Record<string, unknown>,
+      label: string
+    ): Promise<any | null> => {
+      const waits = [0, 2000, 5000]; // initial + 2 retries
+      for (let attempt = 0; attempt < waits.length; attempt++) {
+        if (waits[attempt] > 0) {
+          await new Promise((r) => setTimeout(r, waits[attempt]));
+        }
+        try {
+          const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+          });
+          if (r.ok) return await r.json();
+          const errBody = await r.text().catch(() => "");
+          console.error(`[${label}] HTTP ${r.status} (attempt ${attempt + 1}/${waits.length}): ${errBody.slice(0, 500)}`);
+          // Only retry on transient errors
+          if (r.status !== 429 && r.status < 500) return null;
+        } catch (e) {
+          console.error(`[${label}] fetch threw (attempt ${attempt + 1}/${waits.length}):`, e);
+        }
+      }
+      console.error(`[${label}] all retries exhausted, returning null`);
+      return null;
+    };
+
     // Run Layer 2 (coloring) and Layer 3 (illustrations) in parallel — only when needed
     const layer2Promise = addons.coloring
-      ? fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+      ? callChatWithRetry(
+          {
             model: "google/gemini-2.5-flash",
             messages: [
               { role: "system", content: LAYER_2_SYSTEM_PROMPT },
@@ -588,18 +616,14 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
                 content: `${storyOutput}\n\nPAGE COUNT OVERRIDE (CRITICAL):\nGenerate EXACTLY ${sceneCount} coloring page prompt${sceneCount === 1 ? "" : "s"} (COLOR_PAGE_1_PROMPT${sceneCount > 1 ? ` through COLOR_PAGE_${sceneCount}_PROMPT` : ""}). Do NOT output more than ${sceneCount}. Ignore any references to "5 pages" in the system prompt — the correct count is ${sceneCount}.\n\nCHARACTER DISTRIBUTION OVERRIDE:\n${distributionRule}`,
               },
             ],
-          }),
-        }).then((r) => (r.ok ? r.json() : null))
+          },
+          "layer2-coloring"
+        )
       : Promise.resolve(null);
 
     const layer3Promise = addons.illustrations
-      ? fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+      ? callChatWithRetry(
+          {
             model: "google/gemini-2.5-flash",
             messages: [
               { role: "system", content: LAYER_3_SYSTEM_PROMPT },
@@ -608,9 +632,11 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
                 content: `${storyOutput}\n\nILLUSTRATION COUNT OVERRIDE (CRITICAL):\nGenerate EXACTLY ${sceneCount} illustration prompt${sceneCount === 1 ? "" : "s"} (ILLUSTRATION_1_PROMPT${sceneCount > 1 ? ` through ILLUSTRATION_${sceneCount}_PROMPT` : ""}). Do NOT output more than ${sceneCount}. Ignore any references to "5 illustrations" in the system prompt — the correct count is ${sceneCount}.\n\nCHARACTER DISTRIBUTION OVERRIDE:\n${distributionRule}`,
               },
             ],
-          }),
-        }).then((r) => (r.ok ? r.json() : null))
+          },
+          "layer3-illustration"
+        )
       : Promise.resolve(null);
+
 
     const [layer2Data, layer3Data] = await Promise.all([layer2Promise, layer3Promise]);
 
