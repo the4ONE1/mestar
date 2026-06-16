@@ -1,28 +1,38 @@
 ## Goal
-Verify the updated "Supporting Character Rules" in `generate-story` produce a story where the 2nd character gives critical positive help that's essential to the main character's solution — without breaking the main character's hero role.
+Find out why the last test produced 0 illustrations and 0 coloring pages, and make sure the next real order doesn't ship a text-only PDF.
 
-## Steps
+## What we know
+- Order `ceebdd24…` finished with status `complete` and a PDF URL.
+- `selected_addons` = `{ illustrations: true, coloring: false, audiobook: false }` — so **coloring was off on purpose** (the dev harness defaults it to false; real customers toggle it at checkout).
+- `illustration_storage_paths` = 5 empty strings → every call to the Lovable AI image model returned null.
+- Logs for that run are no longer in the window, so the exact failure is unknown.
 
-1. **Fire a test order** via the `dev-trigger-order` edge function with:
-   - Main character: a child hero (e.g. "Mia", age 6)
-   - Supporting character: a clearly secondary character (e.g. a friendly fox named "Pip")
-   - Theme: simple problem-to-solve plot (e.g. "lost in the forest at sunset")
-   - Audiobook: off (faster, story text is what we're checking)
+## Plan
 
-2. **Wait for `generate-story` to finish** (~20–40s), then pull the generated story pages from the database.
+1. **Patch the dev harness** (`supabase/functions/dev-trigger-order/index.ts`) so we can flip `coloring` and `illustrations` from the request body instead of having them hardcoded. Defaults stay the same; we just stop being forced to edit code to test.
 
-3. **Read the story end-to-end** and check against the new rules:
-   - Pip (2nd character) shows up and actively helps (advice or action)
-   - Pip's contribution is **critical** — without it Mia couldn't solve it
-   - Pip does **not** solve the problem, take over, or act as villain
-   - Mia makes the final decision and performs the resolving action
-   - Mia gets the credit at the end
+2. **Add clearer logging** in `supabase/functions/create-storybook/index.ts` around `generateImage`:
+   - Log the HTTP status + first 200 chars of the error body when the image model fails.
+   - Log a one-line summary per page: `illustration 3/5: ok` or `illustration 3/5: failed (status 429)`.
+   This way the next failed run tells us exactly what happened (rate limit vs. content filter vs. timeout).
 
-4. **Report back** with:
-   - A link to the generated book in the library
-   - A short pass/fail on each of the 5 checks above
-   - Any rule tweaks needed if the model under- or over-shoots
+3. **Re-run a fresh test order** with the same Mia + Pip setup but with `illustrations: true` AND `coloring: true`, then immediately pull the create-storybook logs and report:
+   - How many of 5 illustrations rendered
+   - How many of 5 coloring pages rendered
+   - Any error pattern (all fail = systemic; some fail = content/prompt issue)
 
-## Notes
-- Read-only test for the rule change — no code edits planned unless the output misses a check, in which case I'll come back with a small prompt tweak proposal before changing anything.
-- Cost: one short story generation (no audio, no illustrations needed for this check — but I'll let illustrations run since they're part of the normal pipeline; say the word if you want me to skip them to save credits).
+4. **Fix based on what the logs show.** Most likely fixes, in order of probability:
+   - **Rate limiting** → add a small delay between image calls (we already serialize them, may need 500ms gap) and a single automatic retry on 429.
+   - **Content-filter rejection** → soften the prompt template (e.g. remove any wording the safety filter dislikes) and retry once.
+   - **Bad data URL from the child photo** → fall back to a text-only prompt for that page instead of failing.
+
+5. **Add a safety net for customers**: if fewer than, say, 3 of 5 illustrations succeed on a paid order, mark the order `needs_review` instead of `complete` so we can regenerate before the customer downloads a half-empty book. (No change to the customer-facing UI — purely a backend guardrail.)
+
+## Out of scope
+- No change to the story text engine or the new supporting-character rule.
+- No change to pricing, checkout, or the customer-facing form.
+
+## Technical notes
+- Files touched: `supabase/functions/dev-trigger-order/index.ts`, `supabase/functions/create-storybook/index.ts`.
+- No DB schema changes; `needs_review` is just a new value for the existing `status` text column.
+- Cost: one extra test story generation (~$0.10–0.20 in image credits).
