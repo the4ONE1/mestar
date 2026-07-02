@@ -1,1 +1,0 @@
-ALTER TABLE public.storybook_orders ALTER COLUMN child_age TYPE text USING child_age::text;
