@@ -1,45 +1,60 @@
+# Goal
 
-## What's going on
+Fix the four reliability issues uncovered in the age 11+ test run without changing any customer-facing behavior, UI, pricing, story content, or the happy-path flow. Every change is defensive: it only kicks in when something is already going wrong.
 
-Your project's code was replaced with the Next.js version in a recent commit (`a0c7f22 — Replace Vite/React codebase with Next.js MESTAR application`). Lovable can't run Next.js, so the preview and hosting are effectively broken right now. Before we port SEO improvements, we need to put the working Vite/React app back.
+# Safety guarantees
 
-Good news: nothing is lost — the last working Vite/React commit is still in git history (`31fc406`), and the Next.js files are also still here so I can read them for the SEO details before we discard them.
+- No UI changes.
+- No changes to story text, illustration art style, coloring rules, or prompts.
+- No changes to the order flow, cart, checkout, Shopify integration, or email sending.
+- No database schema changes (no new columns, no migrations). The `needs_review` status is just a string written into the existing `status` field — already a free-text column.
+- No changes to function signatures or how the frontend calls anything.
+- All retries have hard caps so a function can never loop forever or blow past Supabase's execution time limit.
+- If every retry still fails, behavior is the same as today (the call returns null / the illustration is skipped) — just with logs and a status flag so we can see it.
 
-## Plan
+# What changes (4 small, isolated edits)
 
-### Step 1 — Read the Next.js SEO details worth copying
-Before restoring, I'll read (not run) these Next.js files so I know exactly what to port:
-- `app/layout.js` — title, description, keywords, og tags
-- `components/GoogleAnalytics.jsx`, `GoogleTagManager.jsx`, `MetaPixel.jsx` — tracking snippets + env var names
-- `public/sitemap.xml`, `public/robots.txt`, `middleware.js` — sitemap/robots and www redirect
-- Any per-page metadata inside `app/**/page.js`
+### 1. `generate-story` — stop silently swallowing Layer 2 / Layer 3 errors
+Today: `r.ok ? r.json() : null` — if the AI call fails, we get `null` and move on with no log.
+Change: wrap each of the two chat calls in a small helper that
+- logs the HTTP status + first 500 chars of the error body when non-OK,
+- retries up to 2 times on 429 / 5xx with waits of 2s then 5s,
+- still returns `null` after final failure (same as today) so nothing downstream breaks.
 
-### Step 2 — Restore the Vite/React project
-Roll the files back to commit `31fc406` (the last commit before the Next.js swap). This gets your Lovable preview and `mestar.pro` hosting working again exactly as they were.
+### 2. `create-storybook` — stronger retry on image generation 429s
+Today: one retry after 1.5s, then gives up.
+Change: up to 3 retries with waits of 1.5s → 4s → 10s. Still sequential, still gives up gracefully after the last attempt (same fallback path as today: scene is skipped, PDF still builds).
 
-### Step 3 — Port the SEO wins into the Vite/React app
-Applied to the restored codebase:
+### 3. `create-storybook` — add a "needs_review" safety net
+After all illustrations are attempted, compare rendered count vs expected scene count.
+- If rendered < expected (or coloring pages were purchased but zero coloring prompts came back) → set `status = 'needs_review'` instead of `'complete'`.
+- PDF, storage upload, and email all still happen exactly as today, so the customer is not blocked. This is purely an internal flag so you can spot broken orders in the dashboard instead of them looking fine.
 
-1. **`index.html` head** — real title, description, keywords, canonical `https://mestar.pro/`, og:title/og:url/og:type, twitter card, Organization + WebSite JSON-LD.
-2. **Per-route head** — install `react-helmet-async`, add `<HelmetProvider>` in `src/main.tsx`, then add `<Helmet>` blocks with unique title/description/canonical to each route page (home, create, faq, checkout, about, contact, privacy, terms, refund-policy — whichever exist).
-3. **Sitemap generator** — `scripts/generate-sitemap.ts` writing `public/sitemap.xml` from the actual routes in `src/App.tsx`, wired via `predev`/`prebuild` in `package.json`, `BASE_URL = https://mestar.pro`.
-4. **`public/robots.txt`** — `User-agent: * / Allow: /` plus `Sitemap: https://mestar.pro/sitemap.xml`.
-5. **Analytics + pixels** — port the GA4, GTM, and Meta Pixel snippets into small React components that read `VITE_GA_ID`, `VITE_GTM_ID`, `VITE_META_PIXEL_ID`. I'll ask you for those IDs (or we can skip any you don't have — the components no-op when the ID is missing). Nothing renders until real IDs are set, so no fake pixel fires.
-6. **www → apex redirect** — the Next.js `middleware.js` redirected `www.mystarstories.app` → `mystarstories.app`. Lovable's custom-domain UI handles www→apex for `mestar.pro` at the hosting layer, so no code change; I'll confirm the setting is on after we're back on Vite.
-7. **Semantic HTML + alt text pass** — quick sweep on landing components to ensure a single `<h1>`, descriptive alt on hero/theme images, and lazy loading on below-the-fold images.
+### 4. `create-storybook` — trim `illustration_storage_paths` to actual scene count
+Today: array is always padded to length 5, making diagnostics confusing.
+Change: store only the real slots (length = expected scene count for that age). Pure cosmetic; nothing reads the trailing nulls.
 
-### Step 4 — Verify
-- Load the preview to confirm the site is back.
-- View page source on `/`, `/create`, `/faq` and confirm the new title/description/canonical are present.
-- Fetch `/sitemap.xml` and `/robots.txt` in the browser.
-- Run the built-in SEO scan and mark fixed findings.
+# What is explicitly NOT changing
 
-## What I'll ask you next (only after you approve this plan)
-- Do you have a **GA4 measurement ID** (`G-XXXX…`), a **GTM container ID** (`GTM-XXXX…`), and a **Meta Pixel ID**? Any you don't have, we skip.
-- Confirm the tagline/description you want for the homepage title + meta description (I'll suggest one based on the Next.js version if you'd rather not write it).
+- The "MESTAR ILLUSTRATION ENGINE" prompt, art style, likeness-lock text.
+- The age-band scene counts (1/2/3/4).
+- Coloring page logic, Layer 1 story rules, second-character rules.
+- `dev-trigger-order`, the Shopify webhook, the order-status endpoint, the customer email.
+- Anything in `src/` (frontend untouched).
 
-## What this does NOT change
-- No backend/database changes.
-- No Shopify changes.
-- No design changes beyond adding metadata and semantic tweaks.
-- The Next.js repo stays on GitHub untouched — this only affects the Lovable copy.
+# Files touched
+
+- `supabase/functions/generate-story/index.ts` — add `callChatWithRetry` helper, swap two call sites.
+- `supabase/functions/create-storybook/index.ts` — extend image retry loop, add post-loop count check that sets `needs_review`, trim storage-paths array.
+
+# Verification after deploy
+
+1. Re-run all 4 age-band test orders via `dev-trigger-order` with `forceIllustrations: true` + `forceColoring: true`.
+2. Confirm: all 4 finish with rendered count == expected, status = `complete`, storage paths length matches scene count.
+3. Check edge function logs for the new retry log lines (should be quiet on a clean run).
+4. As a negative test, temporarily lower the image-gen retry cap in a one-off run to confirm the `needs_review` flag actually fires when illustrations are missing (then revert).
+
+# Risk assessment
+
+- Worst case if a retry helper has a bug: a chat/image call fails the same way it does today (returns null, scene skipped). No regression vs current behavior.
+- Worst case for `needs_review`: an order that would have been marked `complete` is marked `needs_review` instead — still delivered to the customer, just flagged for your review. No customer-visible difference unless you wire up an alert later.

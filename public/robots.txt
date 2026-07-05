@@ -1,5 +1,5 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
+Disallow: /order-complete
 
-Sitemap: https://mestar.co/sitemap.xml
+Sitemap: https://mestar.pro/sitemap.xml
