@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "my-star-stories-mcp",
+      "version": "0.1.0",
+      "title": "My Star Stories"
+    },
+    "tools": [
+      {
+        "name": "list_products",
+        "title": "List products",
+        "description": "List personalized storybook products available in the My Star Stories shop, with title, handle, price, and description.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 20,
+              "description": "Maximum number of products to return (1-50).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_product",
+        "title": "Get product",
+        "description": "Fetch full details for a single My Star Stories product by its Shopify handle (slug).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "handle": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The product handle / slug, e.g. 'personalized-storybook'."
+            }
+          },
+          "required": [
+            "handle"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_order_status",
+        "title": "Get order status",
+        "description": "Look up the status of a My Star Stories personalized storybook order by its order ID. Returns child name, story title, status, whether it has an audiobook, and (once ready) the PDF download URL.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The order UUID returned when the order was placed."
+            }
+          },
+          "required": [
+            "order_id"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
