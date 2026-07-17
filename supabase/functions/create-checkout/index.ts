@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     );
     const { data: order, error: orderErr } = await supabase
       .from("storybook_orders")
-      .select("id, status, customer_email")
+      .select("id, status, customer_email, recovery_token")
       .eq("id", body.orderId)
       .maybeSingle();
     if (orderErr || !order) {
@@ -75,6 +75,19 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // If a recovery token was supplied (customer clicked a recovery email link),
+    // it MUST match the order's stored token. Otherwise anyone with the order
+    // UUID could resume checkout.
+    if (body.recoveryToken) {
+      if (!order.recovery_token || String(order.recovery_token) !== String(body.recoveryToken)) {
+        return new Response(JSON.stringify({ error: "Invalid recovery link" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
 
     const stripe = createStripeClient(body.environment);
 
