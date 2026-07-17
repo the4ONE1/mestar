@@ -49,3 +49,7 @@ verify_jwt = false
 
 [functions.send-checkout-recovery]
 verify_jwt = false
+
+[functions.confirm-pdf-received]
+verify_jwt = false
+
