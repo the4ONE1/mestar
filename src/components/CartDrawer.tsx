@@ -38,27 +38,9 @@ export const CartDrawer = () => {
       }
       const p = personalized.personalization;
 
-      // Upload photos to storage
-      const uploadDataUrl = async (dataUrl: string, label: string): Promise<string | null> => {
-        try {
-          if (!dataUrl?.startsWith("data:")) return null;
-          const res = await fetch(dataUrl);
-          const blob = await res.blob();
-          const ext = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
-          const path = `${crypto.randomUUID()}-${label}.${ext}`;
-          const { error: upErr } = await supabase.storage
-            .from("customer-photos")
-            .upload(path, blob, { contentType: blob.type, upsert: false });
-          if (upErr) { console.error(upErr); return null; }
-          return path;
-        } catch (e) { console.error(e); return null; }
-      };
-
-      const childPhotoPath = p.photoUrl ? await uploadDataUrl(p.photoUrl, "child") : null;
-      const supportingPhotoPath = p.supportingCharacterPhotoUrl
-        ? await uploadDataUrl(p.supportingCharacterPhotoUrl, "supporting")
-        : null;
-
+      // Send photos to the server; it uploads them under the orderId prefix
+      // so the customer-photos bucket RLS (which requires a pending order id)
+      // is satisfied without needing to expose broader upload rights to guests.
       const { data: orderData, error: orderError } = await supabase.functions.invoke("create-pending-order", {
         body: {
           childName: p.childName,
@@ -69,10 +51,11 @@ export const CartDrawer = () => {
           hasSupportingCharacter: !!p.supportingCharacterPhotoUrl,
           selectedAddons: p.selectedAddons || {},
           customerEmail: p.customerEmail || "",
-          childPhotoPath,
-          supportingCharacterPhotoPath: supportingPhotoPath,
+          childPhotoDataUrl: p.photoUrl || null,
+          supportingCharacterPhotoDataUrl: p.supportingCharacterPhotoUrl || null,
         },
       });
+
       if (orderError || !orderData?.orderId) {
         console.error("create-pending-order failed:", orderError);
         toast.error("Could not start checkout. Please try again.", { position: "top-center" });
