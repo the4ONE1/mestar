@@ -125,18 +125,44 @@ function withLikenessLock(prompt: string, hasRef: boolean): string {
   );
 }
 
+// Age-based complexity guidance for coloring pages.
+// Youngest = very simple with huge fill areas. Oldest = detailed, intricate line art.
+function coloringComplexityForAge(age: number | string | undefined): string {
+  const n = typeof age === "number" ? age : parseInt(String(age ?? ""), 10);
+  const a = isNaN(n) ? 6 : n;
+  if (a <= 3) {
+    return "COMPLEXITY: VERY SIMPLE (toddler). Extra-thick chunky outlines, only 4-8 large shapes on the page, huge open fill areas, minimal background, no small details, no tiny patterns. Easy for tiny hands to color inside the lines.";
+  }
+  if (a <= 5) {
+    return "COMPLEXITY: SIMPLE (preschool). Thick bold outlines, large easy-to-color shapes, a few background elements, no tiny details or fine patterns.";
+  }
+  if (a <= 7) {
+    return "COMPLEXITY: MEDIUM (early elementary). Medium-weight outlines, moderate detail, some background elements and simple patterns, still plenty of open space to color.";
+  }
+  if (a <= 10) {
+    return "COMPLEXITY: DETAILED (older kids). Finer line weight, more scene detail, patterns on clothing and background, layered composition, but still clean and printable.";
+  }
+  return "COMPLEXITY: ADVANCED / INTRICATE (tween+). Fine detailed line art, intricate patterns, textures on clothing/hair/background, layered scene with foreground and background detail — a satisfying challenge to color.";
+}
+
 // For coloring pages: use the matching color illustration as the reference and ask the model
 // to convert it to clean B&W line art. This keeps the same character across both formats
 // without confusing the model with a color photo + B&W instruction conflict.
-function withColoringLock(prompt: string, hasIllustrationRef: boolean): string {
-  if (!hasIllustrationRef) return prompt;
+function withColoringLock(prompt: string, hasIllustrationRef: boolean, age?: number | string): string {
+  const complexity = coloringComplexityForAge(age);
+  if (!hasIllustrationRef) {
+    return (
+      "Black-and-white printable coloring page. Clean white background, NO shading, NO grayscale, NO color fill, NO text.\n" +
+      complexity + "\n\n" + prompt
+    );
+  }
   return (
     "IMPORTANT — REFERENCE IMAGE: The attached image is the full-color illustration of this exact scene. " +
     "Re-draw the SAME character, pose, and scene as a black-and-white printable coloring page: " +
-    "thick bold outlines, clean white background, NO shading, NO grayscale, NO color fill, NO text. " +
+    "clean white background, NO shading, NO grayscale, NO color fill, NO text. " +
     "The character's face, hairstyle, outfit, and proportions must match the reference exactly so it's " +
-    "clearly the same person as in the storybook illustration. Now follow this prompt:\n\n" +
-    prompt
+    "clearly the same person as in the storybook illustration.\n" +
+    complexity + "\n\nNow follow this prompt:\n\n" + prompt
   );
 }
 
