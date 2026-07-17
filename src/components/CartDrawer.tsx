@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2, Upload, Users, CheckCircle2, X } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2, Upload, Users, CheckCircle2, X, CreditCard } from "lucide-react";
 import { useCartStore, type ShopifyProduct } from "@/stores/cartStore";
 import { supabase } from "@/integrations/supabase/client";
 import { attachCartAttributes } from "@/lib/shopify";
-import { SUPPORTING_CHARACTER_ADDON } from "@/lib/products";
+import { SUPPORTING_CHARACTER_ADDON, SUPPORTING_CHARACTER_VARIANT_ID, AUDIOBOOK_VARIANT_ID } from "@/lib/products";
+import { STRIPE_PRICE_IDS } from "@/lib/stripe";
 import { toast } from "sonner";
 
 export const CartDrawer = () => {
@@ -140,6 +141,87 @@ export const CartDrawer = () => {
       setCheckoutLoading(false);
     }
   };
+
+  const [stripeLoading, setStripeLoading] = useState(false);
+
+  const handleStripeCheckout = async () => {
+    setStripeLoading(true);
+    try {
+      const personalized = items.find(i => i.personalization);
+      if (!personalized?.personalization) {
+        toast.error("Please personalize your storybook first.", { position: "top-center" });
+        return;
+      }
+      const p = personalized.personalization;
+
+      // Upload photos to storage
+      const uploadDataUrl = async (dataUrl: string, label: string): Promise<string | null> => {
+        try {
+          if (!dataUrl?.startsWith("data:")) return null;
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          const ext = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
+          const path = `${crypto.randomUUID()}-${label}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from("customer-photos")
+            .upload(path, blob, { contentType: blob.type, upsert: false });
+          if (upErr) { console.error(upErr); return null; }
+          return path;
+        } catch (e) { console.error(e); return null; }
+      };
+
+      const childPhotoPath = p.photoUrl ? await uploadDataUrl(p.photoUrl, "child") : null;
+      const supportingPhotoPath = p.supportingCharacterPhotoUrl
+        ? await uploadDataUrl(p.supportingCharacterPhotoUrl, "supporting")
+        : null;
+
+      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-pending-order", {
+        body: {
+          childName: p.childName,
+          childAge: p.childAge,
+          theme: p.theme,
+          strength: p.strength || "",
+          supportingCharacterName: p.supportingCharacterName || "",
+          hasSupportingCharacter: !!p.supportingCharacterPhotoUrl,
+          selectedAddons: p.selectedAddons || {},
+          customerEmail: p.customerEmail || "",
+          childPhotoPath,
+          supportingCharacterPhotoPath: supportingPhotoPath,
+        },
+      });
+      if (orderError || !orderData?.orderId) {
+        console.error("create-pending-order failed:", orderError);
+        toast.error("Could not start checkout. Please try again.", { position: "top-center" });
+        return;
+      }
+      const orderId = orderData.orderId as string;
+
+      // Build Stripe price ids from cart items
+      const priceIds: string[] = [STRIPE_PRICE_IDS.storybook];
+      for (const item of items) {
+        if (item.variantId === SUPPORTING_CHARACTER_VARIANT_ID) priceIds.push(STRIPE_PRICE_IDS.supportingCharacter);
+        else if (item.variantId === AUDIOBOOK_VARIANT_ID) priceIds.push(STRIPE_PRICE_IDS.audiobookBasic);
+      }
+      if (p.selectedAddons?.coloring) priceIds.push(STRIPE_PRICE_IDS.coloring);
+
+      localStorage.setItem("mestar-pending-story", JSON.stringify({ ...p, orderId }));
+      setIsOpen(false);
+
+      const params = new URLSearchParams({
+        order_id: orderId,
+        prices: Array.from(new Set(priceIds)).join(","),
+        ...(p.customerEmail ? { email: p.customerEmail } : {}),
+      });
+      navigate(`/checkout?${params.toString()}`);
+    } catch (err) {
+      console.error("Stripe checkout error:", err);
+      toast.error("Something went wrong. Please try again.", { position: "top-center" });
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
+
 
   const handleUpsellPhoto = (variantId: string) => {
     setUpsellTargetVariant(variantId);
@@ -342,8 +424,11 @@ export const CartDrawer = () => {
                   <span className="text-lg font-display font-bold">Total</span>
                   <span className="text-xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
                 </div>
-                <Button onClick={handleCheckout} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display text-base" size="lg" disabled={items.length === 0 || isLoading || isSyncing || checkoutLoading}>
-                  {isLoading || isSyncing || checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ExternalLink className="w-4 h-4 mr-2" />Checkout ⭐</>}
+                <Button onClick={handleStripeCheckout} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display text-base" size="lg" disabled={items.length === 0 || stripeLoading}>
+                  {stripeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CreditCard className="w-4 h-4 mr-2" />Pay Securely with Card ⭐</>}
+                </Button>
+                <Button onClick={handleCheckout} variant="outline" className="w-full font-display text-sm" size="sm" disabled={items.length === 0 || isLoading || isSyncing || checkoutLoading}>
+                  {isLoading || isSyncing || checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ExternalLink className="w-4 h-4 mr-2" />Checkout via Shopify</>}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">⚡ Instant digital download after purchase</p>
               </div>
