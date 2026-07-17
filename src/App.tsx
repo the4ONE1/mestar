@@ -18,6 +18,8 @@ import Library from "./pages/Library";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Unsubscribe from "./pages/Unsubscribe";
 import Checkout from "./pages/Checkout";
+import ProductsIndex from "./pages/ProductsIndex";
+
 
 
 
