@@ -20,7 +20,7 @@ export type Database = {
           created_at: string
           customer_email: string | null
           id: string
-          order_id: string | null
+          order_id: string
           stars: number
         }
         Insert: {
@@ -28,7 +28,7 @@ export type Database = {
           created_at?: string
           customer_email?: string | null
           id?: string
-          order_id?: string | null
+          order_id: string
           stars: number
         }
         Update: {
@@ -36,14 +36,14 @@ export type Database = {
           created_at?: string
           customer_email?: string | null
           id?: string
-          order_id?: string | null
+          order_id?: string
           stars?: number
         }
         Relationships: [
           {
             foreignKeyName: "customer_ratings_order_id_fkey"
             columns: ["order_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "storybook_orders"
             referencedColumns: ["id"]
           },
@@ -218,6 +218,7 @@ export type Database = {
           illustration_storage_paths: Json | null
           pdf_storage_path: string | null
           pdf_url: string | null
+          recovery_token: string
           selected_addons: Json | null
           shopify_checkout_token: string | null
           shopify_order_id: string | null
@@ -247,6 +248,7 @@ export type Database = {
           illustration_storage_paths?: Json | null
           pdf_storage_path?: string | null
           pdf_url?: string | null
+          recovery_token?: string
           selected_addons?: Json | null
           shopify_checkout_token?: string | null
           shopify_order_id?: string | null
@@ -276,6 +278,7 @@ export type Database = {
           illustration_storage_paths?: Json | null
           pdf_storage_path?: string | null
           pdf_url?: string | null
+          recovery_token?: string
           selected_addons?: Json | null
           shopify_checkout_token?: string | null
           shopify_order_id?: string | null

@@ -1,49 +1,82 @@
-## Goal
-Replace the Shopify checkout entirely with Lovable's seamless Stripe payments. Shopify will no longer handle the purchase flow for MESTAR.
+## Fix Plan — Checkout & Order Flow Cleanup
 
-## What changes
+### 1. Hide the Hardback Bundle
+- Remove hardback from the cart / add-on UI so no one can add it.
+- Leave the Stripe product in place (it stays available for later reactivation).
+- Add a short code comment marking it "hidden — physical, needs shipping+tax rework before re-enabling."
 
-**1. Enable Stripe (seamless)**
-- Turn on Lovable's built-in Stripe (no account, no API keys needed).
-- Creates a fresh test environment immediately so we can test without real money.
-- Full compliance handling (tax + fraud + disputes handled by Stripe) will be set as the default since MESTAR is a digital product — you can change or turn this off per transaction later.
+### 2. Remove the Shopify checkout button
+- Cart drawer: delete the "Checkout via Shopify" button and its handler. Stripe becomes the only checkout path.
+- Keep the Shopify webhook handler in place so any in-flight Shopify orders still complete.
+- Fix the leftover copy on `/order-complete` that says *"Complete your purchase in the Shopify tab"* → change to a Stripe-friendly waiting message.
 
-**2. Recreate your products in Stripe**
-- Your existing Shopify/old Stripe price IDs will NOT carry over (seamless Stripe is a new environment).
-- I'll batch-create the MESTAR products (Layer 1 story, Layer 2 coloring, bundles, etc.) with the prices you provide.
-- Each product gets a Stripe tax code matched to "digital product / e-book" for correct tax handling.
+### 3. Expand Stripe webhook coverage
+Update `stripe-webhook` to also handle:
+- `checkout.session.expired` → mark order `expired`, trigger recovery email (see §5).
+- `checkout.session.async_payment_failed` and `payment_intent.payment_failed` → mark order `payment_failed` with error message.
+- `checkout.session.async_payment_succeeded` → same as `.completed` (for delayed payment methods).
+- Everything else: log and 200.
 
-**3. Replace the checkout flow**
-- Rip out the Shopify cart + Storefront API checkout (`createShopifyCart`, cart drawer's Shopify sync, checkout URL logic).
-- Replace with a Stripe Checkout session created from a Lovable Cloud edge function.
-- "Buy" / "Add to Cart" buttons will call the edge function and redirect to Stripe Checkout, then back to a success page that triggers story generation.
+### 4. Tighten `customer_ratings` security
+- RLS: allow anon INSERT only when `order_id` exists in `storybook_orders` AND `stars` is 1–5.
+- Add a unique constraint on `(order_id)` so one rating per order.
+- Frontend already gates rating behind download, so this just hardens the API.
 
-**4. Order fulfillment via webhook**
-- New edge function receives Stripe `checkout.session.completed` webhooks.
-- Writes the order to Lovable Cloud (new `orders` table with RLS + GRANTs).
-- Kicks off the AI story generation using the personalization data captured pre-checkout.
+### 5. Abandoned-cart recovery
+- New DB column: `storybook_orders.recovery_token uuid` (auto-generated on order create).
+- New edge function: `send-checkout-recovery` — sends an email with a resume link `/checkout?order_id=…&prices=…&recover=<token>`.
+- Webhook `checkout.session.expired` → sets status to `expired` and enqueues the recovery email (uses the existing transactional email pipeline).
+- New transactional template: `checkout-recovery` (subject: "Your storybook is one click away 💛").
 
-**5. Product data source**
-- Products render from a local config (or a `products` table in Lovable Cloud) instead of Shopify's Storefront API.
-- Product pages, images, and copy stay the same visually — only the data source changes.
+### 6. Order-complete polish
+- Show a friendlier "Payment received — starting your story" state as soon as the return_url loads, without waiting for webhook (informational only; real status still comes from polling).
+- Small "Test mode banner" already renders on `/checkout`; add it on `/order-complete` too during test purchases.
 
-**6. Disconnect Shopify**
-- After Stripe checkout is verified working end-to-end, disconnect the Shopify store from the project (does NOT delete anything in your Shopify admin — just removes the link).
-- Remove Shopify-related code, env references, and the MCP tool wiring that pointed at Shopify.
+### 7. Housekeeping
+- Update the memory index to note "Shopify checkout removed; Stripe is sole payment path."
+- Add short JSDoc comments on the checkout + webhook files describing the full flow (for future you or another agent).
 
-## What you need to do
-- Confirm you want to proceed (this is a big swap).
-- Have your product list + prices ready (name, price in USD, short description, whether it's one-time or subscription). If they match your current MESTAR lineup exactly, I can pull from what's already on the site.
+---
 
-## What stays the same
-- Your site design, personalization form, story engine (Layer 1 + Layer 2), AI generation, PDF delivery, custom domain `mestar.pro`.
-- Lovable Cloud backend, auth (if any), and the MCP agent integration (I'll repoint its order/product tools at the new Stripe + Cloud data).
+### Technical details
 
-## SEO / visibility note
-Switching checkout doesn't hurt SEO — product URLs stay the same. I'll keep JSON-LD `Product` + `Offer` schema on each product page so Google still shows price + availability in search results.
+**Files created**
+- `supabase/functions/send-checkout-recovery/index.ts`
+- `supabase/functions/_shared/transactional-email-templates/checkout-recovery.tsx`
+- `supabase/migrations/<ts>_checkout_hardening.sql` — adds `recovery_token`, `expired`/`payment_failed` allowed statuses, ratings constraint + policy tightening.
 
-## Technical section (for reference)
-- Tool calls: `payments--enable_stripe_payments` → `batch_create_product` (after enable) → `shopify--disconnect_store` at the end.
-- New files: `supabase/functions/create-checkout/index.ts`, `supabase/functions/stripe-webhook/index.ts`, `orders` migration with GRANTs + RLS.
-- Removed/gutted: `src/stores/cartStore.ts` Shopify sync bits, Shopify Storefront API helpers, `.lovable/mcp/manifest.json` Shopify tool refs.
-- Env: `STRIPE_SECRET_KEY` / webhook secret are managed by the seamless integration — you won't touch them.
+**Files edited**
+- `src/components/CartDrawer.tsx` — remove Shopify button + hardback add-on option.
+- `src/pages/OrderComplete.tsx` — fix pending copy, add "payment received" transitional state, add test-mode banner.
+- `src/components/Personalizer.tsx` (or the add-on selector) — hide hardback bundle.
+- `supabase/functions/stripe-webhook/index.ts` — handle expired / failed / async-succeeded events.
+- `supabase/functions/create-pending-order/index.ts` — return `recovery_token` alongside `orderId`.
+- `supabase/functions/_shared/transactional-email-templates/registry.ts` — register new template.
+- `supabase/config.toml` — add `[functions.send-checkout-recovery] verify_jwt = false`.
+
+**No changes** to: auth (you have none — correct for guest checkout), entitlement (one-off product), billing periods (no subs), Stripe product catalog (only visibility hidden), the shared Stripe utility.
+
+---
+
+### How to test end-to-end in the preview
+
+Once shipped, do this in the Lovable preview (not published):
+
+1. Open the site. Confirm the orange **"All payments made in the preview are in test mode"** banner shows at the top.
+2. Click **Create Your Story** → fill the form (any child name, age 5, pick a theme) → **Add to Cart**.
+3. Open the cart. You should see **only one button**: *"Pay Securely with Card ⭐"*. Click it.
+4. On `/checkout`, the Stripe form loads. Use test card:
+   - **Card number**: `4242 4242 4242 4242`
+   - **Expiry**: any future date (e.g. `12/34`)
+   - **CVC**: any 3 digits (e.g. `123`)
+   - **ZIP**: any 5 digits (e.g. `10001`)
+5. Click Pay. You'll land on `/order-complete`. First you'll see "Payment received — starting your story", then the progress stages, then within ~90 s the PDF opens in a new tab.
+6. Click **"Yes, I got my storybook!"** — a confirmation email goes to `mestar.orders@gmail.com`.
+7. Leave a 5-star rating → the same email will include the stars.
+
+**Testing the failure paths** (all use test cards from Stripe's sandbox):
+- **Declined card**: `4000 0000 0000 0002` → order should flip to `payment_failed` and stay recoverable.
+- **Abandoned checkout**: leave `/checkout` open, close the tab. After Stripe's 24 h expiry, you'll receive a recovery email at the address you used. (For faster local testing I can trigger it manually — just ask.)
+- **3D Secure**: `4000 0025 0000 3155` → walks you through the Stripe authentication modal, then completes.
+
+Nothing you do in the preview touches real money. Live mode only activates after you complete Stripe go-live from the Payments panel.

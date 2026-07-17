@@ -46,3 +46,6 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.send-checkout-recovery]
+verify_jwt = false

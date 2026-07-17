@@ -23,11 +23,14 @@ export function getStripe(): Promise<Stripe | null> {
 }
 
 // Map cart variantIds / addon flags to Stripe price lookup keys.
+// NOTE: hardback_bundle_onetime is intentionally NOT exposed here. It's a
+// physical product and Stripe's managed_payments (enabled on every session)
+// rejects physical goods. Re-enable only after adding a separate shipping +
+// tax_code path for it.
 export const STRIPE_PRICE_IDS = {
   storybook: "personalized_storybook_onetime",
   supportingCharacter: "supporting_character_addon_onetime",
   coloring: "coloring_pages_addon_onetime",
   audiobookBasic: "audiobook_basic_onetime",
   audiobookKaraoke: "audiobook_karaoke_onetime",
-  hardbackBundle: "hardback_bundle_onetime",
 } as const;
