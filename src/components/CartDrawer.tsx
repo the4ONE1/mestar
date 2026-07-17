@@ -13,7 +13,7 @@ import { toast } from "sonner";
 export const CartDrawer = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const { items, isLoading, isSyncing, updateQuantity, removeItem, syncCart, updatePersonalization, addItem } = useCartStore();
+  const { items, updateQuantity, removeItem, syncCart, updatePersonalization, addItem } = useCartStore();
   const [upsellDismissed, setUpsellDismissed] = useState(false);
   const hasSupportingAddon = items.some(i => i.variantId === SUPPORTING_CHARACTER_ADDON.variantId);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
