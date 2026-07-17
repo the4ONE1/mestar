@@ -12,9 +12,9 @@ interface Props {
 }
 
 /**
- * Single-click 5-star rating with optional comment.
- * Hovering a star previews; clicking submits immediately.
- * User can add a comment afterwards and hit "Send".
+ * Clear star rating input. Stars are required; the submit button is disabled
+ * until the customer selects a rating, and shows a helper message if they
+ * try to submit without one.
  */
 export default function RatingWidget({ orderId, customerEmail, onSubmitted }: Props) {
   const [hover, setHover] = useState(0);
@@ -22,21 +22,27 @@ export default function RatingWidget({ orderId, customerEmail, onSubmitted }: Pr
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [touched, setTouched] = useState(false);
 
-  const submitRating = async (stars: number, withComment: string = "") => {
-    if (submitting || done) return;
+  const isValid = selected >= 1 && selected <= 5;
+
+  const submitRating = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setTouched(true);
+    if (!isValid || submitting || done) return;
+
     setSubmitting(true);
     try {
       const { error } = await supabase.from("customer_ratings").insert({
         order_id: orderId,
         customer_email: customerEmail || null,
-        stars,
-        comment: withComment.trim() || null,
+        stars: selected,
+        comment: comment.trim() || null,
       });
       if (error) throw error;
       setDone(true);
       toast.success("Thanks for the rating! ⭐", { position: "top-center" });
-      onSubmitted?.(stars, withComment.trim());
+      onSubmitted?.(selected, comment.trim());
     } catch (e) {
       toast.error("Couldn't save your rating — please try again.");
       console.error(e);
@@ -60,16 +66,21 @@ export default function RatingWidget({ orderId, customerEmail, onSubmitted }: Pr
   const activeCount = hover || selected;
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 text-center">
+    <form
+      onSubmit={submitRating}
+      className="bg-card border border-border rounded-2xl p-6 text-center"
+      noValidate
+    >
       <h3 className="font-display text-lg font-bold mb-1">How was your experience?</h3>
       <p className="text-sm text-muted-foreground mb-4">
-        Tap a star — that's it. (Add a comment if you'd like.)
+        Select a star rating to continue. Your comment is optional.
       </p>
 
       <div
-        className="flex justify-center gap-1 mb-4"
+        className="flex justify-center gap-1 mb-2"
         onMouseLeave={() => setHover(0)}
         role="radiogroup"
+        aria-required="true"
         aria-label="Rate your experience from 1 to 5 stars"
       >
         {[1, 2, 3, 4, 5].map((n) => (
@@ -84,8 +95,7 @@ export default function RatingWidget({ orderId, customerEmail, onSubmitted }: Pr
             onFocus={() => setHover(n)}
             onClick={() => {
               setSelected(n);
-              // 1-click submit; comment can still be added after.
-              if (!selected) submitRating(n, "");
+              setTouched(true);
             }}
             className="p-1 transition-transform hover:scale-125 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
           >
@@ -100,33 +110,50 @@ export default function RatingWidget({ orderId, customerEmail, onSubmitted }: Pr
         ))}
       </div>
 
-      {selected > 0 && !done && (
-        <div className="space-y-3 mt-4">
-          <Textarea
-            placeholder="Tell other parents what you loved (optional)..."
-            value={comment}
-            onChange={(e) => setComment(e.target.value.slice(0, 500))}
-            className="text-sm"
-            rows={3}
-          />
-          <Button
-            onClick={() => submitRating(selected, comment)}
-            disabled={submitting}
-            size="sm"
-            variant="outline"
-            className="w-full"
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              "Add my comment"
-            )}
-          </Button>
-        </div>
+      <p className="text-sm font-medium mb-4" aria-live="polite">
+        {selected > 0 ? (
+          <span className="text-primary">
+            {selected} star{selected > 1 ? "s" : ""} selected
+          </span>
+        ) : (
+          <span className="text-muted-foreground">Tap a star to rate</span>
+        )}
+      </p>
+
+      {touched && !isValid && (
+        <p className="text-sm text-destructive mb-4" role="alert">
+          Please select a star rating before submitting.
+        </p>
       )}
-    </div>
+
+      <div className="space-y-3">
+        <Textarea
+          placeholder="Tell other parents what you loved (optional)..."
+          value={comment}
+          onChange={(e) => setComment(e.target.value.slice(0, 500))}
+          className="text-sm"
+          rows={3}
+          disabled={submitting}
+        />
+        <Button
+          type="submit"
+          disabled={submitting || !isValid}
+          size="lg"
+          className="w-full"
+        >
+          {submitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Sending...
+            </>
+          ) : (
+            <>
+              <Star className="h-4 w-4 mr-2" />
+              Submit Review
+            </>
+          )}
+        </Button>
+      </div>
+    </form>
   );
 }
