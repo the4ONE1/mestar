@@ -318,7 +318,7 @@ const OrderComplete = () => {
           <h2 className="font-display text-2xl font-bold mb-1">Order in progress!</h2>
           <p className="text-sm text-muted-foreground">
             {status === "pending_payment"
-              ? "Complete your purchase in the Shopify tab — we'll start creating your story the moment payment is confirmed."
+              ? "Payment received — we're just waiting on Stripe to confirm, then your story starts generating (usually a few seconds)."
               : "Payment confirmed! Your personalized PDF storybook is being created now."}
           </p>
         </div>

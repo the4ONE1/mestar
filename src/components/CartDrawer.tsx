@@ -427,10 +427,7 @@ export const CartDrawer = () => {
                 <Button onClick={handleStripeCheckout} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display text-base" size="lg" disabled={items.length === 0 || stripeLoading}>
                   {stripeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CreditCard className="w-4 h-4 mr-2" />Pay Securely with Card ⭐</>}
                 </Button>
-                <Button onClick={handleCheckout} variant="outline" className="w-full font-display text-sm" size="sm" disabled={items.length === 0 || isLoading || isSyncing || checkoutLoading}>
-                  {isLoading || isSyncing || checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ExternalLink className="w-4 h-4 mr-2" />Checkout via Shopify</>}
-                </Button>
-                <p className="text-xs text-center text-muted-foreground">⚡ Instant digital download after purchase</p>
+                <p className="text-xs text-center text-muted-foreground">⚡ Instant digital download after purchase • Secure checkout by Stripe</p>
               </div>
             </>
           )}
