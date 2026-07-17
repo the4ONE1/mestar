@@ -24,7 +24,7 @@ export function getStripe(): Promise<Stripe | null> {
 
 // Map cart variantIds / addon flags to Stripe price lookup keys.
 export const STRIPE_PRICE_IDS = {
-  storybook: "storybook_standard_onetime",
+  storybook: "personalized_storybook_onetime",
   supportingCharacter: "supporting_character_addon_onetime",
   coloring: "coloring_pages_addon_onetime",
   audiobookBasic: "audiobook_basic_onetime",
