@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, BookOpen, Download, ArrowLeft, Sparkles, CheckCircle2, Mail, Volume2 } from "lucide-react";
+import { Loader2, BookOpen, Download, ArrowLeft, Sparkles, CheckCircle2, Mail, Volume2, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
+import RatingWidget from "@/components/RatingWidget";
+import { supabase } from "@/integrations/supabase/client";
 
 const PROGRESS_STAGES = [
   { status: "pending_payment", label: "Waiting for payment to finish...", icon: "💳" },
@@ -31,7 +33,48 @@ const OrderComplete = () => {
   const [error, setError] = useState<string | null>(null);
   const [customerEmail, setCustomerEmail] = useState<string>("");
   const [hasAudiobook, setHasAudiobook] = useState<boolean>(false);
+  const [confirmed, setConfirmed] = useState<boolean>(false);
+  const [confirming, setConfirming] = useState<boolean>(false);
   const pdfOpenedRef = useRef(false);
+
+  const handleConfirmReceived = async (extra?: { stars?: number; comment?: string }) => {
+    if (!orderId || confirmed) return;
+    setConfirming(true);
+    try {
+      // 1. Mark order fulfilled in DB
+      const { data: ok, error: rpcErr } = await supabase.rpc("confirm_pdf_received", {
+        _order_id: orderId,
+      });
+      if (rpcErr) throw rpcErr;
+      if (!ok) throw new Error("Order not found or not complete yet");
+
+      // 2. Send fulfillment email to shop owner
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "order-fulfilled",
+          recipientEmail: "mestar.orders@gmail.com",
+          idempotencyKey: `order-fulfilled-${orderId}`,
+          templateData: {
+            orderId,
+            childName,
+            storyTitle,
+            customerEmail,
+            stars: extra?.stars,
+            ratingComment: extra?.comment,
+            confirmedAt: new Date().toISOString(),
+          },
+        },
+      });
+
+      setConfirmed(true);
+      toast.success("Thanks for confirming! 💛", { position: "top-center" });
+    } catch (e) {
+      console.error("Confirm failed:", e);
+      toast.error("Couldn't save confirmation — please try again.");
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   // Resolve which order id to poll
   useEffect(() => {
@@ -199,6 +242,52 @@ const OrderComplete = () => {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Confirm PDF received */}
+          {!confirmed ? (
+            <div className="bg-card border-2 border-primary/30 rounded-2xl p-6 mb-6 text-center">
+              <ThumbsUp className="h-8 w-8 text-primary mx-auto mb-2" />
+              <h3 className="font-display text-lg font-bold mb-1">Got your PDF?</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                One tap lets us know your order arrived safely.
+              </p>
+              <Button
+                onClick={() => handleConfirmReceived()}
+                disabled={confirming}
+                size="lg"
+                className="w-full"
+              >
+                {confirming ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Confirming...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-5 w-5 mr-2" />
+                    Yes, I got my storybook!
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : (
+            <div className="bg-primary/10 border border-primary/30 rounded-2xl p-6 mb-6 text-center">
+              <CheckCircle2 className="h-8 w-8 text-primary mx-auto mb-2" />
+              <p className="font-semibold">Delivery confirmed — thank you!</p>
+            </div>
+          )}
+
+          {/* 5-star rating */}
+          <div className="mb-6">
+            <RatingWidget
+              orderId={orderId}
+              customerEmail={customerEmail}
+              onSubmitted={(stars, comment) => {
+                // If they haven't confirmed yet, do it now with the rating attached.
+                if (!confirmed) handleConfirmReceived({ stars, comment });
+              }}
+            />
           </div>
 
           <div className="flex gap-4 justify-center">
