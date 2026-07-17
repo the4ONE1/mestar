@@ -70,7 +70,7 @@ const StoryPreview = ({ productHandle }: StoryPreviewProps) => {
                   size="lg"
                   className="bg-primary text-primary-foreground hover:bg-primary/90 font-display rounded-full px-8 py-6 shadow-lg shadow-primary/30 hover:scale-105 transition-all"
                 >
-                  <Link to={productHandle ? `/product/${productHandle}` : "#products"}>
+                  <Link to={productHandle ? `/product/${productHandle}#personalize` : "#products"}>
                     Create Their Story ⭐
                   </Link>
                 </Button>

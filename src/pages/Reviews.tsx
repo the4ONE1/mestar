@@ -106,7 +106,7 @@ const Reviews = () => {
           <p className="text-muted-foreground mb-4">Join these happy families!</p>
           {firstHandle ? (
             <Link
-              to={`/product/${firstHandle}`}
+              to={`/product/${firstHandle}#personalize`}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-display font-bold rounded-full px-8 py-3 hover:opacity-90 transition-opacity"
             >
               <Sparkles className="h-4 w-4" />

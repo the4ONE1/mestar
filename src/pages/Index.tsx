@@ -12,7 +12,7 @@ const ProductCard = ({ product }: { product: ShopifyProduct }) => {
   const priceNum = parseFloat(price.amount);
 
   return (
-    <Link to={`/product/${product.node.handle}`} className="group block h-full">
+    <Link to={`/product/${product.node.handle}#personalize`} className="group block h-full">
       <div className="relative h-full flex flex-col bg-card rounded-3xl overflow-hidden border border-border hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1">
         {/* Top ribbon */}
         <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider rounded-full px-2.5 py-1 shadow-md">
@@ -209,7 +209,7 @@ const Index = () => {
               size="lg"
               className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all duration-300"
             >
-              <Link to={`/product/${products[0].node.handle}`}>Start Your Magical Journey ⭐</Link>
+              <Link to={`/product/${products[0].node.handle}#personalize`}>Start Your Magical Journey ⭐</Link>
             </Button>
           ) : (
             <Button
@@ -345,7 +345,7 @@ const Index = () => {
               size="lg"
               className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:scale-105 transition-all"
             >
-              <Link to={`/product/${products[0].node.handle}`}>Create Your Story Now ⭐</Link>
+              <Link to={`/product/${products[0].node.handle}#personalize`}>Create Your Story Now ⭐</Link>
             </Button>
           ) : (
             <Button
