@@ -315,7 +315,7 @@ const Index = () => {
               <Star key={i} className="h-6 w-6 text-muted-foreground/40" />
             ))}
           </div>
-          <h2 className="font-display text-2xl font-bold mb-2">Be the first to leave a review</h2>
+          <h2 className="font-display text-2xl font-bold mb-2">Please leave a review, your input is how we improve! Let us know how we can provide the best customer experience possible</h2>
           <p className="text-muted-foreground mb-6">
             Your honest words help other families discover the magic. After your story is delivered,
             we'd love to hear what you and your little one thought.
