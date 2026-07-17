@@ -163,6 +163,59 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_cards: {
+        Row: {
+          amount_cents: number
+          buyer_email: string
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          note: string | null
+          recipient_email: string | null
+          redeemed_at: string | null
+          redeemed_order_id: string | null
+          stripe_session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          buyer_email: string
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          note?: string | null
+          recipient_email?: string | null
+          redeemed_at?: string | null
+          redeemed_order_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          buyer_email?: string
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          note?: string | null
+          recipient_email?: string | null
+          redeemed_at?: string | null
+          redeemed_order_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_cards_redeemed_order_id_fkey"
+            columns: ["redeemed_order_id"]
+            isOneToOne: false
+            referencedRelation: "storybook_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storybook_audio: {
         Row: {
           audio_storage_path: string | null
@@ -212,7 +265,10 @@ export type Database = {
           created_at: string
           customer_email: string | null
           error_message: string | null
+          failure_category: string | null
+          failure_hint: string | null
           fulfillment_confirmed_at: string | null
+          gift_card_code: string | null
           has_supporting_character: boolean | null
           id: string
           illustration_prompts: Json | null
@@ -222,6 +278,7 @@ export type Database = {
           recovery_token: string
           refund_reason: string | null
           refunded_at: string | null
+          retry_count: number
           selected_addons: Json | null
           shopify_checkout_token: string | null
           shopify_order_id: string | null
@@ -245,7 +302,10 @@ export type Database = {
           created_at?: string
           customer_email?: string | null
           error_message?: string | null
+          failure_category?: string | null
+          failure_hint?: string | null
           fulfillment_confirmed_at?: string | null
+          gift_card_code?: string | null
           has_supporting_character?: boolean | null
           id?: string
           illustration_prompts?: Json | null
@@ -255,6 +315,7 @@ export type Database = {
           recovery_token?: string
           refund_reason?: string | null
           refunded_at?: string | null
+          retry_count?: number
           selected_addons?: Json | null
           shopify_checkout_token?: string | null
           shopify_order_id?: string | null
@@ -278,7 +339,10 @@ export type Database = {
           created_at?: string
           customer_email?: string | null
           error_message?: string | null
+          failure_category?: string | null
+          failure_hint?: string | null
           fulfillment_confirmed_at?: string | null
+          gift_card_code?: string | null
           has_supporting_character?: boolean | null
           id?: string
           illustration_prompts?: Json | null
@@ -288,6 +352,7 @@ export type Database = {
           recovery_token?: string
           refund_reason?: string | null
           refunded_at?: string | null
+          retry_count?: number
           selected_addons?: Json | null
           shopify_checkout_token?: string | null
           shopify_order_id?: string | null
