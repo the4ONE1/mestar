@@ -84,7 +84,7 @@ const About = () => {
           <div className="text-center mt-10">
             {firstHandle ? (
               <Link
-                to={`/product/${firstHandle}`}
+                to={`/product/${firstHandle}#personalize`}
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-display font-bold rounded-full px-8 py-3 hover:opacity-90 transition-opacity"
               >
                 <Sparkles className="h-4 w-4" />

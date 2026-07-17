@@ -18,6 +18,7 @@ import Library from "./pages/Library";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Unsubscribe from "./pages/Unsubscribe";
 import Checkout from "./pages/Checkout";
+import ProductsIndex from "./pages/ProductsIndex";
 
 
 
@@ -34,6 +35,7 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/product/:handle" element={<ProductDetail />} />
+          <Route path="/products" element={<ProductsIndex />} />
 
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
