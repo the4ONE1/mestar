@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Loader2, Star, Upload, CheckCircle2, Sparkles, ShieldCheck, Download, Clock, Heart, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
+import StoryPreview from "@/components/StoryPreview";
 import { BASE_PRICE, SUPPORTING_CHARACTER_PRICE, AUDIOBOOK_PRICE, AUDIOBOOK_ADDON } from "@/lib/products";
 
 const STORY_THEMES = [
