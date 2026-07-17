@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.is_pending_order(uuid) TO anon, authenticated;
