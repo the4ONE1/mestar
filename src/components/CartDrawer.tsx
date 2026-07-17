@@ -3,10 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2, Upload, Users, CheckCircle2, X, CreditCard } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, Loader2, Upload, Users, CheckCircle2, X, CreditCard } from "lucide-react";
 import { useCartStore, type ShopifyProduct } from "@/stores/cartStore";
 import { supabase } from "@/integrations/supabase/client";
-import { attachCartAttributes } from "@/lib/shopify";
 import { SUPPORTING_CHARACTER_ADDON, SUPPORTING_CHARACTER_VARIANT_ID, AUDIOBOOK_VARIANT_ID } from "@/lib/products";
 import { STRIPE_PRICE_IDS } from "@/lib/stripe";
 import { toast } from "sonner";
@@ -14,7 +13,7 @@ import { toast } from "sonner";
 export const CartDrawer = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const { items, isLoading, isSyncing, updateQuantity, removeItem, ensureCheckoutUrl, syncCart, updatePersonalization, addItem } = useCartStore();
+  const { items, isLoading, isSyncing, updateQuantity, removeItem, syncCart, updatePersonalization, addItem } = useCartStore();
   const [upsellDismissed, setUpsellDismissed] = useState(false);
   const hasSupportingAddon = items.some(i => i.variantId === SUPPORTING_CHARACTER_ADDON.variantId);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -24,123 +23,8 @@ export const CartDrawer = () => {
 
   useEffect(() => { if (isOpen) syncCart(); }, [isOpen, syncCart]);
 
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-
-  const handleCheckout = async () => {
-    // CRITICAL: open the new tab SYNCHRONOUSLY inside the click handler.
-    // If we open it after awaits, browsers (especially mobile Safari) block it
-    // as a non-user-initiated popup, and clicking checkout appears to "do nothing".
-    const checkoutTab = window.open("about:blank", "_blank");
-
-    setCheckoutLoading(true);
-    try {
-      const cachedCheckoutUrl = useCartStore.getState().checkoutUrl;
-      // Navigate the popup immediately to the cached URL so it doesn't sit empty.
-      if (checkoutTab && cachedCheckoutUrl) {
-        checkoutTab.location.href = cachedCheckoutUrl;
-      }
-
-      const checkoutUrl = (await ensureCheckoutUrl()) || cachedCheckoutUrl;
-      if (!checkoutUrl) {
-        if (checkoutTab) checkoutTab.close();
-        toast.error("Checkout needs a fresh session", {
-          description: "Please tap checkout again. Your cart is safe and we'll refresh it automatically.",
-          position: "top-center",
-        });
-        return;
-      }
-
-      // Make sure the popup ends up at the most current checkout URL
-      if (checkoutTab) {
-        checkoutTab.location.href = checkoutUrl;
-      } else {
-        // Popup was blocked — fall back to navigating the current tab
-        window.location.href = checkoutUrl;
-        return;
-      }
-
-      // Find the personalized item to create a pending order from
-      const personalized = items.find(i => i.personalization);
-      let internalOrderId: string | null = null;
-
-      if (personalized?.personalization) {
-        const p = personalized.personalization;
-
-        // Upload customer photos to private bucket so the AI can use them as likeness references
-        const uploadDataUrl = async (dataUrl: string, label: string): Promise<string | null> => {
-          try {
-            if (!dataUrl?.startsWith("data:")) return null;
-            const res = await fetch(dataUrl);
-            const blob = await res.blob();
-            const ext = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
-            const path = `${crypto.randomUUID()}-${label}.${ext}`;
-            const { error: upErr } = await supabase.storage
-              .from("customer-photos")
-              .upload(path, blob, { contentType: blob.type, upsert: false });
-            if (upErr) {
-              console.error(`${label} photo upload failed:`, upErr);
-              return null;
-            }
-            return path;
-          } catch (e) {
-            console.error(`${label} photo upload exception:`, e);
-            return null;
-          }
-        };
-
-        const childPhotoPath = p.photoUrl ? await uploadDataUrl(p.photoUrl, "child") : null;
-        const supportingPhotoPath = p.supportingCharacterPhotoUrl
-          ? await uploadDataUrl(p.supportingCharacterPhotoUrl, "supporting")
-          : null;
-
-          const { data: orderData, error: orderError } = await supabase.functions.invoke("create-pending-order", {
-            body: {
-              childName: p.childName,
-              childAge: p.childAge,
-              theme: p.theme,
-              strength: p.strength || "",
-              supportingCharacterName: p.supportingCharacterName || "",
-              hasSupportingCharacter: !!p.supportingCharacterPhotoUrl,
-              selectedAddons: p.selectedAddons || {},
-              customerEmail: p.customerEmail || "",
-              childPhotoPath,
-              supportingCharacterPhotoPath: supportingPhotoPath,
-            },
-          });
-
-        if (orderError) {
-          console.error("Failed to create pending order:", orderError);
-        } else if (orderData?.orderId) {
-          internalOrderId = orderData.orderId as string;
-
-          // Attach order id to Shopify cart so the webhook can match payment back
-          const cartId = useCartStore.getState().cartId;
-          if (cartId) {
-            await attachCartAttributes(cartId, [
-              { key: "mestar_order_id", value: internalOrderId },
-            ]);
-          }
-
-          // Keep local copy as fallback (also useful for /order-complete to find by id)
-          localStorage.setItem("mestar-pending-story", JSON.stringify({ ...p, orderId: internalOrderId }));
-        }
-      }
-
-      setIsOpen(false);
-      // Send user to order-complete page with order id so it can poll
-      if (internalOrderId) {
-        navigate(`/order-complete?order_id=${internalOrderId}`);
-      } else {
-        navigate("/order-complete");
-      }
-    } catch (err) {
-      console.error("Checkout error:", err);
-      if (checkoutTab) checkoutTab.close();
-      toast.error("Something went wrong. Please try again.", { position: "top-center" });
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
+  // Shopify checkout was removed in favor of Stripe embedded checkout.
+  // handleStripeCheckout below is the only payment path from the cart.
 
   const [stripeLoading, setStripeLoading] = useState(false);
 
