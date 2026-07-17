@@ -27,8 +27,77 @@ Deno.serve(async (req) => {
     return new Response("Invalid signature", { status: 400 });
   }
 
-  // Only interested in successful checkouts
-  if (event.type !== "checkout.session.completed") {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  // Handle failures / expirations up front — no fulfillment pipeline needed.
+  if (
+    event.type === "checkout.session.expired" ||
+    event.type === "checkout.session.async_payment_failed" ||
+    event.type === "payment_intent.payment_failed"
+  ) {
+    const obj: any = event.data.object;
+    const orderId: string | undefined =
+      obj.metadata?.mestar_order_id ||
+      obj.session?.metadata?.mestar_order_id;
+    if (!orderId) {
+      return new Response(JSON.stringify({ ok: true, ignored: "no_order_id" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    const { data: existing } = await supabase
+      .from("storybook_orders")
+      .select("id, status, customer_email, recovery_token, selected_addons, child_name")
+      .eq("id", orderId)
+      .maybeSingle();
+    if (!existing || existing.status !== "pending_payment") {
+      return new Response(JSON.stringify({ ok: true, ignored: "not_pending" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const newStatus = event.type === "checkout.session.expired" ? "expired" : "payment_failed";
+    const errorMessage =
+      event.type === "payment_intent.payment_failed"
+        ? obj.last_payment_error?.message || "Payment failed"
+        : event.type === "checkout.session.async_payment_failed"
+        ? "Async payment failed"
+        : "Checkout expired";
+
+    await supabase
+      .from("storybook_orders")
+      .update({ status: newStatus, error_message: errorMessage })
+      .eq("id", orderId);
+
+    // For expirations, fire a customer-friendly recovery email
+    if (newStatus === "expired" && existing.customer_email) {
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-checkout-recovery`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({ orderId }),
+        });
+      } catch (e) {
+        console.error("recovery email dispatch failed:", e);
+      }
+    }
+    return new Response(JSON.stringify({ ok: true, status: newStatus }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  // Only fulfill on successful (sync or async) checkouts
+  if (
+    event.type !== "checkout.session.completed" &&
+    event.type !== "checkout.session.async_payment_succeeded"
+  ) {
     return new Response(JSON.stringify({ received: true, ignored: event.type }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
