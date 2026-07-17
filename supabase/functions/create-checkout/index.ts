@@ -11,7 +11,9 @@ interface RequestBody {
   customerEmail?: string;
   returnUrl: string;
   environment: StripeEnv;
+  recoveryToken?: string;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
