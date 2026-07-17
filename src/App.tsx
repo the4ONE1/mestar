@@ -33,7 +33,10 @@ const AppContent = () => {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/product" element={<ProductsIndex />} />
+          <Route path="/products" element={<ProductsIndex />} />
           <Route path="/product/:handle" element={<ProductDetail />} />
+
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/reviews" element={<Reviews />} />
