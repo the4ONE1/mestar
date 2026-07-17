@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2, Upload, Users, CheckCircle2, X } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2, Upload, Users, CheckCircle2, X, CreditCard } from "lucide-react";
 import { useCartStore, type ShopifyProduct } from "@/stores/cartStore";
 import { supabase } from "@/integrations/supabase/client";
 import { attachCartAttributes } from "@/lib/shopify";
-import { SUPPORTING_CHARACTER_ADDON } from "@/lib/products";
+import { SUPPORTING_CHARACTER_ADDON, SUPPORTING_CHARACTER_VARIANT_ID, AUDIOBOOK_VARIANT_ID } from "@/lib/products";
+import { STRIPE_PRICE_IDS } from "@/lib/stripe";
 import { toast } from "sonner";
 
 export const CartDrawer = () => {
