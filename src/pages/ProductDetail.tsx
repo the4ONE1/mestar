@@ -64,6 +64,16 @@ const ProductDetail = () => {
       .finally(() => setLoading(false));
   }, [handle]);
 
+  // Auto-scroll to personalization form when arriving via /product/...#personalize
+  useEffect(() => {
+    if (loading || !product) return;
+    if (typeof window !== "undefined" && window.location.hash === "#personalize") {
+      setTimeout(() => {
+        personalizationRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 200);
+    }
+  }, [loading, product]);
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
