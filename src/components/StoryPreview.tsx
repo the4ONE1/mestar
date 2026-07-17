@@ -28,6 +28,20 @@ import dino1 from "/images/samples/dino-1.jpg";
 import dino2 from "/images/samples/dino-2.jpg";
 import dino3 from "/images/samples/dino-3.jpg";
 import dino4 from "/images/samples/dino-4.jpg";
+// Coloring page samples (one per theme)
+import coloringFairy from "/images/samples/coloring-fairy.jpg";
+import coloringOcean from "/images/samples/coloring-ocean.jpg";
+import coloringPrince from "/images/samples/coloring-prince.jpg";
+import coloringSpace from "/images/samples/coloring-space.jpg";
+import coloringDino from "/images/samples/coloring-dino.jpg";
+
+const THEME_COLORING: Record<string, string> = {
+  "Fairy Tale": coloringFairy,
+  "Ocean Adventure & Pirates": coloringOcean,
+  "Prince & Princess": coloringPrince,
+  "Outer Space": coloringSpace,
+  Dinosaurs: coloringDino,
+};
 
 type SamplePage = { src: string; alt: string; pageNum: number };
 
@@ -162,16 +176,27 @@ const StoryPreview = ({ productHandle, theme, embedded = false }: StoryPreviewPr
             />
 
             {isLastPage && (
-              <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4 p-6 text-center">
-                <Lock className="h-12 w-12 text-primary" />
+              <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center gap-3 p-5 text-center">
+                <Lock className="h-10 w-10 text-primary" />
                 <h3 className="font-display text-2xl font-bold">How does it end?</h3>
-                <p className="text-muted-foreground text-sm max-w-xs">
-                  Only your child can solve the mystery! Create their one of a kind custom story to discover the ending.
+                <p className="text-muted-foreground text-xs max-w-xs">
+                  Only your child can solve the mystery! Every story also comes with a matching coloring page:
                 </p>
+                <div className="rounded-xl border-2 border-primary/40 bg-white p-1 shadow-lg">
+                  <img
+                    src={THEME_COLORING[activeTheme] ?? coloringFairy}
+                    alt={`${activeTheme} coloring page sample`}
+                    className="w-28 h-28 sm:w-32 sm:h-32 object-contain rounded-md"
+                    loading="lazy"
+                    width={256}
+                    height={256}
+                  />
+                  <p className="text-[10px] font-bold text-primary mt-1">Free coloring page included</p>
+                </div>
                 <Button
                   asChild
                   size="lg"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-display rounded-full px-8 py-6 shadow-lg shadow-primary/30 hover:scale-105 transition-all"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-display rounded-full px-6 py-5 shadow-lg shadow-primary/30 hover:scale-105 transition-all"
                 >
                   <Link to={productHandle ? `/product/${productHandle}#personalize` : "#products"}>
                     Create Their Story ⭐
