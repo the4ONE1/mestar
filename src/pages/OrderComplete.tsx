@@ -188,7 +188,9 @@ const OrderComplete = () => {
   if (pdfUrl) {
     return (
       <div className="min-h-screen py-8">
+        <PaymentTestModeBanner />
         <div className="container max-w-lg">
+
           <div className="text-center mb-8">
             <p className="text-5xl mb-4">🎉</p>
             <h1 className="font-display text-3xl font-bold mb-2">
