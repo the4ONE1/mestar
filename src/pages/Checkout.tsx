@@ -11,6 +11,7 @@ const Checkout = () => {
   const orderId = searchParams.get("order_id");
   const priceIdsRaw = searchParams.get("prices") || "";
   const email = searchParams.get("email") || undefined;
+  const recoveryToken = searchParams.get("recover") || undefined;
   const priceIds = priceIdsRaw.split(",").filter(Boolean);
   const [ready, setReady] = useState(false);
 
@@ -43,10 +44,12 @@ const Checkout = () => {
           priceIds={priceIds}
           customerEmail={email}
           returnUrl={returnUrl}
+          recoveryToken={recoveryToken}
         />
       </div>
     </>
   );
+
 };
 
 export default Checkout;

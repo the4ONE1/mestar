@@ -93,6 +93,40 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Handle refunds — revoke PDF/audiobook access.
+  if (event.type === "charge.refunded" || event.type === "charge.refund.updated") {
+    const charge: any = event.data.object;
+    const paymentIntentId: string | undefined =
+      charge.payment_intent || charge.charge?.payment_intent;
+    if (!paymentIntentId) {
+      return new Response(JSON.stringify({ ok: true, ignored: "no_payment_intent" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    const { data: refundedOrder } = await supabase
+      .from("storybook_orders")
+      .select("id, status, refunded_at")
+      .eq("stripe_payment_intent_id", paymentIntentId)
+      .maybeSingle();
+    if (refundedOrder && !refundedOrder.refunded_at) {
+      await supabase
+        .from("storybook_orders")
+        .update({
+          status: "refunded",
+          refunded_at: new Date().toISOString(),
+          refund_reason: charge.refunds?.data?.[0]?.reason || "refunded_via_stripe",
+          access_expires_at: new Date().toISOString(), // expire immediately
+        })
+        .eq("id", refundedOrder.id);
+      console.log("Refund processed, access revoked for order", refundedOrder.id);
+    }
+    return new Response(JSON.stringify({ ok: true, refunded: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   // Only fulfill on successful (sync or async) checkouts
   if (
     event.type !== "checkout.session.completed" &&
@@ -103,6 +137,7 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json" },
     });
   }
+
 
   const session = event.data.object;
   const orderId: string | undefined = session.metadata?.mestar_order_id;

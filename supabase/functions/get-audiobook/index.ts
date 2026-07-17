@@ -35,10 +35,10 @@ serve(async (req) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // Validate the order: must exist, be complete, and have audiobook addon
+  // Validate the order: must exist, be complete, have audiobook addon, and not be refunded/expired
   const { data: order, error: orderErr } = await supabase
     .from("storybook_orders")
-    .select("id, status, story_title, child_name, selected_addons")
+    .select("id, status, story_title, child_name, selected_addons, completed_at, refunded_at, access_expires_at")
     .eq("id", orderId)
     .maybeSingle();
 
@@ -56,6 +56,25 @@ serve(async (req) => {
       { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
+
+  // Access control: block refunded orders and links older than 30 days
+  const ACCESS_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+  const explicitExpiry = order.access_expires_at ? new Date(order.access_expires_at).getTime() : null;
+  const impliedExpiry = order.completed_at ? new Date(order.completed_at).getTime() + ACCESS_WINDOW_MS : null;
+  const expiresAt = explicitExpiry ?? impliedExpiry;
+  if (order.refunded_at) {
+    return new Response(
+      JSON.stringify({ error: "This order was refunded. Access has been revoked." }),
+      { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+  if (expiresAt !== null && Date.now() > expiresAt) {
+    return new Response(
+      JSON.stringify({ error: "Download link expired. Please contact support if you need access." }),
+      { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
 
   // Load pages
   const { data: pages, error: pagesErr } = await supabase

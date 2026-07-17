@@ -5,7 +5,9 @@ import { Loader2, BookOpen, Download, ArrowLeft, Sparkles, CheckCircle2, Mail, V
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
 import RatingWidget from "@/components/RatingWidget";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { supabase } from "@/integrations/supabase/client";
+
 
 const PROGRESS_STAGES = [
   { status: "pending_payment", label: "Waiting for payment to finish...", icon: "💳" },
@@ -186,7 +188,9 @@ const OrderComplete = () => {
   if (pdfUrl) {
     return (
       <div className="min-h-screen py-8">
+        <PaymentTestModeBanner />
         <div className="container max-w-lg">
+
           <div className="text-center mb-8">
             <p className="text-5xl mb-4">🎉</p>
             <h1 className="font-display text-3xl font-bold mb-2">
@@ -304,7 +308,9 @@ const OrderComplete = () => {
 
   // ── Generating / Waiting State ──
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4">
+      <PaymentTestModeBanner />
+
       <SEO
         title="Your Order — MESTAR"
         description="Your personalized MESTAR PDF storybook is being created right now. We'll email your download link as soon as it's ready — usually within minutes."

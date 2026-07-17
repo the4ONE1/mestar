@@ -6,6 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const ACCESS_WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -29,7 +31,7 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const { data: order, error } = await supabase
     .from("storybook_orders")
-    .select("id, status, story_title, pdf_url, child_name, customer_email, selected_addons")
+    .select("id, status, story_title, pdf_url, child_name, customer_email, selected_addons, completed_at, refunded_at, access_expires_at")
     .eq("id", orderId)
     .maybeSingle();
 
@@ -41,15 +43,30 @@ serve(async (req) => {
   }
 
   const addons = (order.selected_addons as Record<string, boolean>) || {};
+
+  // Access control: expired or refunded orders should not return the PDF URL.
+  const now = Date.now();
+  const explicitExpiry = order.access_expires_at ? new Date(order.access_expires_at).getTime() : null;
+  const impliedExpiry = order.completed_at
+    ? new Date(order.completed_at).getTime() + ACCESS_WINDOW_MS
+    : null;
+  const expiresAt = explicitExpiry ?? impliedExpiry;
+  const isRefunded = !!order.refunded_at;
+  const isExpired = expiresAt !== null && now > expiresAt;
+  const accessBlocked = isRefunded || isExpired;
+
   return new Response(JSON.stringify({
     id: order.id,
     status: order.status,
     story_title: order.story_title,
-    pdf_url: order.pdf_url,
+    pdf_url: accessBlocked ? null : order.pdf_url,
     child_name: order.child_name,
     customer_email: order.customer_email,
     has_audiobook: !!addons.audiobook,
     has_error: order.status === "failed",
+    access_blocked: accessBlocked,
+    access_blocked_reason: isRefunded ? "refunded" : isExpired ? "expired" : null,
+    expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
   }), {
     status: 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
