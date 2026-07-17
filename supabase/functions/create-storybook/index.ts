@@ -541,7 +541,7 @@ serve(async (req) => {
         const illusRef = bytesToDataUrl(illustrations[i] || null, "image/png");
         const refs = illusRef ? [illusRef] : [];
         const img = await generateImage(
-          withColoringLock(prompts[i], refs.length > 0),
+          withColoringLock(prompts[i], refs.length > 0, childAge),
           LOVABLE_API_KEY,
           refs,
           `coloring ${i + 1}/5`
