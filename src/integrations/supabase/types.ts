@@ -203,6 +203,7 @@ export type Database = {
       }
       storybook_orders: {
         Row: {
+          access_expires_at: string | null
           child_age: string
           child_name: string
           child_photo_path: string | null
@@ -219,6 +220,8 @@ export type Database = {
           pdf_storage_path: string | null
           pdf_url: string | null
           recovery_token: string
+          refund_reason: string | null
+          refunded_at: string | null
           selected_addons: Json | null
           shopify_checkout_token: string | null
           shopify_order_id: string | null
@@ -233,6 +236,7 @@ export type Database = {
           theme: string
         }
         Insert: {
+          access_expires_at?: string | null
           child_age: string
           child_name: string
           child_photo_path?: string | null
@@ -249,6 +253,8 @@ export type Database = {
           pdf_storage_path?: string | null
           pdf_url?: string | null
           recovery_token?: string
+          refund_reason?: string | null
+          refunded_at?: string | null
           selected_addons?: Json | null
           shopify_checkout_token?: string | null
           shopify_order_id?: string | null
@@ -263,6 +269,7 @@ export type Database = {
           theme: string
         }
         Update: {
+          access_expires_at?: string | null
           child_age?: string
           child_name?: string
           child_photo_path?: string | null
@@ -279,6 +286,8 @@ export type Database = {
           pdf_storage_path?: string | null
           pdf_url?: string | null
           recovery_token?: string
+          refund_reason?: string | null
+          refunded_at?: string | null
           selected_addons?: Json | null
           shopify_checkout_token?: string | null
           shopify_order_id?: string | null
