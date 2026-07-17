@@ -17,6 +17,7 @@ import OrderComplete from "./pages/OrderComplete";
 import Library from "./pages/Library";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Unsubscribe from "./pages/Unsubscribe";
+import Checkout from "./pages/Checkout";
 
 
 
@@ -35,6 +36,7 @@ const AppContent = () => {
           <Route path="/faq" element={<FAQ />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/why-read-together" element={<WhyReadTogether />} />
+          <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-complete" element={<OrderComplete />} />
           <Route path="/library/:orderId" element={<Library />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
