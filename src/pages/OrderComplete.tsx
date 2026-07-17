@@ -41,12 +41,13 @@ const OrderComplete = () => {
     if (!orderId || confirmed) return;
     setConfirming(true);
     try {
-      // 1. Mark order fulfilled in DB
-      const { data: ok, error: rpcErr } = await supabase.rpc("confirm_pdf_received", {
-        _order_id: orderId,
-      });
+      // 1. Mark order fulfilled in DB (via edge function using service role)
+      const { data: confirmData, error: rpcErr } = await supabase.functions.invoke(
+        "confirm-pdf-received",
+        { body: { order_id: orderId } },
+      );
       if (rpcErr) throw rpcErr;
-      if (!ok) throw new Error("Order not found or not complete yet");
+      if (!confirmData?.ok) throw new Error("Order not found or not complete yet");
 
       // 2. Send fulfillment email to shop owner
       await supabase.functions.invoke("send-transactional-email", {
