@@ -18,7 +18,7 @@ import Library from "./pages/Library";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Unsubscribe from "./pages/Unsubscribe";
 import Checkout from "./pages/Checkout";
-import ProductsIndex from "./pages/ProductsIndex";
+
 
 
 
@@ -33,8 +33,6 @@ const AppContent = () => {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/product" element={<ProductsIndex />} />
-          <Route path="/products" element={<ProductsIndex />} />
           <Route path="/product/:handle" element={<ProductDetail />} />
 
           <Route path="/about" element={<About />} />
