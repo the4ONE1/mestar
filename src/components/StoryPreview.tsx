@@ -180,7 +180,7 @@ const StoryPreview = ({ productHandle, theme, embedded = false }: StoryPreviewPr
                 <Lock className="h-10 w-10 text-primary" />
                 <h3 className="font-display text-2xl font-bold">How does it end?</h3>
                 <p className="text-muted-foreground text-xs max-w-xs">
-                  Only your child can solve the mystery! Every story also comes with a matching coloring page:
+                  Only your child can solve the mystery! Add matching coloring pages — one for every scene in your story:
                 </p>
                 <div className="rounded-xl border-2 border-primary/40 bg-white p-1 shadow-lg">
                   <img
@@ -191,7 +191,8 @@ const StoryPreview = ({ productHandle, theme, embedded = false }: StoryPreviewPr
                     width={256}
                     height={256}
                   />
-                  <p className="text-[10px] font-bold text-primary mt-1">Free coloring page included</p>
+                  <p className="text-[10px] font-bold text-primary mt-1">Coloring pages add-on</p>
+                  <p className="text-[9px] text-muted-foreground mt-0.5 max-w-[8rem] leading-tight">One per scene — longer stories (older kids) get more pages</p>
                 </div>
                 <Button
                   asChild
