@@ -244,6 +244,52 @@ const OrderComplete = () => {
             </div>
           </div>
 
+          {/* Confirm PDF received */}
+          {!confirmed ? (
+            <div className="bg-card border-2 border-primary/30 rounded-2xl p-6 mb-6 text-center">
+              <ThumbsUp className="h-8 w-8 text-primary mx-auto mb-2" />
+              <h3 className="font-display text-lg font-bold mb-1">Got your PDF?</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                One tap lets us know your order arrived safely.
+              </p>
+              <Button
+                onClick={() => handleConfirmReceived()}
+                disabled={confirming}
+                size="lg"
+                className="w-full"
+              >
+                {confirming ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Confirming...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-5 w-5 mr-2" />
+                    Yes, I got my storybook!
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : (
+            <div className="bg-primary/10 border border-primary/30 rounded-2xl p-6 mb-6 text-center">
+              <CheckCircle2 className="h-8 w-8 text-primary mx-auto mb-2" />
+              <p className="font-semibold">Delivery confirmed — thank you!</p>
+            </div>
+          )}
+
+          {/* 5-star rating */}
+          <div className="mb-6">
+            <RatingWidget
+              orderId={orderId}
+              customerEmail={customerEmail}
+              onSubmitted={(stars, comment) => {
+                // If they haven't confirmed yet, do it now with the rating attached.
+                if (!confirmed) handleConfirmReceived({ stars, comment });
+              }}
+            />
+          </div>
+
           <div className="flex gap-4 justify-center">
             <Button onClick={() => navigate("/")} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
