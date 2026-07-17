@@ -501,7 +501,24 @@ const ProductDetail = () => {
                     {STORY_THEMES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
+
+                {/* Live sample preview for the selected theme */}
+                {theme && (
+                  <div className="mt-4 rounded-2xl border border-border bg-card/40 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-bold text-primary">
+                        Sample: {theme}
+                      </span>
+                    </div>
+                    <StoryPreview theme={theme} productHandle={handle} embedded />
+                    <p className="text-center text-[11px] text-muted-foreground mt-3">
+                      Sample only — your child's book will star them by name & photo.
+                    </p>
+                  </div>
+                )}
               </div>
+
 
               <div className="space-y-2">
                 <Label htmlFor="strength" className="font-medium">Strength to Nurture</Label>
