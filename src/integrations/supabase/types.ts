@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          customer_email: string | null
+          id: string
+          order_id: string | null
+          stars: number
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          customer_email?: string | null
+          id?: string
+          order_id?: string | null
+          stars: number
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          customer_email?: string | null
+          id?: string
+          order_id?: string | null
+          stars?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_ratings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "storybook_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -176,6 +211,7 @@ export type Database = {
           created_at: string
           customer_email: string | null
           error_message: string | null
+          fulfillment_confirmed_at: string | null
           has_supporting_character: boolean | null
           id: string
           illustration_prompts: Json | null
@@ -189,6 +225,8 @@ export type Database = {
           story_text: string | null
           story_title: string | null
           strength: string | null
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           supporting_character_name: string | null
           supporting_character_photo_path: string | null
           theme: string
@@ -202,6 +240,7 @@ export type Database = {
           created_at?: string
           customer_email?: string | null
           error_message?: string | null
+          fulfillment_confirmed_at?: string | null
           has_supporting_character?: boolean | null
           id?: string
           illustration_prompts?: Json | null
@@ -215,6 +254,8 @@ export type Database = {
           story_text?: string | null
           story_title?: string | null
           strength?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           supporting_character_name?: string | null
           supporting_character_photo_path?: string | null
           theme: string
@@ -228,6 +269,7 @@ export type Database = {
           created_at?: string
           customer_email?: string | null
           error_message?: string | null
+          fulfillment_confirmed_at?: string | null
           has_supporting_character?: boolean | null
           id?: string
           illustration_prompts?: Json | null
@@ -241,6 +283,8 @@ export type Database = {
           story_text?: string | null
           story_title?: string | null
           strength?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           supporting_character_name?: string | null
           supporting_character_photo_path?: string | null
           theme?: string
@@ -276,6 +320,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_pdf_received: { Args: { _order_id: string }; Returns: boolean }
       create_pending_order:
         | {
             Args: {
