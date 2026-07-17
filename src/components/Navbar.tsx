@@ -11,6 +11,9 @@ export const Navbar = () => {
           <span className="font-display text-xl font-bold text-foreground">My <span className="text-star-yellow">Star</span> Stories</span>
         </Link>
         <div className="flex items-center gap-4">
+          <Link to="/products" className="text-sm font-bold text-primary hover:text-primary/80 transition-colors">
+            Shop
+          </Link>
           <Link to="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             About
           </Link>
@@ -20,7 +23,7 @@ export const Navbar = () => {
           <Link to="/reviews" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Reviews
           </Link>
-          <Link to="/why-read-together" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link to="/why-read-together" className="hidden sm:inline text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Why Read
           </Link>
           <CartDrawer />
