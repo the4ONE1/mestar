@@ -308,7 +308,9 @@ const OrderComplete = () => {
 
   // ── Generating / Waiting State ──
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4">
+      <PaymentTestModeBanner />
+
       <SEO
         title="Your Order — MESTAR"
         description="Your personalized MESTAR PDF storybook is being created right now. We'll email your download link as soon as it's ready — usually within minutes."
