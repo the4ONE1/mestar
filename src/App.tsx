@@ -20,6 +20,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Unsubscribe from "./pages/Unsubscribe";
 import Checkout from "./pages/Checkout";
 import ProductsIndex from "./pages/ProductsIndex";
+import ProductLanding from "./pages/ProductLanding";
 
 
 
@@ -38,6 +39,7 @@ const AppContent = () => {
           <Route path="/" element={<Index />} />
           <Route path="/product/:handle" element={<ProductDetail />} />
           <Route path="/products" element={<ProductsIndex />} />
+          <Route path="/products/:slug" element={<ProductLanding />} />
 
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />

@@ -9,6 +9,7 @@ import {
 } from "@/lib/products";
 
 type Product = {
+  slug: string;
   title: string;
   price: number;
   icon: React.ComponentType<{ className?: string }>;
@@ -20,6 +21,7 @@ type Product = {
 
 const PRODUCTS: Product[] = [
   {
+    slug: "personalized-storybook",
     title: "Personalized Storybook",
     price: BASE_PRICE,
     icon: BookOpen,
@@ -28,6 +30,7 @@ const PRODUCTS: Product[] = [
     ctaLabel: "Personalize & Buy",
   },
   {
+    slug: "supporting-character",
     title: "Supporting Character Add-On",
     price: SUPPORTING_CHARACTER_PRICE,
     icon: Users,
@@ -37,6 +40,7 @@ const PRODUCTS: Product[] = [
     ctaLabel: "Add During Personalization",
   },
   {
+    slug: "coloring-pages",
     title: "Coloring Pages Add-On",
     price: 4.99,
     icon: Palette,
@@ -46,6 +50,7 @@ const PRODUCTS: Product[] = [
     ctaLabel: "Add During Personalization",
   },
   {
+    slug: "karaoke-audiobook",
     title: "Karaoke Audiobook Add-On",
     price: AUDIOBOOK_PRICE,
     icon: Mic,
@@ -56,6 +61,7 @@ const PRODUCTS: Product[] = [
     ctaLabel: "Coming Soon",
   },
   {
+    slug: "basic-audiobook",
     title: "Basic Audiobook Add-On",
     price: 4.99,
     icon: Volume2,
@@ -66,6 +72,7 @@ const PRODUCTS: Product[] = [
     ctaLabel: "Coming Soon",
   },
   {
+    slug: "paperback-storybook",
     title: "Paperback Storybook",
     price: 0,
     icon: Package,
@@ -101,14 +108,14 @@ export default function ProductsIndex() {
             const Icon = p.icon;
             return (
               <div
-                key={p.title}
+                key={p.slug}
                 className={`rounded-2xl border p-6 flex flex-col ${
                   p.comingSoon
                     ? "border-dashed border-border bg-muted/30"
                     : "border-border bg-card"
                 }`}
               >
-                <div className="flex items-start gap-4 mb-4">
+                <Link to={`/products/${p.slug}`} className="flex items-start gap-4 mb-4 group">
                   <div className={`h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                     p.comingSoon ? "bg-muted" : "bg-primary/10"
                   }`}>
@@ -116,7 +123,7 @@ export default function ProductsIndex() {
                   </div>
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h2 className="font-display text-lg font-bold">{p.title}</h2>
+                      <h2 className="font-display text-lg font-bold group-hover:text-primary transition-colors">{p.title}</h2>
                       {p.comingSoon && (
                         <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">
                           (Coming Soon)
@@ -134,19 +141,24 @@ export default function ProductsIndex() {
                       </p>
                     )}
                   </div>
-                </div>
+                </Link>
                 <p className="text-sm text-muted-foreground mb-5 flex-1">{p.description}</p>
-                {p.comingSoon ? (
-                  <Button disabled variant="outline" className="w-full">
-                    {p.ctaLabel}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button asChild variant="outline" className="flex-1">
+                    <Link to={`/products/${p.slug}`}>Learn more</Link>
                   </Button>
-                ) : (
-                  <Button asChild className="w-full">
-                    <Link to="/product/personalized-storybook#personalize">
-                      {p.ctaLabel} →
-                    </Link>
-                  </Button>
-                )}
+                  {p.comingSoon ? (
+                    <Button disabled className="flex-1">
+                      {p.ctaLabel}
+                    </Button>
+                  ) : (
+                    <Button asChild className="flex-1">
+                      <Link to="/product/personalized-storybook#personalize">
+                        {p.ctaLabel} →
+                      </Link>
+                    </Button>
+                  )}
+                </div>
               </div>
             );
           })}
