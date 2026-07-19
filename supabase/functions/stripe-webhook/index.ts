@@ -116,11 +116,13 @@ Deno.serve(async (req) => {
         console.error("recovery email dispatch failed:", e);
       }
     }
+    await logEvent({ orderId, result: newStatus, message: errorMessage, sessionId: obj.id || null, paymentIntentId: obj.payment_intent || null });
     return new Response(JSON.stringify({ ok: true, status: newStatus }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   }
+
 
   // Handle refunds — revoke PDF/audiobook access.
   if (event.type === "charge.refunded" || event.type === "charge.refund.updated") {
