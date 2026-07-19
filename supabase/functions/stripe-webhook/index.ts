@@ -130,6 +130,7 @@ Deno.serve(async (req) => {
     const paymentIntentId: string | undefined =
       charge.payment_intent || charge.charge?.payment_intent;
     if (!paymentIntentId) {
+      await logEvent({ result: "ignored", message: "no_payment_intent" });
       return new Response(JSON.stringify({ ok: true, ignored: "no_payment_intent" }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -151,6 +152,9 @@ Deno.serve(async (req) => {
         })
         .eq("id", refundedOrder.id);
       console.log("Refund processed, access revoked for order", refundedOrder.id);
+      await logEvent({ orderId: refundedOrder.id, paymentIntentId, result: "refunded", message: "access_revoked" });
+    } else {
+      await logEvent({ orderId: refundedOrder?.id || null, paymentIntentId, result: "skipped", message: refundedOrder ? "already_refunded" : "order_not_found" });
     }
     return new Response(JSON.stringify({ ok: true, refunded: true }), {
       status: 200,
@@ -163,11 +167,13 @@ Deno.serve(async (req) => {
     event.type !== "checkout.session.completed" &&
     event.type !== "checkout.session.async_payment_succeeded"
   ) {
+    await logEvent({ result: "ignored", message: `unhandled event: ${event.type}` });
     return new Response(JSON.stringify({ received: true, ignored: event.type }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   }
+
 
 
   const session = event.data.object;
