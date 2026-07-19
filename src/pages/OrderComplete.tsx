@@ -7,6 +7,7 @@ import SEO from "@/components/SEO";
 import RatingWidget from "@/components/RatingWidget";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { supabase } from "@/integrations/supabase/client";
+import { getStripeEnvironment } from "@/lib/stripe";
 
 
 const PROGRESS_STAGES = [
@@ -26,6 +27,7 @@ const OrderComplete = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const orderIdFromUrl = searchParams.get("order_id");
+  const sessionIdFromUrl = searchParams.get("session_id");
 
   const [orderId, setOrderId] = useState<string | null>(null);
   const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
@@ -39,6 +41,7 @@ const OrderComplete = () => {
   const [confirmed, setConfirmed] = useState<boolean>(false);
   const [confirming, setConfirming] = useState<boolean>(false);
   const pdfOpenedRef = useRef(false);
+  const paymentConfirmedRef = useRef(false);
 
   const handleConfirmReceived = async (extra?: { stars?: number; comment?: string }) => {
     if (!orderId || confirmed) return;
@@ -114,6 +117,25 @@ const OrderComplete = () => {
       setError("No order found. If you just paid, check your email — your storybook will arrive there shortly.");
     }
   }, [orderIdFromUrl]);
+
+  // If Stripe's webhook is misconfigured, the customer return still contains
+  // a session_id. Verify that session directly with Stripe and start generation.
+  useEffect(() => {
+    if (!orderId || !sessionIdFromUrl || paymentConfirmedRef.current) return;
+    paymentConfirmedRef.current = true;
+
+    supabase.functions
+      .invoke("confirm-checkout-payment", {
+        body: {
+          orderId,
+          sessionId: sessionIdFromUrl,
+          environment: getStripeEnvironment(),
+        },
+      })
+      .then(({ error: invokeError }) => {
+        if (invokeError) console.error("Payment confirmation fallback failed:", invokeError);
+      });
+  }, [orderId, sessionIdFromUrl]);
 
   // Poll the database for order status
   useEffect(() => {

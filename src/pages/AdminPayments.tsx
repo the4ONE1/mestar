@@ -121,7 +121,12 @@ export default function AdminPayments() {
       if (!res.ok) throw new Error(await res.text());
       const { orderId } = await res.json();
       toast.success("Test order created — opening checkout in new tab");
-      window.open(`/checkout?orderId=${orderId}`, "_blank");
+      const params = new URLSearchParams({
+        order_id: orderId,
+        prices: "storybook",
+        email: "mestar.orders@gmail.com",
+      });
+      window.open(`/checkout?${params.toString()}`, "_blank");
       // Auto-refresh every 3s for 90s so events land visibly
       let ticks = 0;
       const timer = setInterval(() => {
