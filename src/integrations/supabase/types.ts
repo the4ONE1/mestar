@@ -434,35 +434,21 @@ export type Database = {
     }
     Functions: {
       confirm_pdf_received: { Args: { _order_id: string }; Returns: boolean }
-      create_pending_order:
-        | {
-            Args: {
-              _child_age: string
-              _child_name: string
-              _customer_email: string
-              _has_supporting_character: boolean
-              _selected_addons: Json
-              _strength: string
-              _supporting_character_name: string
-              _theme: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              _child_age: string
-              _child_name: string
-              _child_photo_path?: string
-              _customer_email: string
-              _has_supporting_character: boolean
-              _selected_addons: Json
-              _strength: string
-              _supporting_character_name: string
-              _supporting_character_photo_path?: string
-              _theme: string
-            }
-            Returns: string
-          }
+      create_pending_order: {
+        Args: {
+          _child_age: string
+          _child_name: string
+          _child_photo_path?: string
+          _customer_email: string
+          _has_supporting_character: boolean
+          _selected_addons: Json
+          _strength: string
+          _supporting_character_name: string
+          _supporting_character_photo_path?: string
+          _theme: string
+        }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
