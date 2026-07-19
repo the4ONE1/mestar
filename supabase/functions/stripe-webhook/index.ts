@@ -23,7 +23,21 @@ Deno.serve(async (req) => {
   try {
     event = await verifyWebhook(req, env);
   } catch (e) {
-    console.error("Webhook verification failed:", e);
+    const errMsg = e instanceof Error ? e.message : String(e);
+    console.error("Webhook verification failed:", errMsg);
+    // Log to payment_events so the admin dashboard surfaces webhook rejections
+    try {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      await supabase.from("payment_events").insert({
+        event_type: "webhook.signature_failed",
+        result: "signature_invalid",
+        message: errMsg,
+        payload_summary: { env },
+      });
+    } catch (_) { /* ignore */ }
     return new Response("Invalid signature", { status: 400 });
   }
 
