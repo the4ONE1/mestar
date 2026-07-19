@@ -51,14 +51,31 @@ const Library = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
+  // Per-order access token — required by get-audiobook. Read from URL first,
+  // fall back to localStorage (set in the checkout flow).
+  const urlToken = new URLSearchParams(window.location.search).get("token");
+  let storedToken: string | null = null;
+  try {
+    const saved = localStorage.getItem("mestar-pending-story");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed?.orderId === orderId && parsed?.recoveryToken) storedToken = parsed.recoveryToken;
+    }
+  } catch { /* ignore */ }
+  const accessToken = urlToken || storedToken;
+
   // Fetch + poll until audiobook is fully ready
   useEffect(() => {
     if (!orderId) return;
+    if (!accessToken) {
+      setError("Missing access token. Please open your audiobook from the order confirmation page or your email link.");
+      return;
+    }
     let cancelled = false;
 
     const load = async () => {
       try {
-        const res = await fetch(`${SUPABASE_FN_BASE}/get-audiobook?orderId=${orderId}`);
+        const res = await fetch(`${SUPABASE_FN_BASE}/get-audiobook?orderId=${orderId}&token=${encodeURIComponent(accessToken)}`);
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
           setError(body.error || `Could not load audiobook (${res.status})`);

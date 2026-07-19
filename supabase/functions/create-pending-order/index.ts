@@ -110,7 +110,15 @@ serve(async (req) => {
     if (updErr) console.error("attach photo paths failed:", updErr);
   }
 
-  return new Response(JSON.stringify({ orderId }), {
+  // Return recovery_token so the client can hold it as a per-order access
+  // secret (used to authorize /library audiobook access).
+  const { data: tokenRow } = await supabase
+    .from("storybook_orders")
+    .select("recovery_token")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  return new Response(JSON.stringify({ orderId, recoveryToken: tokenRow?.recovery_token ?? null }), {
     status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });

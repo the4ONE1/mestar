@@ -62,6 +62,7 @@ export const CartDrawer = () => {
         return;
       }
       const orderId = orderData.orderId as string;
+      const recoveryToken = (orderData as { recoveryToken?: string })?.recoveryToken || null;
 
       // Build Stripe price ids from cart items
       const priceIds: string[] = [STRIPE_PRICE_IDS.storybook];
@@ -71,7 +72,7 @@ export const CartDrawer = () => {
       }
       if (p.selectedAddons?.coloring) priceIds.push(STRIPE_PRICE_IDS.coloring);
 
-      localStorage.setItem("mestar-pending-story", JSON.stringify({ ...p, orderId }));
+      localStorage.setItem("mestar-pending-story", JSON.stringify({ ...p, orderId, recoveryToken }));
       setIsOpen(false);
 
       const params = new URLSearchParams({
