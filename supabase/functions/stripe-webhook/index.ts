@@ -31,6 +31,31 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
 
+  // Helper: record a payment_events row (best-effort; never throws)
+  const logEvent = async (params: {
+    orderId?: string | null;
+    sessionId?: string | null;
+    paymentIntentId?: string | null;
+    result: string;
+    message?: string | null;
+    summary?: Record<string, unknown>;
+  }) => {
+    try {
+      await supabase.from("payment_events").insert({
+        order_id: params.orderId || null,
+        stripe_session_id: params.sessionId || null,
+        stripe_payment_intent_id: params.paymentIntentId || null,
+        event_type: event.type,
+        result: params.result,
+        message: params.message || null,
+        payload_summary: { env, ...(params.summary || {}) },
+      });
+    } catch (e) {
+      console.error("payment_events insert failed:", e);
+    }
+  };
+
+
   // Handle failures / expirations up front — no fulfillment pipeline needed.
   if (
     event.type === "checkout.session.expired" ||
@@ -42,22 +67,26 @@ Deno.serve(async (req) => {
       obj.metadata?.mestar_order_id ||
       obj.session?.metadata?.mestar_order_id;
     if (!orderId) {
+      await logEvent({ result: "ignored", message: "no_order_id" });
       return new Response(JSON.stringify({ ok: true, ignored: "no_order_id" }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
     }
+
     const { data: existing } = await supabase
       .from("storybook_orders")
       .select("id, status, customer_email, recovery_token, selected_addons, child_name")
       .eq("id", orderId)
       .maybeSingle();
     if (!existing || existing.status !== "pending_payment") {
+      await logEvent({ orderId, result: "skipped", message: "not_pending" });
       return new Response(JSON.stringify({ ok: true, ignored: "not_pending" }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
     }
+
 
     const newStatus = event.type === "checkout.session.expired" ? "expired" : "payment_failed";
     const errorMessage =
@@ -87,11 +116,13 @@ Deno.serve(async (req) => {
         console.error("recovery email dispatch failed:", e);
       }
     }
+    await logEvent({ orderId, result: newStatus, message: errorMessage, sessionId: obj.id || null, paymentIntentId: obj.payment_intent || null });
     return new Response(JSON.stringify({ ok: true, status: newStatus }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   }
+
 
   // Handle refunds — revoke PDF/audiobook access.
   if (event.type === "charge.refunded" || event.type === "charge.refund.updated") {
@@ -99,6 +130,7 @@ Deno.serve(async (req) => {
     const paymentIntentId: string | undefined =
       charge.payment_intent || charge.charge?.payment_intent;
     if (!paymentIntentId) {
+      await logEvent({ result: "ignored", message: "no_payment_intent" });
       return new Response(JSON.stringify({ ok: true, ignored: "no_payment_intent" }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -120,6 +152,9 @@ Deno.serve(async (req) => {
         })
         .eq("id", refundedOrder.id);
       console.log("Refund processed, access revoked for order", refundedOrder.id);
+      await logEvent({ orderId: refundedOrder.id, paymentIntentId, result: "refunded", message: "access_revoked" });
+    } else {
+      await logEvent({ orderId: refundedOrder?.id || null, paymentIntentId, result: "skipped", message: refundedOrder ? "already_refunded" : "order_not_found" });
     }
     return new Response(JSON.stringify({ ok: true, refunded: true }), {
       status: 200,
@@ -132,11 +167,13 @@ Deno.serve(async (req) => {
     event.type !== "checkout.session.completed" &&
     event.type !== "checkout.session.async_payment_succeeded"
   ) {
+    await logEvent({ result: "ignored", message: `unhandled event: ${event.type}` });
     return new Response(JSON.stringify({ received: true, ignored: event.type }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   }
+
 
 
   const session = event.data.object;
@@ -146,6 +183,7 @@ Deno.serve(async (req) => {
 
   if (!orderId) {
     console.warn("stripe-webhook: session has no mestar_order_id metadata:", session.id);
+    await logEvent({ sessionId: session.id, result: "skipped", message: "no_order_id_metadata" });
     return new Response(JSON.stringify({ ok: true, skipped: "no_order_id" }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -161,6 +199,7 @@ Deno.serve(async (req) => {
 
   if (fetchErr || !order) {
     console.error("Order not found:", orderId, fetchErr);
+    await logEvent({ orderId, sessionId: session.id, result: "skipped", message: "order_not_found" });
     return new Response(JSON.stringify({ ok: true, skipped: "order_not_found" }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -170,6 +209,7 @@ Deno.serve(async (req) => {
   // Idempotency
   if (order.status !== "pending_payment") {
     console.log("Order already processed:", orderId, order.status);
+    await logEvent({ orderId, sessionId: session.id, result: "skipped", message: `already_processed:${order.status}` });
     return new Response(JSON.stringify({ ok: true, skipped: "already_processed" }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -198,6 +238,16 @@ Deno.serve(async (req) => {
       selected_addons: selectedAddons,
     })
     .eq("id", orderId);
+
+  await logEvent({
+    orderId,
+    sessionId: session.id,
+    paymentIntentId: session.payment_intent,
+    result: "queued",
+    message: "payment_confirmed, generation pipeline started",
+    summary: { priceIds, customerEmail: customerEmail || order.customer_email },
+  });
+
 
   // Background pipeline: generate-story -> create-storybook
   (async () => {
@@ -257,16 +307,20 @@ Deno.serve(async (req) => {
       });
       if (!pdfRes.ok) throw new Error(`create-storybook failed: ${await pdfRes.text()}`);
       console.log("Pipeline complete for order", orderId);
+      await logEvent({ orderId, sessionId: session.id, result: "pipeline_complete", message: story.title || "PDF generated" });
     } catch (e) {
       console.error("Pipeline failed for", orderId, e);
+      const errMsg = e instanceof Error ? e.message : String(e);
       await supabase
         .from("storybook_orders")
         .update({
           status: "failed",
-          error_message: e instanceof Error ? e.message : String(e),
+          error_message: errMsg,
         })
         .eq("id", orderId);
+      await logEvent({ orderId, sessionId: session.id, result: "pipeline_failed", message: errMsg });
     }
+
   })();
 
   return new Response(JSON.stringify({ ok: true, orderId }), {

@@ -21,6 +21,8 @@ import Unsubscribe from "./pages/Unsubscribe";
 import Checkout from "./pages/Checkout";
 import ProductsIndex from "./pages/ProductsIndex";
 import ProductLanding from "./pages/ProductLanding";
+import AdminPayments from "./pages/AdminPayments";
+
 
 
 
@@ -50,6 +52,8 @@ const AppContent = () => {
           <Route path="/library/:orderId" element={<Library />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
+          <Route path="/admin/payments" element={<AdminPayments />} />
+
           
           
           
