@@ -53,6 +53,9 @@ verify_jwt = false
 [functions.confirm-pdf-received]
 verify_jwt = false
 
+[functions.confirm-checkout-payment]
+verify_jwt = false
+
 [functions.admin-payment-events]
 verify_jwt = false
 

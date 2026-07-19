@@ -12,6 +12,7 @@ const Checkout = () => {
   const priceIdsRaw = searchParams.get("prices") || "";
   const email = searchParams.get("email") || undefined;
   const recoveryToken = searchParams.get("recover") || undefined;
+  const forcedEnvironment = searchParams.get("env") === "sandbox" ? "sandbox" : undefined;
   const priceIds = priceIdsRaw.split(",").filter(Boolean);
   const [ready, setReady] = useState(false);
 
@@ -45,6 +46,7 @@ const Checkout = () => {
           customerEmail={email}
           returnUrl={returnUrl}
           recoveryToken={recoveryToken}
+          environment={forcedEnvironment}
         />
       </div>
     </>

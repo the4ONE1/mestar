@@ -46,9 +46,6 @@ export async function verifyWebhook(
 ): Promise<{ type: string; data: { object: any } }> {
   const signature = req.headers.get("stripe-signature");
   const body = await req.text();
-  const secret = env === "sandbox"
-    ? getEnv("PAYMENTS_SANDBOX_WEBHOOK_SECRET")
-    : getEnv("PAYMENTS_LIVE_WEBHOOK_SECRET");
 
   if (!signature || !body) throw new Error("Missing signature or body");
 
@@ -64,20 +61,32 @@ export async function verifyWebhook(
   const age = Math.abs(Date.now() / 1000 - Number(timestamp));
   if (age > 300) throw new Error("Webhook timestamp too old");
 
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signed = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(`${timestamp}.${body}`),
-  );
-  const expected = new TextDecoder().decode(encode(new Uint8Array(signed)));
+  const verifyWithSecret = async (secret: string): Promise<boolean> => {
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const signed = await crypto.subtle.sign(
+      "HMAC",
+      key,
+      new TextEncoder().encode(`${timestamp}.${body}`),
+    );
+    const expected = new TextDecoder().decode(encode(new Uint8Array(signed)));
+    return v1Signatures.includes(expected);
+  };
 
-  if (!v1Signatures.includes(expected)) throw new Error("Invalid webhook signature");
+  const primarySecret = env === "sandbox"
+    ? getEnv("PAYMENTS_SANDBOX_WEBHOOK_SECRET")
+    : getEnv("PAYMENTS_LIVE_WEBHOOK_SECRET");
+  const fallbackSecret = env === "sandbox"
+    ? Deno.env.get("PAYMENTS_LIVE_WEBHOOK_SECRET")
+    : Deno.env.get("PAYMENTS_SANDBOX_WEBHOOK_SECRET");
+
+  const verified = await verifyWithSecret(primarySecret)
+    || (fallbackSecret ? await verifyWithSecret(fallbackSecret) : false);
+  if (!verified) throw new Error("Invalid webhook signature");
   return JSON.parse(body);
 }
