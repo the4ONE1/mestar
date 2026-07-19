@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-payment-events`;
+const TEST_CHECKOUT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-run-test-checkout`;
 const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const TOKEN_STORAGE_KEY = "mestar_admin_token";
 
@@ -34,9 +35,25 @@ type OrderSummary = {
   error_message: string | null;
 };
 
+type Health = {
+  healthy: boolean;
+  count24h: number;
+  successes24h: number;
+  failures24h: number;
+  lastSuccessAt: string | null;
+  lastFailureAt: string | null;
+  lastFailureMessage: string | null;
+  lastFailureEventType: string | null;
+};
+
 const resultTone = (result: string): "default" | "secondary" | "destructive" | "outline" => {
   if (result === "queued" || result === "pipeline_complete" || result === "refunded") return "default";
-  if (result === "pipeline_failed" || result === "payment_failed" || result === "expired") return "destructive";
+  if (
+    result === "pipeline_failed" ||
+    result === "payment_failed" ||
+    result === "expired" ||
+    result === "signature_invalid"
+  ) return "destructive";
   if (result === "ignored" || result === "skipped") return "secondary";
   return "outline";
 };
@@ -46,7 +63,9 @@ export default function AdminPayments() {
   const [authed, setAuthed] = useState<boolean>(false);
   const [events, setEvents] = useState<PaymentEvent[]>([]);
   const [orders, setOrders] = useState<Record<string, OrderSummary>>({});
+  const [health, setHealth] = useState<Health | null>(null);
   const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
   const [orderFilter, setOrderFilter] = useState<string>("");
 
   const load = async (opts?: { silent?: boolean }) => {
@@ -72,6 +91,7 @@ export default function AdminPayments() {
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
       setEvents(json.events || []);
+      setHealth(json.health || null);
       const map: Record<string, OrderSummary> = {};
       for (const o of json.orders || []) map[o.id] = o;
       setOrders(map);
@@ -85,9 +105,65 @@ export default function AdminPayments() {
     }
   };
 
+  const runTestCheckout = async () => {
+    setBusy("test-checkout");
+    try {
+      const res = await fetch(TEST_CHECKOUT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-token": token,
+          apikey: ANON,
+          Authorization: `Bearer ${ANON}`,
+        },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const { orderId } = await res.json();
+      toast.success("Test order created — opening checkout in new tab");
+      window.open(`/checkout?orderId=${orderId}`, "_blank");
+      // Auto-refresh every 3s for 90s so events land visibly
+      let ticks = 0;
+      const timer = setInterval(() => {
+        ticks++;
+        load({ silent: true });
+        if (ticks >= 30) clearInterval(timer);
+      }, 3000);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to create test checkout");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const retryOrder = async (orderId: string) => {
+    setBusy(orderId);
+    try {
+      const res = await fetch(FN_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-token": token,
+          apikey: ANON,
+          Authorization: `Bearer ${ANON}`,
+        },
+        body: JSON.stringify({ action: "retry_generation", orderId }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      toast.success("Retry started — refresh in ~30s to see the result");
+      setTimeout(() => load({ silent: true }), 3000);
+    } catch (e) {
+      console.error(e);
+      toast.error("Retry failed");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   useEffect(() => {
     if (token) load({ silent: true });
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!authed) {
@@ -122,14 +198,17 @@ export default function AdminPayments() {
             Every Stripe webhook event received, most recent first.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button onClick={runTestCheckout} disabled={busy === "test-checkout"}>
+            {busy === "test-checkout" ? "Creating…" : "Run Sandbox Test Checkout"}
+          </Button>
           <Input
             placeholder="Filter by order ID (UUID)"
             value={orderFilter}
             onChange={(e) => setOrderFilter(e.target.value)}
-            className="w-72"
+            className="w-64"
           />
-          <Button onClick={() => load()} disabled={loading}>
+          <Button variant="outline" onClick={() => load()} disabled={loading}>
             {loading ? "Loading…" : "Refresh"}
           </Button>
           <Button
@@ -145,9 +224,47 @@ export default function AdminPayments() {
         </div>
       </div>
 
+      {health && (
+        <Card className={`p-4 border-l-4 ${health.healthy ? "border-l-green-500" : "border-l-red-500"}`}>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-block h-3 w-3 rounded-full ${health.healthy ? "bg-green-500" : "bg-red-500"}`}
+                  aria-hidden
+                />
+                <h2 className="font-semibold">
+                  Webhook health: {health.healthy ? "Healthy" : "Failing"}
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Last 24h: {health.count24h} events · {health.successes24h} success · {health.failures24h} failed
+              </p>
+              {health.lastFailureAt && (
+                <p className="text-sm text-destructive mt-2">
+                  Last failure {new Date(health.lastFailureAt).toLocaleString()} ({health.lastFailureEventType}):{" "}
+                  <span className="font-mono">{health.lastFailureMessage || "unknown"}</span>
+                </p>
+              )}
+              {health.lastSuccessAt && !health.lastFailureAt && (
+                <p className="text-sm text-green-700 mt-2">
+                  Last success {new Date(health.lastSuccessAt).toLocaleString()}
+                </p>
+              )}
+              {health.count24h === 0 && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Stripe hasn't hit the webhook at all in 24h. Either no payments completed, or
+                  the endpoint isn't registered in Stripe → Developers → Webhooks.
+                </p>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
+
       {events.length === 0 ? (
         <Card className="p-8 text-center text-muted-foreground">
-          No payment events yet. Once Stripe fires a webhook, it will appear here.
+          No payment events yet. Click "Run Sandbox Test Checkout" above to fire one end-to-end.
         </Card>
       ) : (
         <div className="overflow-x-auto">
@@ -160,6 +277,7 @@ export default function AdminPayments() {
                 <th className="p-2">Order</th>
                 <th className="p-2">Stripe Session</th>
                 <th className="p-2">Message</th>
+                <th className="p-2">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -200,6 +318,18 @@ export default function AdminPayments() {
                       {e.stripe_session_id ? `${e.stripe_session_id.slice(0, 14)}…` : "—"}
                     </td>
                     <td className="p-2 text-xs">{e.message || "—"}</td>
+                    <td className="p-2">
+                      {e.order_id && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busy === e.order_id}
+                          onClick={() => retryOrder(e.order_id!)}
+                        >
+                          {busy === e.order_id ? "…" : "Retry"}
+                        </Button>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
