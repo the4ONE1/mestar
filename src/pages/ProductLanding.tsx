@@ -342,6 +342,38 @@ export default function ProductLanding() {
           </div>
         </section>
 
+        {/* Related products — internal SEO backlinks */}
+        <section className="mb-10">
+          <h2 className="font-display text-2xl font-bold mb-4">You Might Also Like</h2>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {LANDING_SLUGS.filter(s => s !== landing.slug).slice(0, 4).map(s => {
+              const rel = LANDINGS[s];
+              const RIcon = rel.icon;
+              return (
+                <Link
+                  key={s}
+                  to={`/products/${s}`}
+                  className="flex items-start gap-3 rounded-xl border border-border p-4 hover:border-primary hover:bg-primary/5 transition-colors"
+                >
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <RIcon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-sm mb-1 flex items-center gap-2">
+                      {rel.h1}
+                      {rel.comingSoon && (
+                        <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 rounded-full px-1.5 py-0.5">Soon</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{rel.shortPitch}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+
         {/* Bottom CTA */}
         <section className="text-center bg-card border border-border rounded-2xl p-8">
           <h2 className="font-display text-2xl font-bold mb-3">Ready to make your child the hero?</h2>
