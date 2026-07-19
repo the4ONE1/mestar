@@ -1,5 +1,6 @@
-// Admin-only endpoint that returns recent Stripe webhook events for review.
-// Requires an X-Admin-Token header matching ADMIN_DASHBOARD_TOKEN secret.
+// Admin-only endpoint that returns recent Stripe webhook events for review,
+// plus webhook health summary. POST supports actions: retry_generation.
+// Requires X-Admin-Token header matching ADMIN_DASHBOARD_TOKEN secret.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -15,6 +16,35 @@ function timingSafeEqual(a: string, b: string): boolean {
   return out === 0;
 }
 
+const SUCCESS_RESULTS = new Set(["queued", "pipeline_complete", "refunded"]);
+const FAILURE_RESULTS = new Set(["signature_invalid", "pipeline_failed", "payment_failed"]);
+
+async function computeHealth(supabase: ReturnType<typeof createClient>) {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: recent } = await supabase
+    .from("payment_events")
+    .select("result, message, event_type, created_at")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(500);
+  const rows = recent || [];
+  const successes = rows.filter((r: any) => SUCCESS_RESULTS.has(r.result));
+  const failures = rows.filter((r: any) => FAILURE_RESULTS.has(r.result));
+  const lastSuccess = successes[0] || null;
+  const lastFailure = failures[0] || null;
+  const healthy = successes.length > 0 && (!lastFailure || (lastSuccess && new Date(lastSuccess.created_at) > new Date(lastFailure.created_at)));
+  return {
+    healthy,
+    count24h: rows.length,
+    successes24h: successes.length,
+    failures24h: failures.length,
+    lastSuccessAt: lastSuccess?.created_at || null,
+    lastFailureAt: lastFailure?.created_at || null,
+    lastFailureMessage: lastFailure?.message || null,
+    lastFailureEventType: lastFailure?.event_type || null,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -27,14 +57,111 @@ Deno.serve(async (req) => {
     });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  // POST: actions
+  if (req.method === "POST") {
+    let body: any = {};
+    try { body = await req.json(); } catch (_) { /* ignore */ }
+    const action = body?.action;
+
+    if (action === "retry_generation") {
+      const orderId = String(body?.orderId || "");
+      if (!/^[0-9a-f-]{36}$/i.test(orderId)) {
+        return new Response(JSON.stringify({ error: "Invalid orderId" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: order } = await supabase
+        .from("storybook_orders")
+        .select("*")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (!order) {
+        return new Response(JSON.stringify({ error: "Order not found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Force status to queued and re-run pipeline in background
+      await supabase.from("storybook_orders").update({ status: "queued", error_message: null }).eq("id", orderId);
+      await supabase.from("payment_events").insert({
+        order_id: orderId,
+        event_type: "admin.retry_generation",
+        result: "queued",
+        message: "manual retry triggered from admin dashboard",
+        payload_summary: {},
+      });
+
+      // Kick pipeline (fire-and-forget)
+      (async () => {
+        try {
+          const storyRes = await fetch(`${supabaseUrl}/functions/v1/generate-story`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+            body: JSON.stringify({
+              childName: order.child_name,
+              childAge: order.child_age,
+              theme: order.theme,
+              strength: order.strength || "",
+              hasSupportingCharacter: !!order.has_supporting_character,
+              supportingCharacterName: order.supporting_character_name || "",
+              selectedAddons: order.selected_addons || {},
+            }),
+          });
+          if (!storyRes.ok) throw new Error(`generate-story failed: ${await storyRes.text()}`);
+          const story = await storyRes.json();
+          await supabase.from("storybook_orders").update({
+            status: "generating_images", story_title: story.title, story_text: story.story,
+          }).eq("id", orderId);
+          const pdfRes = await fetch(`${supabaseUrl}/functions/v1/create-storybook`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+            body: JSON.stringify({
+              orderId, title: story.title, story: story.story,
+              childName: order.child_name, childAge: order.child_age,
+              theme: order.theme, strength: order.strength || "",
+              customerEmail: order.customer_email || "",
+              hasSupportingCharacter: !!order.has_supporting_character,
+              supportingCharacterName: order.supporting_character_name || "",
+              selectedAddons: order.selected_addons || {},
+              coloringPrompts: story.coloringPrompts || [],
+              illustrationPrompts: (story.illustrationPrompts?.length ? story.illustrationPrompts : story.scenes) || [],
+            }),
+          });
+          if (!pdfRes.ok) throw new Error(`create-storybook failed: ${await pdfRes.text()}`);
+          await supabase.from("payment_events").insert({
+            order_id: orderId, event_type: "admin.retry_generation",
+            result: "pipeline_complete", message: story.title || "PDF regenerated",
+            payload_summary: {},
+          });
+        } catch (e) {
+          const errMsg = e instanceof Error ? e.message : String(e);
+          await supabase.from("storybook_orders").update({
+            status: "failed", error_message: errMsg,
+          }).eq("id", orderId);
+          await supabase.from("payment_events").insert({
+            order_id: orderId, event_type: "admin.retry_generation",
+            result: "pipeline_failed", message: errMsg, payload_summary: {},
+          });
+        }
+      })();
+
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: "Unknown action" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // GET: list events + health
   const url = new URL(req.url);
   const orderId = url.searchParams.get("orderId")?.trim() || null;
   const limit = Math.min(parseInt(url.searchParams.get("limit") || "100", 10) || 100, 500);
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
 
   let query = supabase
     .from("payment_events")
@@ -54,7 +181,6 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Also fetch related order summaries for context
   const orderIds = [...new Set((events || []).map((e: any) => e.order_id).filter(Boolean))];
   let orders: any[] = [];
   if (orderIds.length > 0) {
@@ -65,7 +191,9 @@ Deno.serve(async (req) => {
     orders = orderRows || [];
   }
 
-  return new Response(JSON.stringify({ events: events || [], orders }), {
+  const health = await computeHealth(supabase);
+
+  return new Response(JSON.stringify({ events: events || [], orders, health }), {
     status: 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });

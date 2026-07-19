@@ -1,44 +1,50 @@
-## Goal
-Give you a single file you can open in your browser that shows every MESTAR product with a **"Copy"** button next to each field (title, description, price, link, image, etc.) — formatted exactly the way Google Merchant Center asks for it. Plus a **"Download CSV Feed"** button so you can upload all 4 sellable products to Merchant Center in one shot instead of typing anything.
+## Root cause (confirmed from logs)
 
-## What you'll get
-A file saved to your downloads area: `mestar-merchant-center.html`
+Stripe's sandbox webhook IS reaching our server. Every call fails with `Invalid webhook signature`. The `PAYMENTS_SANDBOX_WEBHOOK_SECRET` stored in the project does not match the secret Stripe uses to sign events. That's why 100% of paid test checkouts sit in `pending_payment` forever and no generation ever runs.
 
-When you open it, you'll see:
+## Part 1 — Fix the webhook secret (the actual blocker)
 
-1. **Big green button at the top:** "Download Google Merchant CSV Feed" → gives you `mestar-products.csv` ready to upload directly to Merchant Center under **Products → Add products → Add multiple products → File upload**.
-2. **A card for each product** with these fields, each with its own one-click **Copy** button:
-   - `id` (unique product ID)
-   - `title` (≤150 chars, SEO-optimized)
-   - `description` (≤5000 chars, keyword-rich)
-   - `link` (product URL on mestar.pro)
-   - `image_link` (main product image)
-   - `availability` (in_stock)
-   - `price` (USD)
-   - `brand` (MESTAR)
-   - `condition` (new)
-   - `google_product_category` (Media > Books)
-   - `product_type` (your internal category)
-   - `identifier_exists` (no — custom-made goods)
-   - `age_group` / `gender` (kids / unisex)
+Two possible causes; the fix differs slightly:
 
-## Products included (the 4 that are actually for sale)
-1. Personalized Storybook — $19.99 — `/product/personalized-storybook`
-2. Coloring Pages Add-On — $4.99 — `/product/coloring-pages`
-3. Supporting Character Add-On — $9.99 — `/product/supporting-character`
-4. Karaoke Audiobook Add-On — $9.99 — `/product/karaoke-audiobook`
+**Cause A — Manual webhook you added in Stripe's dashboard:** the whsec you pasted into Lovable is out of sync. Fix: I'll ask you for the current `whsec_...` shown next to that endpoint in Stripe → Developers → Webhooks (I'll walk you through where to click, screenshot-level detail), then I'll store it via `secrets--set_secret` for `PAYMENTS_SANDBOX_WEBHOOK_SECRET`.
 
-The two "Coming Soon" items (Basic Audiobook, Hardback Bundle) will be **excluded** — Merchant Center will disapprove products that aren't purchasable yet. I'll add them back the day they go live.
+**Cause B — Duplicate endpoints:** Lovable already auto-registered a webhook when payments were enabled, AND you added a second one manually. Stripe signs with whichever endpoint's secret; ours only knows one. Fix: delete the manual one, keep the Lovable-managed one.
 
-## How you'll use it (dead simple)
-1. I'll drop the file into your downloads panel.
-2. You click it → it opens in your browser.
-3. Click the green **Download CSV Feed** button.
-4. In Google Merchant Center: **Products → Add products → File → Upload the CSV**.
-5. Done. If Merchant Center wants you to edit anything by hand later, just come back to the HTML file and click Copy next to whatever field you need.
+Step 1 of this plan is a 3-minute back-and-forth where you tell me what's in your Stripe dashboard and I decide A vs B.
 
-## Technical notes (you can ignore these)
-- File is a self-contained static HTML page with inline JS for the copy buttons and CSV blob download — no server, no dependencies, works offline.
-- CSV uses Google's official feed spec (tab-separated with `.csv` extension is also accepted; I'll use standard comma-separated for maximum compatibility).
-- Saved to `/mnt/documents/mestar-merchant-center.html` so it appears in your artifacts panel for one-click download.
-- Nothing in the actual mestar.pro codebase changes.
+## Part 2 — Admin dashboard: one-click test checkout + webhook health
+
+In `src/pages/AdminPayments.tsx`:
+
+- **Green/red webhook health pill** at the top: green if any successful event landed in the last 24h, red otherwise (with the exact error from the last failed attempt shown inline — no more guessing).
+- **"Run Sandbox Test Checkout" button** that:
+  1. Calls a new tiny edge function `admin-run-test-checkout` (protected by `x-admin-token`) which creates a pending order with test data (child "Admin Test", age 5, kindness theme, your email) via the existing `create_pending_order` RPC.
+  2. Opens `/checkout?orderId=<new-id>` in a new tab so you complete the Stripe form with `4242 4242 4242 4242`.
+  3. Auto-polls `payment_events` every 3s for 90s so you literally watch the events land (or watch them NOT land, which is equally useful).
+- **Retry-generation button** on each stuck order row that manually kicks the pipeline (bypasses the webhook), so we can rescue the 5 real-looking stuck orders and prove the generation pipeline itself still works.
+
+## Part 3 — What to do about the 30 stuck orders
+
+- **25 test orders (your emails, [t@e.com](mailto:t@e.com), etc.)** — I'll archive them (mark as `status='cancelled'`) so your dashboard is clean.
+- **5 real-looking orders** (fieldgar369 + the 3 temp-mail addresses + one bob ross entry) — these never had a completed Stripe payment (only 2 of the 5 even got as far as opening the checkout iframe), so no refund is needed. I'll mark them `abandoned` with a note. If any of these were real people who paid, they'd have chased you by email by now; none did.
+
+## Technical details (skip if not interested)
+
+- New edge function: `supabase/functions/admin-run-test-checkout/index.ts` (verify_jwt=false, checks `x-admin-token`, POST-only, no CORS surprises). Inserts via `create_pending_order` RPC and returns `{ orderId }`. Adds one line to `supabase/config.toml`.
+- Extend `admin-payment-events` response with `{ webhookHealth: { lastSuccessAt, lastErrorAt, lastErrorMessage, count24h } }` by also querying recent edge-function logs via the internal logs endpoint.
+- Add "Archive test orders" and "Retry generation" actions to `admin-payment-events` (POST mode) — same auth, small switch.
+- No DB migration required.
+- Build/typecheck runs automatically.
+
+## How you'll test it end-to-end
+
+1. **First**, we get the he secret sorted (Part 1) — takes 3 min.
+2. Open `/admin/payments`, sign in with `ADMINDASHBOARDTOKEN`.
+3. Health pill should be red still (no successes yet). Click **Run Sandbox Test Checkout**.
+4. New tab opens with the Stripe form. Pay with `4242 4242 4242 4242`, exp `12/30`, CVC `123`, ZIP anything.
+5. Return to admin tab. Within ~5 seconds you'll see rows appear: `checkout.session.completed` → `queued` → `pipeline_complete`. Health pill flips green.
+6. If step 5 shows a red row with a new error message, we fix that one thing and repeat. No more mystery.
+
+## Why this order
+
+Adding the test button before fixing the secret would just give you a slicker way to reproduce the same failure. Secret first, button second.
