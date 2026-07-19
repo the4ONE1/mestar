@@ -235,7 +235,7 @@ const OrderComplete = () => {
                 (Audio may take 1–2 extra minutes to finish recording.)
               </p>
               <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                <Link to={`/library/${orderId}`}>
+                <Link to={`/library/${orderId}${recoveryToken ? `?token=${recoveryToken}` : ""}`}>
                   <Volume2 className="h-5 w-5 mr-2" />
                   Listen Now
                 </Link>
