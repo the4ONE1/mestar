@@ -80,11 +80,13 @@ Deno.serve(async (req) => {
       .eq("id", orderId)
       .maybeSingle();
     if (!existing || existing.status !== "pending_payment") {
+      await logEvent({ orderId, result: "skipped", message: "not_pending" });
       return new Response(JSON.stringify({ ok: true, ignored: "not_pending" }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
     }
+
 
     const newStatus = event.type === "checkout.session.expired" ? "expired" : "payment_failed";
     const errorMessage =
