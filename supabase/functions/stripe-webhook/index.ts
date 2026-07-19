@@ -183,6 +183,7 @@ Deno.serve(async (req) => {
 
   if (!orderId) {
     console.warn("stripe-webhook: session has no mestar_order_id metadata:", session.id);
+    await logEvent({ sessionId: session.id, result: "skipped", message: "no_order_id_metadata" });
     return new Response(JSON.stringify({ ok: true, skipped: "no_order_id" }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -198,6 +199,7 @@ Deno.serve(async (req) => {
 
   if (fetchErr || !order) {
     console.error("Order not found:", orderId, fetchErr);
+    await logEvent({ orderId, sessionId: session.id, result: "skipped", message: "order_not_found" });
     return new Response(JSON.stringify({ ok: true, skipped: "order_not_found" }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -207,6 +209,7 @@ Deno.serve(async (req) => {
   // Idempotency
   if (order.status !== "pending_payment") {
     console.log("Order already processed:", orderId, order.status);
+    await logEvent({ orderId, sessionId: session.id, result: "skipped", message: `already_processed:${order.status}` });
     return new Response(JSON.stringify({ ok: true, skipped: "already_processed" }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -235,6 +238,16 @@ Deno.serve(async (req) => {
       selected_addons: selectedAddons,
     })
     .eq("id", orderId);
+
+  await logEvent({
+    orderId,
+    sessionId: session.id,
+    paymentIntentId: session.payment_intent,
+    result: "queued",
+    message: "payment_confirmed, generation pipeline started",
+    summary: { priceIds, customerEmail: customerEmail || order.customer_email },
+  });
+
 
   // Background pipeline: generate-story -> create-storybook
   (async () => {
