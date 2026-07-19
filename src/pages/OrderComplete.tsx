@@ -146,7 +146,8 @@ const OrderComplete = () => {
             pdfOpenedRef.current = true;
             window.open(row.pdf_url, "_blank");
             toast.success("Your storybook PDF is ready! 🎉", { position: "top-center" });
-            localStorage.removeItem("mestar-pending-story");
+            // Keep mestar-pending-story so recoveryToken remains available
+            // for audiobook access on /library/<id>. It's cleared on new orders.
           }
           return; // stop polling
         }
