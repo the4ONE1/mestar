@@ -1,6 +1,7 @@
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { supabase } from "@/integrations/supabase/client";
+import type { StripeEnv } from "@/lib/stripe";
 
 interface Props {
   orderId: string;
@@ -8,9 +9,10 @@ interface Props {
   customerEmail?: string;
   returnUrl: string;
   recoveryToken?: string;
+  environment?: StripeEnv;
 }
 
-export function StripeEmbeddedCheckout({ orderId, priceIds, customerEmail, returnUrl, recoveryToken }: Props) {
+export function StripeEmbeddedCheckout({ orderId, priceIds, customerEmail, returnUrl, recoveryToken, environment }: Props) {
   const fetchClientSecret = async (): Promise<string> => {
     const { data, error } = await supabase.functions.invoke("create-checkout", {
       body: {
@@ -18,7 +20,7 @@ export function StripeEmbeddedCheckout({ orderId, priceIds, customerEmail, retur
         priceIds,
         customerEmail,
         returnUrl,
-        environment: getStripeEnvironment(),
+        environment: getStripeEnvironment(environment),
         recoveryToken,
       },
     });

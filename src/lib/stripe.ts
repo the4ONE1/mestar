@@ -3,8 +3,10 @@ import { loadStripe, Stripe } from "@stripe/stripe-js";
 export type StripeEnv = "sandbox" | "live";
 
 const clientToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN;
+const sandboxClientToken = "pk_test_51Ttt4nGkH5A1tO6iihvLWbztPa7K6otQ5a1C5R7VoKLrLnk68hdUAlT3F6ImJeaKS5xwW2t4eGp4EHTT4cRAkEj800FVXSr0Zb";
 
-export function getStripeEnvironment(): StripeEnv {
+export function getStripeEnvironment(forcedEnvironment?: StripeEnv | null): StripeEnv {
+  if (forcedEnvironment === "sandbox" || forcedEnvironment === "live") return forcedEnvironment;
   if (clientToken?.startsWith("pk_test_")) return "sandbox";
   if (clientToken?.startsWith("pk_live_")) return "live";
   throw new Error(
@@ -12,14 +14,15 @@ export function getStripeEnvironment(): StripeEnv {
   );
 }
 
-let stripePromise: Promise<Stripe | null> | null = null;
+const stripePromises: Partial<Record<StripeEnv, Promise<Stripe | null>>> = {};
 
-export function getStripe(): Promise<Stripe | null> {
-  if (!stripePromise) {
-    getStripeEnvironment();
-    stripePromise = loadStripe(clientToken as string);
+export function getStripe(forcedEnvironment?: StripeEnv | null): Promise<Stripe | null> {
+  const env = getStripeEnvironment(forcedEnvironment);
+  const token = env === "sandbox" ? sandboxClientToken : clientToken;
+  if (!stripePromises[env]) {
+    stripePromises[env] = loadStripe(token as string);
   }
-  return stripePromise;
+  return stripePromises[env]!;
 }
 
 // Map cart variantIds / addon flags to Stripe price lookup keys.
