@@ -82,25 +82,34 @@ const OrderComplete = () => {
 
   // Resolve which order id to poll
   useEffect(() => {
-    if (orderIdFromUrl) {
-      setOrderId(orderIdFromUrl);
-      return;
-    }
-    // Fallback: read from localStorage (handles older flows)
+    // Try localStorage first so we can also pick up the recoveryToken.
     const saved = localStorage.getItem("mestar-pending-story");
+    let savedOrderId: string | null = null;
+    let savedToken: string | null = null;
+    let savedEmail: string | null = null;
+    let savedHasAudiobook = false;
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed.orderId) {
-          setOrderId(parsed.orderId);
-          if (parsed.customerEmail) setCustomerEmail(parsed.customerEmail);
-          if (parsed.selectedAddons?.audiobook) setHasAudiobook(true);
-        } else {
-          setError("We couldn't find your order. If you just paid, check your email — your storybook will arrive there shortly.");
-        }
-      } catch {
-        setError("We couldn't read your order details. Please check your email for your storybook.");
-      }
+        if (parsed.orderId) savedOrderId = parsed.orderId as string;
+        if (parsed.recoveryToken) savedToken = parsed.recoveryToken as string;
+        if (parsed.customerEmail) savedEmail = parsed.customerEmail as string;
+        if (parsed.selectedAddons?.audiobook) savedHasAudiobook = true;
+      } catch { /* ignore */ }
+    }
+
+    if (orderIdFromUrl) {
+      setOrderId(orderIdFromUrl);
+      if (savedOrderId === orderIdFromUrl && savedToken) setRecoveryToken(savedToken);
+      if (savedEmail) setCustomerEmail(savedEmail);
+      if (savedHasAudiobook) setHasAudiobook(true);
+      return;
+    }
+    if (savedOrderId) {
+      setOrderId(savedOrderId);
+      if (savedToken) setRecoveryToken(savedToken);
+      if (savedEmail) setCustomerEmail(savedEmail);
+      if (savedHasAudiobook) setHasAudiobook(true);
     } else {
       setError("No order found. If you just paid, check your email — your storybook will arrive there shortly.");
     }
