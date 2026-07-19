@@ -216,6 +216,42 @@ export type Database = {
           },
         ]
       }
+      payment_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          message: string | null
+          order_id: string | null
+          payload_summary: Json
+          result: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          message?: string | null
+          order_id?: string | null
+          payload_summary?: Json
+          result: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string | null
+          order_id?: string | null
+          payload_summary?: Json
+          result?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+        }
+        Relationships: []
+      }
       storybook_audio: {
         Row: {
           audio_storage_path: string | null
