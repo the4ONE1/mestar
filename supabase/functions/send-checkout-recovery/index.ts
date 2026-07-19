@@ -25,6 +25,20 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Server-only: require the service role bearer token. This function is
+  // called by trusted server callers (stripe-webhook) and must not be
+  // invokable directly from the browser — it can reset order state and
+  // trigger emails.
+  const authHeader = req.headers.get("Authorization") || "";
+  const provided = authHeader.replace(/^Bearer\s+/i, "").trim();
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (!provided || !serviceKey || provided !== serviceKey) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const { orderId } = (await req.json()) as { orderId?: string };
     if (!orderId || !/^[0-9a-f-]{36}$/i.test(orderId)) {
