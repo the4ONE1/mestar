@@ -123,7 +123,7 @@ export default function AdminPayments() {
       toast.success("Test order created — opening checkout in new tab");
       const params = new URLSearchParams({
         order_id: orderId,
-        prices: "storybook",
+        prices: "personalized_storybook_onetime",
         email: "mestar.orders@gmail.com",
       });
       window.open(`/checkout?${params.toString()}`, "_blank");
