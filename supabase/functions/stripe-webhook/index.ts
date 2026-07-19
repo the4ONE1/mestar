@@ -307,16 +307,20 @@ Deno.serve(async (req) => {
       });
       if (!pdfRes.ok) throw new Error(`create-storybook failed: ${await pdfRes.text()}`);
       console.log("Pipeline complete for order", orderId);
+      await logEvent({ orderId, sessionId: session.id, result: "pipeline_complete", message: story.title || "PDF generated" });
     } catch (e) {
       console.error("Pipeline failed for", orderId, e);
+      const errMsg = e instanceof Error ? e.message : String(e);
       await supabase
         .from("storybook_orders")
         .update({
           status: "failed",
-          error_message: e instanceof Error ? e.message : String(e),
+          error_message: errMsg,
         })
         .eq("id", orderId);
+      await logEvent({ orderId, sessionId: session.id, result: "pipeline_failed", message: errMsg });
     }
+
   })();
 
   return new Response(JSON.stringify({ ok: true, orderId }), {
