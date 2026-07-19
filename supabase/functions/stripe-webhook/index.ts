@@ -31,6 +31,31 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
 
+  // Helper: record a payment_events row (best-effort; never throws)
+  const logEvent = async (params: {
+    orderId?: string | null;
+    sessionId?: string | null;
+    paymentIntentId?: string | null;
+    result: string;
+    message?: string | null;
+    summary?: Record<string, unknown>;
+  }) => {
+    try {
+      await supabase.from("payment_events").insert({
+        order_id: params.orderId || null,
+        stripe_session_id: params.sessionId || null,
+        stripe_payment_intent_id: params.paymentIntentId || null,
+        event_type: event.type,
+        result: params.result,
+        message: params.message || null,
+        payload_summary: { env, ...(params.summary || {}) },
+      });
+    } catch (e) {
+      console.error("payment_events insert failed:", e);
+    }
+  };
+
+
   // Handle failures / expirations up front — no fulfillment pipeline needed.
   if (
     event.type === "checkout.session.expired" ||
