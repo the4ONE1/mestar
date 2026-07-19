@@ -33,7 +33,7 @@ export function StripeEmbeddedCheckout({ orderId, priceIds, customerEmail, retur
 
   return (
     <div id="checkout">
-      <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret }}>
+      <EmbeddedCheckoutProvider stripe={getStripe(environment)} options={{ fetchClientSecret }}>
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>
     </div>

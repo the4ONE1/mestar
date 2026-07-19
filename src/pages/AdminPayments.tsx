@@ -125,6 +125,7 @@ export default function AdminPayments() {
         order_id: orderId,
         prices: "personalized_storybook_onetime",
         email: "mestar.orders@gmail.com",
+        env: "sandbox",
       });
       window.open(`/checkout?${params.toString()}`, "_blank");
       // Auto-refresh every 3s for 90s so events land visibly
