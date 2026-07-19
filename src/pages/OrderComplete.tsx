@@ -28,6 +28,7 @@ const OrderComplete = () => {
   const orderIdFromUrl = searchParams.get("order_id");
 
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
   const [status, setStatus] = useState<string>("pending_payment");
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [storyTitle, setStoryTitle] = useState<string>("");
