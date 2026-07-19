@@ -67,11 +67,13 @@ Deno.serve(async (req) => {
       obj.metadata?.mestar_order_id ||
       obj.session?.metadata?.mestar_order_id;
     if (!orderId) {
+      await logEvent({ result: "ignored", message: "no_order_id" });
       return new Response(JSON.stringify({ ok: true, ignored: "no_order_id" }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
     }
+
     const { data: existing } = await supabase
       .from("storybook_orders")
       .select("id, status, customer_email, recovery_token, selected_addons, child_name")
