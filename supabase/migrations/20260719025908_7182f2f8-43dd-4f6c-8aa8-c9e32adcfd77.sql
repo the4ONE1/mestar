@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.is_pending_order(uuid) FROM authenticated;
