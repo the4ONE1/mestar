@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MESTAR — Google Merchant Center Feed (v2)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root{--bg:#0f172a;--card:#111827;--text:#f8fafc;--muted:#94a3b8;--accent:#3b82f6;--ok:#10b981;--warn:#f59e0b}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f8fafc;color:#0f172a;padding:24px}
+  h1{margin:0 0 4px}
+  .sub{color:#475569;margin-bottom:24px}
+  .dl{background:#10b981;color:#fff;border:0;padding:14px 22px;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer}
+  .dl:hover{background:#059669}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px;margin:16px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .card h2{margin:0 0 4px;font-size:20px}
+  .card .price{color:#3b82f6;font-weight:700;margin-bottom:12px}
+  .row{display:grid;grid-template-columns:160px 1fr auto;gap:10px;align-items:start;padding:8px 0;border-top:1px solid #f1f5f9}
+  .row:first-of-type{border-top:0}
+  .label{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;padding-top:4px}
+  .val{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#f1f5f9;padding:8px 10px;border-radius:6px;word-break:break-word;white-space:pre-wrap}
+  .copy{background:#3b82f6;color:#fff;border:0;padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px;height:32px}
+  .copy:hover{background:#2563eb}
+  .copy.ok{background:#10b981}
+  .note{background:#fef3c7;border:1px solid #fde68a;color:#78350f;padding:12px 14px;border-radius:8px;margin:16px 0;font-size:14px}
+  .backlinks{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;padding:10px 14px;border-radius:8px;margin-top:12px;font-size:13px}
+  .backlinks a{color:#1d4ed8}
+  @media(max-width:640px){.row{grid-template-columns:1fr;gap:6px}.label{padding-top:0}}
+</style>
+</head>
+<body>
+<h1>MESTAR — Google Merchant Center Feed</h1>
+<div class="sub">v2 — now with landing-page URLs + internal backlinks for SEO. Download the CSV or copy any field.</div>
+
+<button class="dl" onclick="downloadCsv()">⬇️ Download Google Merchant CSV Feed</button>
+
+<div class="note"><strong>Coming Soon items are excluded</strong> (Basic Audiobook, Paperback, Karaoke Audiobook). Google Merchant Center rejects products that aren't purchasable. Add them back when they go live.</div>
+
+<div id="cards"></div>
+
+<script>
+const HERO = "https://storage.googleapis.com/gpt-engineer-file-uploads/hfdVpZRvZ4hMNWvlpFRlEdIJbxm2/social-images/social-1775247101557-576.webp";
+const BASE = "https://mestar.pro";
+
+// Every product links to its landing page AND to the personalization URL,
+// so Google sees two distinct entry points per product and each landing
+// page description references the sibling landing pages (internal backlinks).
+const PRODUCTS = [
+  {
+    id: "mestar-storybook-001",
+    title: "Personalized Storybook for Kids — Your Child Is the Hero (Printable PDF)",
+    price: "19.99 USD",
+    link: BASE + "/products/personalized-storybook",
+    mobile_link: BASE + "/product/personalized-storybook#personalize",
+    image_link: HERO,
+    google_product_category: "Media > Books",
+    product_type: "Personalized Kids Books > Storybooks",
+    description: "Upload your child's photo, pick a theme (fairy tale, ocean, space, dinosaurs, or prince & princess), and get a printable PDF storybook where they're the hero — plus matching coloring pages included free. Age-tuned stories from toddlers to 11+. Delivered in minutes. Add a sibling, friend, or pet with the Supporting Character add-on (" + BASE + "/products/supporting-character), extra Coloring Pages (" + BASE + "/products/coloring-pages), or the Karaoke Audiobook when available (" + BASE + "/products/karaoke-audiobook).",
+    related: ["supporting-character","coloring-pages","karaoke-audiobook"]
+  },
+  {
+    id: "mestar-coloring-002",
+    title: "Personalized Coloring Pages Add-On — Kids Coloring Book Printable",
+    price: "4.99 USD",
+    link: BASE + "/products/coloring-pages",
+    mobile_link: BASE + "/product/personalized-storybook#personalize",
+    image_link: HERO,
+    google_product_category: "Toys & Games > Toys > Art & Drawing Toys",
+    product_type: "Personalized Kids Books > Coloring Pages",
+    description: "Extra printable coloring pages featuring your child in scenes from their MESTAR story. Complexity scales with age — chunky shapes for toddlers, detailed line art for older kids. Add-on to the MESTAR Personalized Storybook (" + BASE + "/products/personalized-storybook). Pairs perfectly with the Supporting Character add-on (" + BASE + "/products/supporting-character).",
+    related: ["personalized-storybook","supporting-character"]
+  },
+  {
+    id: "mestar-supporting-003",
+    title: "Supporting Character Add-On — Add a Sibling, Friend, or Pet to the Story",
+    price: "9.99 USD",
+    link: BASE + "/products/supporting-character",
+    mobile_link: BASE + "/product/personalized-storybook#personalize",
+    image_link: HERO,
+    google_product_category: "Media > Books",
+    product_type: "Personalized Kids Books > Add-Ons",
+    description: "Upload a second photo and give your child a sidekick in their personalized MESTAR storybook. Sibling, best friend, parent, or pet — the supporting character always helps the hero. Requires the MESTAR Personalized Storybook (" + BASE + "/products/personalized-storybook). Great combined with extra Coloring Pages (" + BASE + "/products/coloring-pages).",
+    related: ["personalized-storybook","coloring-pages"]
+  }
+];
+
+const SHARED = {
+  availability: "in_stock",
+  condition: "new",
+  brand: "MESTAR",
+  identifier_exists: "no",
+  age_group: "kids",
+  gender: "unisex",
+  shipping_weight: "0 lb"
+};
+
+function csvEscape(v){
+  const s = String(v ?? "");
+  if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+
+function buildRows(){
+  const headers = ["id","title","description","link","mobile_link","image_link","availability","price","brand","condition","google_product_category","product_type","identifier_exists","age_group","gender","shipping_weight"];
+  const rows = [headers.join(",")];
+  PRODUCTS.forEach(p=>{
+    const row = headers.map(h => csvEscape(p[h] !== undefined ? p[h] : SHARED[h] ?? ""));
+    rows.push(row.join(","));
+  });
+  return rows.join("\n");
+}
+
+function downloadCsv(){
+  const blob = new Blob([buildRows()], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "mestar-products.csv";
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function copyText(btn, text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const old = btn.textContent; btn.textContent = "✓ Copied"; btn.classList.add("ok");
+    setTimeout(()=>{btn.textContent = old; btn.classList.remove("ok");}, 1400);
+  });
+}
+
+function render(){
+  const c = document.getElementById("cards");
+  PRODUCTS.forEach(p=>{
+    const fields = [
+      ["id",p.id],["title",p.title],["description",p.description],
+      ["link",p.link],["mobile_link",p.mobile_link],["image_link",p.image_link],
+      ["price",p.price],["availability",SHARED.availability],["brand",SHARED.brand],
+      ["condition",SHARED.condition],["google_product_category",p.google_product_category],
+      ["product_type",p.product_type],["identifier_exists",SHARED.identifier_exists],
+      ["age_group",SHARED.age_group],["gender",SHARED.gender]
+    ];
+    const rowsHtml = fields.map(([k,v])=>`
+      <div class="row">
+        <div class="label">${k}</div>
+        <div class="val" id="v_${p.id}_${k}">${escapeHtml(v)}</div>
+        <button class="copy" data-target="v_${p.id}_${k}">Copy</button>
+      </div>`).join("");
+    const backlinks = p.related.map(r=>`<a href="${BASE}/products/${r}">${BASE}/products/${r}</a>`).join(" · ");
+    c.insertAdjacentHTML("beforeend",`
+      <div class="card">
+        <h2>${escapeHtml(p.title)}</h2>
+        <div class="price">${p.price} · <a href="${p.link}">${p.link}</a></div>
+        ${rowsHtml}
+        <div class="backlinks"><strong>Internal SEO backlinks:</strong> ${backlinks}</div>
+      </div>`);
+  });
+  document.querySelectorAll(".copy").forEach(btn=>{
+    btn.addEventListener("click",()=> copyText(btn, document.getElementById(btn.dataset.target).textContent));
+  });
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+render();
+</script>
+</body>
+</html>
