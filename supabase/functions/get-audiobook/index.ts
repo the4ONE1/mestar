@@ -26,9 +26,16 @@ serve(async (req) => {
 
   const url = new URL(req.url);
   const orderId = url.searchParams.get("orderId")?.trim();
+  const token = url.searchParams.get("token")?.trim();
   if (!orderId || !/^[0-9a-f-]{36}$/i.test(orderId)) {
     return new Response(JSON.stringify({ error: "Invalid orderId" }), {
       status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (!token || !/^[0-9a-f-]{36}$/i.test(token)) {
+    return new Response(JSON.stringify({ error: "Missing or invalid access token" }), {
+      status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -38,13 +45,23 @@ serve(async (req) => {
   // Validate the order: must exist, be complete, have audiobook addon, and not be refunded/expired
   const { data: order, error: orderErr } = await supabase
     .from("storybook_orders")
-    .select("id, status, story_title, child_name, selected_addons, completed_at, refunded_at, access_expires_at")
+    .select("id, status, story_title, child_name, selected_addons, completed_at, refunded_at, access_expires_at, recovery_token")
     .eq("id", orderId)
     .maybeSingle();
 
   if (orderErr || !order) {
     return new Response(JSON.stringify({ error: "Order not found" }), {
       status: 404,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Constant-time-ish token check: reject unless the caller supplied the
+  // per-order recovery_token issued at checkout. Prevents anyone with just
+  // the order UUID (from URL/referrer leakage) from reading PII/audio.
+  if (!order.recovery_token || String(order.recovery_token) !== token) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
