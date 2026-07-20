@@ -615,13 +615,14 @@ serve(async (req) => {
     }
 
 
-    // Build PDF
+    // Build PDF — scene coloring pages always included; bonus book appended when purchased
     console.log("Assembling PDF...");
     const { pdf: pdfBytes, pageTexts } = await buildStorybookPDF(
       title,
       story,
       illustrationImages,
       coloringImages,
+      bonusColoringImages,
       addons.illustrations,
       addons.coloring
     );
