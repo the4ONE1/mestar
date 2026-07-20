@@ -220,8 +220,9 @@ async function buildStorybookPDF(
   storyText: string,
   illustrationImages: (Uint8Array | null)[],
   coloringImages: (Uint8Array | null)[],
+  bonusColoringImages: (Uint8Array | null)[],
   hasIllustrations: boolean,
-  hasColoring: boolean
+  hasBonusColoringBook: boolean
 ): Promise<{ pdf: Uint8Array; pageTexts: string[] }> {
   const pdfDoc = await PDFDocument.create();
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
