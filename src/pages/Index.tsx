@@ -1,10 +1,370 @@
-import { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, useRef, useCallback, DragEvent, ChangeEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, CheckCircle2, Volume2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, CheckCircle2, Volume2, Upload, ImageIcon, X } from "lucide-react";
 import { fetchProducts, ShopifyProduct } from "@/lib/shopify";
 import StoryPreview from "@/components/StoryPreview";
 import SEO from "@/components/SEO";
+import { toast } from "sonner";
+import type { PreviewDraft } from "./Preview";
+
+const DRAFT_KEY = "mestar-preview-draft";
+
+const STORY_THEMES = [
+  "Fairy Tale",
+  "Ocean Adventure & Pirates",
+  "Prince & Princess",
+  "Outer Space",
+  "Dinosaurs",
+];
+
+// ── Demo crossfade data ──────────────────────────────────────────────────────
+
+interface DemoSlide {
+  childLabel: string;
+  beforeBg: string;  // CSS gradient representing a "real child photo"
+  afterSrc: string;  // actual storybook sample image
+  theme: string;
+  icon: string;
+}
+
+const DEMO_SLIDES: DemoSlide[] = [
+  {
+    childLabel: "Sophie",
+    beforeBg: "linear-gradient(135deg, hsl(25 60% 55%), hsl(20 50% 45%))",
+    afterSrc: "/images/sample-page-1.jpg",
+    theme: "Fairy Tale",
+    icon: "🧚",
+  },
+  {
+    childLabel: "Leo",
+    beforeBg: "linear-gradient(135deg, hsl(200 55% 50%), hsl(195 45% 40%))",
+    afterSrc: "/images/samples/ocean-1.jpg",
+    theme: "Ocean Adventure",
+    icon: "🌊",
+  },
+  {
+    childLabel: "Mia",
+    beforeBg: "linear-gradient(135deg, hsl(260 50% 55%), hsl(255 45% 40%))",
+    afterSrc: "/images/samples/space-1.jpg",
+    theme: "Outer Space",
+    icon: "🚀",
+  },
+];
+
+/** Animated demo: cycles through 3 photo→storybook transformations */
+const HeroDemo = () => {
+  const [slideIdx, setSlideIdx] = useState(0);
+  const [phase, setPhase] = useState<"before" | "transforming" | "after">("before");
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const cycle = () => {
+      // before → transforming
+      timer = setTimeout(() => {
+        setPhase("transforming");
+        // transforming → after
+        timer = setTimeout(() => {
+          setPhase("after");
+          // after → next slide (before)
+          timer = setTimeout(() => {
+            setSlideIdx((prev) => (prev + 1) % DEMO_SLIDES.length);
+            setPhase("before");
+            cycle();
+          }, 3200);
+        }, 900);
+      }, 3000);
+    };
+    cycle();
+    return () => clearTimeout(timer);
+  }, []);
+
+  const slide = DEMO_SLIDES[slideIdx];
+
+  return (
+    <div className="relative w-full max-w-sm mx-auto select-none">
+      {/* Main transformation frame */}
+      <div className="relative aspect-square rounded-3xl overflow-hidden border-2 border-primary/40 shadow-2xl shadow-primary/20">
+        {/* Before layer — illustrated child avatar */}
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 transition-opacity duration-700"
+          style={{
+            background: "hsl(220 20% 10%)",
+            opacity: phase === "before" ? 1 : 0,
+          }}
+        >
+          {/* Child silhouette avatar */}
+          <div
+            className="w-36 h-36 rounded-full border-4 border-primary/60 shadow-lg shadow-primary/20 flex items-center justify-center"
+            style={{ background: slide.beforeBg }}
+          >
+            {/* Simple face SVG */}
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" aria-hidden>
+              <circle cx="40" cy="32" r="22" fill="rgba(255,255,255,0.25)" />
+              <circle cx="32" cy="30" r="4" fill="rgba(255,255,255,0.7)" />
+              <circle cx="48" cy="30" r="4" fill="rgba(255,255,255,0.7)" />
+              <path d="M32 42 Q40 50 48 42" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+              <rect x="14" y="58" width="52" height="20" rx="10" fill="rgba(255,255,255,0.15)" />
+            </svg>
+          </div>
+          <span className="font-display font-bold text-foreground text-lg">{slide.childLabel}'s Photo</span>
+          <span className="text-xs text-muted-foreground">Tap to transform →</span>
+        </div>
+
+        {/* Transforming shimmer layer */}
+        <div
+          className="absolute inset-0 transition-opacity duration-300 pointer-events-none"
+          style={{
+            background: "radial-gradient(circle, hsl(43 90% 62% / 0.6) 0%, hsl(220 20% 10%) 70%)",
+            opacity: phase === "transforming" ? 1 : 0,
+          }}
+        >
+          <div className="absolute inset-0 preview-shimmer" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Sparkles className="h-16 w-16 text-primary animate-pulse" />
+          </div>
+        </div>
+
+        {/* After layer — storybook scene */}
+        <div
+          className="absolute inset-0 transition-opacity duration-700"
+          style={{ opacity: phase === "after" ? 1 : 0 }}
+        >
+          <img
+            src={slide.afterSrc}
+            alt={`${slide.childLabel} in a ${slide.theme} storybook scene`}
+            className="w-full h-full object-cover"
+            loading="eager"
+          />
+          {/* Overlay badge */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4">
+            <p className="font-display text-base font-bold text-foreground text-center">
+              {slide.icon} {slide.childLabel} — {slide.theme}
+            </p>
+          </div>
+        </div>
+
+        {/* Phase indicator pill */}
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-background/80 backdrop-blur-sm border border-border rounded-full px-3 py-1 text-[11px] font-bold z-10">
+          {phase === "before" ? "📷 Child's Photo" : phase === "transforming" ? "✨ Transforming…" : "📖 Storybook Scene"}
+        </div>
+      </div>
+
+      {/* Slide indicators */}
+      <div className="flex justify-center gap-2 mt-4">
+        {DEMO_SLIDES.map((s, i) => (
+          <button
+            key={s.childLabel}
+            onClick={() => { setSlideIdx(i); setPhase("before"); }}
+            aria-label={`Show ${s.childLabel}'s demo`}
+            className={`rounded-full transition-all ${
+              i === slideIdx ? "w-7 h-2.5 bg-primary" : "w-2.5 h-2.5 bg-muted-foreground/30"
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Floating sparkles (decorative) */}
+      <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-primary/20 animate-twinkle" />
+      <div className="absolute -bottom-3 -left-3 w-5 h-5 rounded-full bg-primary/30 animate-twinkle" style={{ animationDelay: "1.5s" }} />
+    </div>
+  );
+};
+
+// ── Quick-Start Hero Form ───────────────────────────────────────────────────
+
+const HeroForm = () => {
+  const navigate = useNavigate();
+  const [childName, setChildName] = useState("");
+  const [theme, setTheme] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const acceptFile = useCallback((file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (JPG, PNG, etc.)");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Photo must be under 8 MB");
+      return;
+    }
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setPhotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setDragging(false);
+      const file = e.dataTransfer.files?.[0];
+      if (file) acceptFile(file);
+    },
+    [acceptFile],
+  );
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) acceptFile(file);
+  };
+
+  const isValid = childName.trim().length > 0 && theme.length > 0 && photoPreview !== null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isValid) {
+      toast.error("Please fill in all fields and upload a photo.");
+      return;
+    }
+    setSubmitting(true);
+    const draft: PreviewDraft = {
+      childName: childName.trim(),
+      theme,
+      photoData: photoPreview,
+      savedAt: Date.now(),
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    navigate("/preview");
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+      {/* Child's Name */}
+      <div className="space-y-1.5">
+        <Label htmlFor="hero-child-name" className="text-sm font-bold">
+          Child's Name
+        </Label>
+        <Input
+          id="hero-child-name"
+          type="text"
+          placeholder="e.g. Sophie"
+          value={childName}
+          onChange={(e) => setChildName(e.target.value)}
+          maxLength={40}
+          className="rounded-xl bg-secondary/50 border-border h-11"
+          autoComplete="off"
+        />
+      </div>
+
+      {/* Story Theme */}
+      <div className="space-y-1.5">
+        <Label htmlFor="hero-theme" className="text-sm font-bold">
+          Story Theme
+        </Label>
+        <Select value={theme} onValueChange={setTheme}>
+          <SelectTrigger id="hero-theme" className="rounded-xl bg-secondary/50 border-border h-11">
+            <SelectValue placeholder="Choose a theme…" />
+          </SelectTrigger>
+          <SelectContent>
+            {STORY_THEMES.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Photo Upload */}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-bold">Upload Your Child's Photo</Label>
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Upload photo by clicking or dragging and dropping"
+          className={`relative rounded-xl border-2 border-dashed p-4 text-center cursor-pointer transition-colors ${
+            dragging ? "dropzone-active" : "border-border hover:border-primary/50 hover:bg-secondary/30"
+          }`}
+          onClick={() => fileInputRef.current?.click()}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && fileInputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={handleDrop}
+        >
+          {photoPreview ? (
+            <div className="flex items-center gap-3">
+              <img
+                src={photoPreview}
+                alt="Preview of uploaded child photo"
+                className="w-14 h-14 rounded-lg object-cover shrink-0 border border-primary/30"
+              />
+              <div className="flex-1 text-left min-w-0">
+                <p className="text-sm font-bold text-foreground truncate">{photoFile?.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {photoFile ? `${(photoFile.size / 1024).toFixed(0)} KB` : "Photo ready"}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Remove photo"
+                onClick={(e) => { e.stopPropagation(); setPhotoFile(null); setPhotoPreview(null); }}
+                className="ml-auto p-1.5 rounded-full hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="py-3 flex flex-col items-center gap-2 text-muted-foreground">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                {dragging ? (
+                  <ImageIcon className="h-6 w-6 text-primary animate-bounce" />
+                ) : (
+                  <Upload className="h-6 w-6 text-primary" />
+                )}
+              </div>
+              <p className="text-sm font-bold text-foreground">
+                {dragging ? "Drop it here!" : "Drag & drop or click to upload"}
+              </p>
+              <p className="text-xs">JPG, PNG, WEBP — max 8 MB</p>
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            aria-label="Upload child photo"
+            onChange={handleFileChange}
+          />
+        </div>
+      </div>
+
+      {/* Submit */}
+      <Button
+        type="submit"
+        size="lg"
+        disabled={!isValid || submitting}
+        className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full py-7 shadow-xl shadow-primary/30 hover:scale-105 transition-all duration-300 disabled:scale-100 disabled:opacity-60"
+      >
+        {submitting ? (
+          <>
+            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+            Creating Preview…
+          </>
+        ) : (
+          <>
+            <Sparkles className="h-5 w-5 mr-2" />
+            See the Magic Preview!
+          </>
+        )}
+      </Button>
+
+      <p className="text-[11px] text-center text-muted-foreground/70">
+        Free preview — no payment required. Photo stored privately for 5&nbsp;days max.
+      </p>
+    </form>
+  );
+};
+
+// ── Product Card (unchanged) ────────────────────────────────────────────────
 
 const ProductCard = ({ product }: { product: ShopifyProduct }) => {
   const image = product.node.images.edges[0]?.node;
@@ -14,7 +374,6 @@ const ProductCard = ({ product }: { product: ShopifyProduct }) => {
   return (
     <Link to={`/product/${product.node.handle}#personalize`} className="group block h-full">
       <div className="relative h-full flex flex-col bg-card rounded-3xl overflow-hidden border border-border hover:border-primary/60 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1">
-        {/* Top ribbon */}
         <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider rounded-full px-2.5 py-1 shadow-md">
           <Sparkles className="h-3 w-3" /> Bestseller
         </div>
@@ -34,7 +393,6 @@ const ProductCard = ({ product }: { product: ShopifyProduct }) => {
         )}
 
         <div className="p-5 flex flex-col flex-1">
-          {/* Rating row */}
           <div className="flex items-center gap-1.5 mb-2">
             <div className="flex">
               {[...Array(5)].map((_, i) => (
@@ -51,7 +409,6 @@ const ProductCard = ({ product }: { product: ShopifyProduct }) => {
             {product.node.description}
           </p>
 
-          {/* Mini feature ticks */}
           <ul className="text-xs text-muted-foreground space-y-1 mb-4">
             <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Your child as the hero</li>
             <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Coloring pages included</li>
@@ -130,7 +487,6 @@ const Index = () => {
           className="fixed inset-0 z-50 bg-black flex items-center justify-center cursor-pointer overflow-hidden"
           onClick={handleVideoEnd}
         >
-          {/* Blurred backdrop fill so portrait video doesn't leave black bars on desktop */}
           <video
             src="/videos/promo-ad.mp4"
             playsInline
@@ -181,6 +537,7 @@ const Index = () => {
           logo: "https://mestar.pro/favicon.ico",
         }}
       />
+
       {/* Announcement Bar */}
       <div className="bg-primary text-primary-foreground text-center py-2 px-4">
         <p className="text-sm font-display font-bold">
@@ -188,45 +545,60 @@ const Index = () => {
         </p>
       </div>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="relative z-10 container text-center pt-12 pb-16 sm:pt-20 sm:pb-24">
-          <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm border border-primary/30 rounded-full px-4 py-2 mb-6">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-bold text-primary">Personalized Bedtime Magic</span>
-          </div>
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-lg">
-            Your Child Is
-            <br />
-            <span className="text-primary drop-shadow-[0_0_20px_hsl(43_75%_62%/0.5)]">the ⭐</span>
-          </h1>
-          <p className="text-lg text-foreground/90 max-w-lg mx-auto mb-8 leading-relaxed drop-shadow-md">
-            A one-of-a-kind digital storybook where your little one is the hero. Instantly download and start the magic tonight.
-          </p>
-          {products.length > 0 ? (
-            <Button
-              asChild
-              size="lg"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all duration-300"
-            >
-              <Link to={`/product/${products[0].node.handle}#personalize`}>Start Your Magical Journey ⭐</Link>
-            </Button>
-          ) : (
-            <Button
-              asChild
-              size="lg"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full px-10 py-7 shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all duration-300"
-            >
-              <a href="#products">Start Your Magical Journey ⭐</a>
-            </Button>
-          )}
+      {/* ── NEW Hero Section ── */}
+      <section className="relative overflow-hidden stars-bg">
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background pointer-events-none" />
+        <div className="relative z-10 container py-14 sm:py-20">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
 
-          {/* Social proof */}
-          <div className="mt-8 flex items-center justify-center gap-1">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="h-5 w-5 text-primary fill-primary" />
-            ))}
-            <span className="ml-2 text-sm text-foreground/80 font-medium">Loved by 2,000+ families</span>
+            {/* Left — form column */}
+            <div className="flex flex-col gap-6">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm border border-primary/30 rounded-full px-4 py-2 mb-5">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-bold text-primary">Personalized Bedtime Magic</span>
+                </div>
+                <h1 className="font-display text-4xl sm:text-5xl font-extrabold mb-4 leading-tight drop-shadow-lg">
+                  Make Your Child
+                  <br />
+                  <span className="text-primary drop-shadow-[0_0_20px_hsl(43_75%_62%/0.5)]">
+                    the ⭐ of the Story
+                  </span>
+                </h1>
+                <p className="text-base text-foreground/80 leading-relaxed mb-2">
+                  Upload a photo, pick a theme, and see a free preview in seconds. Then unlock the full 20-page personalised storybook for just&nbsp;<strong>$19.99</strong>.
+                </p>
+              </div>
+
+              {/* Quick-start form */}
+              <div className="bg-card/70 backdrop-blur-md rounded-2xl border border-border p-6 shadow-xl">
+                <HeroForm />
+              </div>
+
+              {/* Social proof */}
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 text-primary fill-primary" />
+                  ))}
+                </div>
+                <span className="text-sm text-foreground/70 font-medium">Loved by 2,000+ families</span>
+              </div>
+            </div>
+
+            {/* Right — animated demo column */}
+            <div className="flex flex-col items-center gap-6">
+              <div className="text-center mb-2">
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                  Watch the transformation
+                </p>
+                <p className="text-xs text-muted-foreground/70">
+                  Real child photo → personalised storybook character
+                </p>
+              </div>
+              <HeroDemo />
+            </div>
+
           </div>
         </div>
       </section>
@@ -250,17 +622,15 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Video Section - Coming Soon */}
-
       {/* How It Works */}
       <section className="py-16">
         <div className="container">
           <h2 className="font-display text-3xl font-bold text-center mb-10">How It Works</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {[
-              { step: "1", icon: Sparkles, title: "Personalize It", desc: "Upload a photo, choose a theme & add details" },
-              { step: "2", icon: BookOpen, title: "Place Your Order", desc: "Complete checkout — optionally add a second character" },
-              { step: "3", icon: Download, title: "Download & Enjoy", desc: "Get your personalized PDF storybook instantly" },
+              { step: "1", icon: Sparkles, title: "Personalize It", desc: "Upload a photo, choose a theme & get a free preview" },
+              { step: "2", icon: BookOpen, title: "Place Your Order", desc: "Unlock the full story for $19.99 — one-time payment" },
+              { step: "3", icon: Download, title: "Download & Enjoy", desc: "Get your personalised PDF storybook instantly" },
             ].map(({ step, icon: Icon, title, desc }) => (
               <div key={step} className="text-center">
                 <div className="w-14 h-14 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center mx-auto mb-4">
@@ -307,7 +677,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Reviews — empty state until real reviews exist */}
+      {/* Reviews */}
       <section className="py-16 border-t border-border">
         <div className="container max-w-3xl text-center">
           <div className="flex items-center justify-center gap-1 mb-4">
