@@ -674,11 +674,12 @@ serve(async (req) => {
       // Safety net: if we didn't render the full expected count, flag the order for review
       // instead of silently marking it complete. PDF + email still go through as today.
       const illustrationsShort = addons.illustrations && illustrationCount < expectedIllustrations;
-      const coloringShort = addons.coloring && coloringCount < expectedColoring;
-      const finalStatus = illustrationsShort || coloringShort ? "needs_review" : "complete";
+      const coloringShort = coloringCount < expectedColoring;
+      const bonusShort = addons.coloring && bonusColoringCount < expectedBonusColoring;
+      const finalStatus = illustrationsShort || coloringShort || bonusShort ? "needs_review" : "complete";
       if (finalStatus === "needs_review") {
         console.error(
-          `Order ${orderId} flagged needs_review: illustrations ${illustrationCount}/${expectedIllustrations}, coloring ${coloringCount}/${expectedColoring}`
+          `Order ${orderId} flagged needs_review: illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}`
         );
       }
       await supabase
