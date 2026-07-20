@@ -423,6 +423,7 @@ serve(async (req) => {
       title,
       story,
       coloringPrompts,
+      bonusColoringPrompts,
       illustrationPrompts,
       selectedAddons,
       customerEmail,
@@ -441,6 +442,9 @@ serve(async (req) => {
       );
     }
 
+    // NOTE: scene-derived coloring pages (one per story scene) are ALWAYS included
+    // free with every storybook. `addons.coloring` gates the PAID bonus coloring
+    // book (8 extra pages with the child across random themes).
     const addons = {
       illustrations: true,
       coloring: false,
