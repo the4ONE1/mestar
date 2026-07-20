@@ -1,50 +1,49 @@
-## Root cause (confirmed from logs)
+## Recommendation on the image model
 
-Stripe's sandbox webhook IS reaching our server. Every call fails with `Invalid webhook signature`. The `PAYMENTS_SANDBOX_WEBHOOK_SECRET` stored in the project does not match the secret Stripe uses to sign events. That's why 100% of paid test checkouts sit in `pending_payment` forever and no generation ever runs.
+You said "AWS-3" but I want to be honest — there is no image model called that. The three real options I could map it to:
 
-## Part 1 — Fix the webhook secret (the actual blocker)
+1. **Stable Diffusion 3 via AWS Bedrock** — requires you to open an AWS account, request Bedrock model access, and manage a second API key. Extra bill, extra setup, no character-consistency advantage for kids' books.
+2. **Amazon Nova Canvas** — same AWS friction, weaker at stylized children's illustration.
+3. **Google Gemini 3 Pro Image (a.k.a. "Nano Banana Pro")** — **my recommendation.** It's already available through Lovable's built-in AI Gateway (no extra account, no extra key), it's currently the top-rated model for character consistency across multiple illustrations (critical so the child looks like the same kid on every page), and billing rolls into your existing Lovable credits.
 
-Two possible causes; the fix differs slightly:
+Going with **Gemini 3 Pro Image** unless you tell me otherwise.
 
-**Cause A — Manual webhook you added in Stripe's dashboard:** the whsec you pasted into Lovable is out of sync. Fix: I'll ask you for the current `whsec_...` shown next to that endpoint in Stripe → Developers → Webhooks (I'll walk you through where to click, screenshot-level detail), then I'll store it via `secrets--set_secret` for `PAYMENTS_SANDBOX_WEBHOOK_SECRET`.
+## What changes
 
-**Cause B — Duplicate endpoints:** Lovable already auto-registered a webhook when payments were enabled, AND you added a second one manually. Stripe signs with whichever endpoint's secret; ours only knows one. Fix: delete the manual one, keep the Lovable-managed one.
+### 1. Story generation → `google/gemini-2.5-flash`
+File: `supabase/functions/generate-story/index.ts`
+- Swap the current chat model call to `google/gemini-2.5-flash` through the Lovable AI Gateway.
+- Keep the existing prompt, age-group logic, supporting-character rules, and JSON structure — only the model id and request shape change.
+- Keep the existing retry/rate-limit handler (`callChatWithRetry`).
 
-Step 1 of this plan is a 3-minute back-and-forth where you tell me what's in your Stripe dashboard and I decide A vs B.
+### 2. Illustrations + coloring pages → `google/gemini-3-pro-image`
+File: `supabase/functions/create-storybook/index.ts`
+- Replace the current image-generation call with the Gateway `/v1/images/generations` endpoint using the Gemini chat-shape body (`messages` + `modalities: ["image","text"]`).
+- Apply to **both** the story illustrations (one per scene) and the scene-derived coloring pages. Same model, different prompts (coloring pages get the "black-and-white line art, no shading" instruction already in the code).
+- Keep the age-based coloring-page count logic already in place.
+- Keep the retry-on-failure loop already in place.
 
-## Part 2 — Admin dashboard: one-click test checkout + webhook health
+### 3. Confirm the webhook pipeline (no code change, just verification)
+Already correct — documenting so you know:
+- `stripe-webhook` → `generate-story` → `create-storybook`
+- `create-storybook` internally generates: **illustrations → coloring pages → audiobook** (audiobook only if that add-on was purchased).
+- One paid checkout fires the entire pipeline. No extra wiring needed.
 
-In `src/pages/AdminPayments.tsx`:
+### 4. Nothing else touched
+- No Stripe changes.
+- No UI changes.
+- No database changes.
+- Audiobook stays on ElevenLabs (that's a separate voice model, not an image/text one).
 
-- **Green/red webhook health pill** at the top: green if any successful event landed in the last 24h, red otherwise (with the exact error from the last failed attempt shown inline — no more guessing).
-- **"Run Sandbox Test Checkout" button** that:
-  1. Calls a new tiny edge function `admin-run-test-checkout` (protected by `x-admin-token`) which creates a pending order with test data (child "Admin Test", age 5, kindness theme, your email) via the existing `create_pending_order` RPC.
-  2. Opens `/checkout?orderId=<new-id>` in a new tab so you complete the Stripe form with `4242 4242 4242 4242`.
-  3. Auto-polls `payment_events` every 3s for 90s so you literally watch the events land (or watch them NOT land, which is equally useful).
-- **Retry-generation button** on each stuck order row that manually kicks the pipeline (bypasses the webhook), so we can rescue the 5 real-looking stuck orders and prove the generation pipeline itself still works.
+## How you'll test after I build it
 
-## Part 3 — What to do about the 30 stuck orders
+1. Go to `/admin/payments` → click **Run Sandbox Test Checkout**.
+2. Use test card `4242 4242 4242 4242`, any future date, any CVC.
+3. Within ~60 seconds the order status should move: `pending_payment` → `generating_story` → `generating_images` → `complete`.
+4. Open the library link for that order — you should see: story text, a same-looking child on every illustration, and the scene-matched coloring pages.
 
-- **25 test orders (your emails, [t@e.com](mailto:t@e.com), etc.)** — I'll archive them (mark as `status='cancelled'`) so your dashboard is clean.
-- **5 real-looking orders** (fieldgar369 + the 3 temp-mail addresses + one bob ross entry) — these never had a completed Stripe payment (only 2 of the 5 even got as far as opening the checkout iframe), so no refund is needed. I'll mark them `abandoned` with a note. If any of these were real people who paid, they'd have chased you by email by now; none did.
+## Technical notes (for my own reference)
 
-## Technical details (skip if not interested)
-
-- New edge function: `supabase/functions/admin-run-test-checkout/index.ts` (verify_jwt=false, checks `x-admin-token`, POST-only, no CORS surprises). Inserts via `create_pending_order` RPC and returns `{ orderId }`. Adds one line to `supabase/config.toml`.
-- Extend `admin-payment-events` response with `{ webhookHealth: { lastSuccessAt, lastErrorAt, lastErrorMessage, count24h } }` by also querying recent edge-function logs via the internal logs endpoint.
-- Add "Archive test orders" and "Retry generation" actions to `admin-payment-events` (POST mode) — same auth, small switch.
-- No DB migration required.
-- Build/typecheck runs automatically.
-
-## How you'll test it end-to-end
-
-1. **First**, we get the he secret sorted (Part 1) — takes 3 min.
-2. Open `/admin/payments`, sign in with `ADMINDASHBOARDTOKEN`.
-3. Health pill should be red still (no successes yet). Click **Run Sandbox Test Checkout**.
-4. New tab opens with the Stripe form. Pay with `4242 4242 4242 4242`, exp `12/30`, CVC `123`, ZIP anything.
-5. Return to admin tab. Within ~5 seconds you'll see rows appear: `checkout.session.completed` → `queued` → `pipeline_complete`. Health pill flips green.
-6. If step 5 shows a red row with a new error message, we fix that one thing and repeat. No more mystery.
-
-## Why this order
-
-Adding the test button before fixing the secret would just give you a slicker way to reproduce the same failure. Secret first, button second.
+- Gemini 2.5 Flash uses `/v1/chat/completions` with standard `messages`; existing JSON-output prompt stays.
+- Gemini 3 Pro Image uses `/v1/images/generations` with `messages` + `modalities: ["image","text"]`, `stream: false` (server-side, no UI streaming needed), returns `data[0].b64_json`.
+- All calls stay server-side in edge functions using `LOVABLE_API_KEY` — no client exposure.
