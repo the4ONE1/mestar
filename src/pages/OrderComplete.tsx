@@ -116,24 +116,8 @@ const OrderComplete = () => {
     }
   }, [orderIdFromUrl]);
 
-  // If Stripe's webhook is misconfigured, the customer return still contains
-  // a session_id. Verify that session directly with Stripe and start generation.
-  useEffect(() => {
-    if (!orderId || !sessionIdFromUrl || paymentConfirmedRef.current) return;
-    paymentConfirmedRef.current = true;
+  // Payment integration removed — nothing to confirm on return.
 
-    supabase.functions
-      .invoke("confirm-checkout-payment", {
-        body: {
-          orderId,
-          sessionId: sessionIdFromUrl,
-          environment: getStripeEnvironment(),
-        },
-      })
-      .then(({ error: invokeError }) => {
-        if (invokeError) console.error("Payment confirmation fallback failed:", invokeError);
-      });
-  }, [orderId, sessionIdFromUrl]);
 
   // Poll the database for order status
   useEffect(() => {
