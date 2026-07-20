@@ -697,6 +697,17 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
       }
     }
 
+    // Parse bonus coloring prompts (paid add-on)
+    const bonusColoringPrompts: string[] = [];
+    if (bonusColoringOutput) {
+      for (let i = 1; i <= 8; i++) {
+        const regex = new RegExp(`\\*{0,2}COLOR_PAGE_${i}_PROMPT\\*{0,2}:\\s*\\n?([\\s\\S]*?)(?=\\*{0,2}COLOR_PAGE_${i + 1}_PROMPT\\*{0,2}:|$)`, "i");
+        const match = bonusColoringOutput.match(regex);
+        const p = match?.[1]?.trim();
+        if (p) bonusColoringPrompts.push(p);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -704,10 +715,12 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
         story: storyMatch?.[1]?.trim() || storyOutput,
         scenes: sceneMatches,
         coloringPrompts,
+        bonusColoringPrompts,
         illustrationPrompts,
         addons,
         rawStoryOutput: storyOutput,
         rawColoringOutput: coloringOutput,
+        rawBonusColoringOutput: bonusColoringOutput,
         rawIllustrationOutput: illustrationOutput,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
