@@ -635,13 +635,14 @@ Supporting Character Included: ${hasSupportingCharacter ? "Yes" : "No"}
 Supporting Character Name: ${hasSupportingCharacter && supportingCharacterName ? supportingCharacterName : "N/A"}
 Desired Strength to Nurture: ${strength || "organic positive growth"}
 
-WORD COUNT REQUIREMENT (HARD — DO NOT IGNORE):
-The STORY section MUST be between ${minWords} and ${maxWords} words.
-MINIMUM ${minWords} words is a hard floor — outputs under ${minWords} words are unacceptable.
-Before finalizing, silently count the words in your STORY. If under ${minWords},
-keep writing: expand scenes, add sensory description, deepen dialogue, lengthen
-the resolution and bedtime closing — until you are within ${minWords}–${maxWords}.
-Do NOT shorten to "wrap up" early. Word count is measured on the STORY section only.
+STORY LENGTH GUIDANCE — PREMIUM QUALITY FIRST:
+Aim for the STORY section to land around ${minWords}–${maxWords} words.
+This is a target, not a hard rule. The premium, real-sounding story matters
+most. If the story needs more space to deliver a full emotional arc, allow
+it to run longer. Do NOT pad filler, force extra sentences, or repeat phrases
+to hit a minimum. Do NOT cut a satisfying ending short to stay under a maximum.
+Silently check word count only as a sanity check, then prioritize emotional
+truth, natural pacing, and a memorable resolution.
 
 SCENE COUNT OVERRIDE (CRITICAL):
 Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"} (SCENE_1_SUMMARY${
