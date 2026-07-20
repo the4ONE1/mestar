@@ -246,6 +246,15 @@ author. Never mechanical, formulaic, or obviously AI-generated. Two
 customers choosing the same theme should receive noticeably different
 stories. The emotional experience must linger after the final line.
 
+WORD COUNT vs. QUALITY (PRIORITY RULE):
+A premium, emotionally honest story is MORE important than any word count.
+If a scene needs more space to land, let it. If the ending feels richer
+with an extra beat, include it. Do NOT pad filler, force extra sentences,
+repeat phrases, or artificially stretch a story to hit a target. Likewise,
+do NOT rush or cut a satisfying moment just to stay under a ceiling. Count
+words only as a sanity check, not as the goal. Let the story find its own
+natural length within its age group's attention span.
+
 NARRATIVE FLOW:
 - Paragraphs transition smoothly.
 - No abrupt scene jumps.
