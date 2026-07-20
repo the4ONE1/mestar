@@ -334,10 +334,10 @@ async function buildStorybookPDF(
     pageTexts.push(...splitStoryIntoPages(storyText, 5));
   }
 
-  // ── Coloring Pages (if purchased) ──
-  if (hasColoring && coloringImages.some(Boolean)) {
+  // Helper to render a set of coloring pages with a title divider
+  const renderColoringSection = async (dividerText: string, images: (Uint8Array | null)[]) => {
+    if (!images.some(Boolean)) return;
     const dividerPage = pdfDoc.addPage([PAGE_W, PAGE_H]);
-    const dividerText = "Bonus Coloring Pages";
     const dividerSize = 28;
     const dividerWidth = helveticaBold.widthOfTextAtSize(dividerText, dividerSize);
     dividerPage.drawText(dividerText, {
@@ -347,8 +347,7 @@ async function buildStorybookPDF(
       font: helveticaBold,
       color: rgb(0.2, 0.2, 0.4),
     });
-
-    for (const imgBytes of coloringImages) {
+    for (const imgBytes of images) {
       if (!imgBytes) continue;
       try {
         const image = await pdfDoc.embedPng(imgBytes);
@@ -364,6 +363,14 @@ async function buildStorybookPDF(
         console.error("Failed to embed coloring image:", e);
       }
     }
+  };
+
+  // ── Scene coloring pages (ALWAYS included free — one per story scene) ──
+  await renderColoringSection("Your Story Coloring Pages", coloringImages);
+
+  // ── Bonus Coloring Book (paid add-on: extra pages across random themes) ──
+  if (hasBonusColoringBook) {
+    await renderColoringSection("Bonus Coloring Book", bonusColoringImages);
   }
 
   return { pdf: await pdfDoc.save(), pageTexts };
