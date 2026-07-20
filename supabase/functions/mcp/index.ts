@@ -7,7 +7,52 @@ import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/list_products.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { fetchProducts } from "npm:@/lib/shopify";
+
+// src/lib/shopify.ts
+var LOCAL_VARIANT_ID = "gid://mestar/ProductVariant/personalized-storybook";
+var LOCAL_PRODUCTS = [
+  {
+    node: {
+      id: "gid://mestar/Product/personalized-storybook",
+      title: "Personalized Storybook \u2014 Your Child Is the Star",
+      description: "A one-of-a-kind digital PDF storybook starring your child. Upload a photo, choose a theme, and download a print-ready book plus matching coloring pages in minutes.",
+      handle: "personalized-storybook",
+      priceRange: {
+        minVariantPrice: { amount: "19.99", currencyCode: "USD" }
+      },
+      images: {
+        edges: [
+          { node: { url: "/images/sample-page-1.jpg", altText: "Sample storybook page 1" } },
+          { node: { url: "/images/sample-page-2.jpg", altText: "Sample storybook page 2" } },
+          { node: { url: "/images/sample-page-3.jpg", altText: "Sample storybook page 3" } },
+          { node: { url: "/images/sample-page-4.jpg", altText: "Sample storybook page 4" } }
+        ]
+      },
+      variants: {
+        edges: [
+          {
+            node: {
+              id: LOCAL_VARIANT_ID,
+              title: "Default",
+              price: { amount: "19.99", currencyCode: "USD" },
+              availableForSale: true,
+              selectedOptions: [{ name: "Format", value: "Digital PDF" }]
+            }
+          }
+        ]
+      },
+      options: [{ name: "Format", values: ["Digital PDF"] }]
+    }
+  }
+];
+async function fetchProducts(_first = 20) {
+  return LOCAL_PRODUCTS;
+}
+async function fetchProductByHandle(handle) {
+  return LOCAL_PRODUCTS.find((p) => p.node.handle === handle) ?? null;
+}
+
+// src/lib/mcp/tools/list_products.ts
 var list_products_default = defineTool({
   name: "list_products",
   title: "List products",
@@ -34,7 +79,6 @@ var list_products_default = defineTool({
 // src/lib/mcp/tools/get_product.ts
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z } from "npm:zod@^4.4.3";
-import { fetchProductByHandle } from "npm:@/lib/shopify";
 var get_product_default = defineTool2({
   name: "get_product",
   title: "Get product details",

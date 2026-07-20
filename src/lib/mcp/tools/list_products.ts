@@ -1,6 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { fetchProducts } from "@/lib/shopify";
+import { fetchProducts } from "../../shopify";
 
 export default defineTool({
   name: "list_products",
