@@ -34,6 +34,8 @@ export default function Checkout() {
   const email = params.get("email") || undefined;
   const priceIds = pricesParam.split(",").filter(Boolean);
 
+  const nextRoute = params.get("next") || null;
+
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
@@ -50,6 +52,31 @@ export default function Checkout() {
   }, [sessionId, orderId]);
 
   if (sessionId) {
+    // If a `next` redirect was requested (e.g. /upsell after the initial $19.99), redirect there
+    // once confirmation has settled (or immediately if no confirmation needed).
+    if (nextRoute && !confirming) {
+      const destination = nextRoute.includes("?")
+        ? `${nextRoute}&order_id=${orderId}`
+        : `${nextRoute}?order_id=${orderId}`;
+      return (
+        <>
+          <SEO title="Payment Received — MESTAR" description="Your personalized storybook is being created." />
+          <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+            <Loader2 className="w-10 h-10 animate-spin mx-auto mb-4 text-primary" />
+            <h1 className="font-display text-2xl mb-2">Payment confirmed — one moment…</h1>
+            {confirmed && (
+              <p className="text-muted-foreground">
+                Redirecting you now…{" "}
+                <Link to={destination} className="text-primary underline">Click here</Link> if it takes too long.
+              </p>
+            )}
+            {/* Auto-redirect once confirmed */}
+            {confirmed && (() => { setTimeout(() => { window.location.href = destination; }, 500); return null; })()}
+          </div>
+        </>
+      );
+    }
+
     return (
       <>
         <SEO title="Order Received — MESTAR" description="Your personalized storybook is being created." />
@@ -86,7 +113,7 @@ export default function Checkout() {
     );
   }
 
-  const returnUrl = `${window.location.origin}/checkout?order_id=${orderId}&session_id={CHECKOUT_SESSION_ID}`;
+  const returnUrl = `${window.location.origin}/checkout?order_id=${orderId}&session_id={CHECKOUT_SESSION_ID}${nextRoute ? `&next=${encodeURIComponent(nextRoute)}` : ""}`;
 
   return (
     <>

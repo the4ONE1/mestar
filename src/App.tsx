@@ -8,6 +8,8 @@ import { Footer } from "@/components/Footer";
 import { Analytics } from "@/components/Analytics";
 import { useCartSync } from "@/hooks/useCartSync";
 import Index from "./pages/Index";
+import Preview from "./pages/Preview";
+import Upsell from "./pages/Upsell";
 import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import FAQ from "./pages/FAQ";
@@ -39,6 +41,8 @@ const AppContent = () => {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/preview" element={<Preview />} />
+          <Route path="/upsell" element={<Upsell />} />
           <Route path="/product/:handle" element={<ProductDetail />} />
           <Route path="/products" element={<ProductsIndex />} />
           <Route path="/products/:slug" element={<ProductLanding />} />
