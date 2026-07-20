@@ -221,10 +221,42 @@ const OrderComplete = () => {
             <p className="text-sm text-muted-foreground mb-6">
               Includes the personalized story plus any add-ons you selected.
             </p>
-            <Button asChild size="lg" className="w-full">
-              <a href={pdfUrl} target="_blank" rel="noopener noreferrer" download>
-                <Download className="h-5 w-5 mr-2" />
-                Download Your PDF
+            <Button
+              size="lg"
+              className="w-full mb-3"
+              onClick={async () => {
+                try {
+                  toast.loading("Preparing download...", { id: "pdf-dl", position: "top-center" });
+                  const res = await fetch(pdfUrl);
+                  if (!res.ok) throw new Error("Fetch failed");
+                  const blob = await res.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  const safeName = (storyTitle || childName || "storybook")
+                    .replace(/[^a-z0-9]+/gi, "-")
+                    .replace(/^-|-$/g, "")
+                    .toLowerCase();
+                  a.download = `${safeName || "storybook"}.pdf`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                  toast.success("Downloaded! 📥", { id: "pdf-dl", position: "top-center" });
+                } catch (e) {
+                  console.error(e);
+                  toast.error("Download failed — opening in a new tab instead.", { id: "pdf-dl" });
+                  window.open(pdfUrl, "_blank");
+                }
+              }}
+            >
+              <Download className="h-5 w-5 mr-2" />
+              Download Now
+            </Button>
+            <Button asChild variant="outline" size="sm" className="w-full">
+              <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                <BookOpen className="h-4 w-4 mr-2" />
+                Open in new tab
               </a>
             </Button>
           </div>
