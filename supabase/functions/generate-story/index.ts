@@ -63,17 +63,16 @@ This story must:
 AGE GROUP STRUCTURE RULES
 ----------------------------------------
 
-MANDATORY MINIMUM WORD COUNT (HARD REQUIREMENT):
-The STORY section MUST meet the minimum word count for the age group.
-This is NOT a soft target. Before outputting, silently count the words
-in your STORY section. If it is below the minimum, KEEP WRITING —
-expand scenes, add sensory detail, deepen dialogue, extend the
-resolution — until you are within the range. Do NOT output a story
-that is under the minimum. Word counts apply to the STORY section
-only (not TITLE or SCENE summaries).
+STORY LENGTH GUIDELINE — QUALITY FIRST:
+The target word ranges below are helpful directional guides, NOT hard
+floors or ceilings. The premium, real-sounding story is the absolute
+priority. If the narrative needs more room to breathe, deepen a moment,
+extend the resolution, or add a meaningful beat, ALLOW the story to be
+longer. Do not cut a satisfying story short simply to hit a number. Word
+counts apply to the STORY section only (not TITLE or SCENE summaries).
 
 Age Group 1–3:
-- 350–500 words (MINIMUM 350)
+- Target ~350–500 words
 - Gentle rhythm
 - Simple sensory imagery
 - Minimal conflict
@@ -82,21 +81,21 @@ Age Group 1–3:
 - Very basic vocabulary
 
 Age Group 4–7:
-- 700–900 words (MINIMUM 700)
+- Target ~700–900 words
 - Clear beginning → challenge → resolution
 - One decision moment
 - Light dialogue allowed
 - Slightly richer vocabulary and sentence structure
 
 Age Group 8–10:
-- 1100–1400 words (MINIMUM 1100)
+- Target ~1100–1400 words
 - Clear problem with cause-and-effect progression
 - Emotional growth moment
 - More descriptive language and varied sentence structure
 - Can include mild tension
 
 Age Group 11+:
-- 1600–2000 words (MINIMUM 1600)
+- Target ~1600–2000 words
 - Multi-step challenge
 - Clear internal decision and reflective growth
 - Sophisticated vocabulary and narrative depth
@@ -246,6 +245,15 @@ Every story must read like it was written by an award-winning children's
 author. Never mechanical, formulaic, or obviously AI-generated. Two
 customers choosing the same theme should receive noticeably different
 stories. The emotional experience must linger after the final line.
+
+WORD COUNT vs. QUALITY (PRIORITY RULE):
+A premium, emotionally honest story is MORE important than any word count.
+If a scene needs more space to land, let it. If the ending feels richer
+with an extra beat, include it. Do NOT pad filler, force extra sentences,
+repeat phrases, or artificially stretch a story to hit a target. Likewise,
+do NOT rush or cut a satisfying moment just to stay under a ceiling. Count
+words only as a sanity check, not as the goal. Let the story find its own
+natural length within its age group's attention span.
 
 NARRATIVE FLOW:
 - Paragraphs transition smoothly.
@@ -627,13 +635,14 @@ Supporting Character Included: ${hasSupportingCharacter ? "Yes" : "No"}
 Supporting Character Name: ${hasSupportingCharacter && supportingCharacterName ? supportingCharacterName : "N/A"}
 Desired Strength to Nurture: ${strength || "organic positive growth"}
 
-WORD COUNT REQUIREMENT (HARD — DO NOT IGNORE):
-The STORY section MUST be between ${minWords} and ${maxWords} words.
-MINIMUM ${minWords} words is a hard floor — outputs under ${minWords} words are unacceptable.
-Before finalizing, silently count the words in your STORY. If under ${minWords},
-keep writing: expand scenes, add sensory description, deepen dialogue, lengthen
-the resolution and bedtime closing — until you are within ${minWords}–${maxWords}.
-Do NOT shorten to "wrap up" early. Word count is measured on the STORY section only.
+STORY LENGTH GUIDANCE — PREMIUM QUALITY FIRST:
+Aim for the STORY section to land around ${minWords}–${maxWords} words.
+This is a target, not a hard rule. The premium, real-sounding story matters
+most. If the story needs more space to deliver a full emotional arc, allow
+it to run longer. Do NOT pad filler, force extra sentences, or repeat phrases
+to hit a minimum. Do NOT cut a satisfying ending short to stay under a maximum.
+Silently check word count only as a sanity check, then prioritize emotional
+truth, natural pacing, and a memorable resolution.
 
 SCENE COUNT OVERRIDE (CRITICAL):
 Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"} (SCENE_1_SUMMARY${
