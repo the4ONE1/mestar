@@ -194,6 +194,7 @@ serve(async (req) => {
           title: story.title,
           story: story.story,
           coloringPrompts: story.coloringPrompts || [],
+      bonusColoringPrompts: story.bonusColoringPrompts || [],
           illustrationPrompts:
             (story.illustrationPrompts && story.illustrationPrompts.length
               ? story.illustrationPrompts
