@@ -1,57 +1,30 @@
-import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
-import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
-import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
 
 const Checkout = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const orderId = searchParams.get("order_id");
-  const priceIdsRaw = searchParams.get("prices") || "";
-  const email = searchParams.get("email") || undefined;
-  const recoveryToken = searchParams.get("recover") || undefined;
-  const forcedEnvironment = searchParams.get("env") === "sandbox" ? "sandbox" : undefined;
-  const priceIds = priceIdsRaw.split(",").filter(Boolean);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    if (!orderId || priceIds.length === 0) {
-      navigate("/", { replace: true });
-      return;
-    }
-    setReady(true);
-  }, [orderId, priceIdsRaw]);
-
-  if (!ready || !orderId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  const returnUrl = `${window.location.origin}/order-complete?order_id=${orderId}&session_id={CHECKOUT_SESSION_ID}`;
-
   return (
     <>
-      <SEO title="Secure Checkout — MESTAR" description="Complete your personalized storybook purchase securely." />
-      <PaymentTestModeBanner />
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <h1 className="font-display text-2xl md:text-3xl mb-6 text-center">Secure Checkout ⭐</h1>
-        <StripeEmbeddedCheckout
-          orderId={orderId}
-          priceIds={priceIds}
-          customerEmail={email}
-          returnUrl={returnUrl}
-          recoveryToken={recoveryToken}
-          environment={forcedEnvironment}
-        />
+      <SEO title="Checkout — MESTAR" description="Checkout is temporarily unavailable while we upgrade our payment system." />
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+        <h1 className="font-display text-3xl md:text-4xl mb-4">Checkout Temporarily Unavailable ⭐</h1>
+        <p className="text-muted-foreground mb-2">
+          We're upgrading our payment system to give you a smoother experience.
+        </p>
+        <p className="text-muted-foreground mb-8">
+          Your personalization details are saved. Please check back very soon — we'll be live again shortly.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button asChild size="lg">
+            <Link to="/">Back to Home</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <Link to="/products">Browse Stories</Link>
+          </Button>
+        </div>
       </div>
     </>
   );
-
 };
 
 export default Checkout;

@@ -5,9 +5,7 @@ import { Loader2, BookOpen, Download, ArrowLeft, Sparkles, CheckCircle2, Mail, V
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
 import RatingWidget from "@/components/RatingWidget";
-import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { supabase } from "@/integrations/supabase/client";
-import { getStripeEnvironment } from "@/lib/stripe";
 
 
 const PROGRESS_STAGES = [
@@ -118,24 +116,8 @@ const OrderComplete = () => {
     }
   }, [orderIdFromUrl]);
 
-  // If Stripe's webhook is misconfigured, the customer return still contains
-  // a session_id. Verify that session directly with Stripe and start generation.
-  useEffect(() => {
-    if (!orderId || !sessionIdFromUrl || paymentConfirmedRef.current) return;
-    paymentConfirmedRef.current = true;
+  // Payment integration removed — nothing to confirm on return.
 
-    supabase.functions
-      .invoke("confirm-checkout-payment", {
-        body: {
-          orderId,
-          sessionId: sessionIdFromUrl,
-          environment: getStripeEnvironment(),
-        },
-      })
-      .then(({ error: invokeError }) => {
-        if (invokeError) console.error("Payment confirmation fallback failed:", invokeError);
-      });
-  }, [orderId, sessionIdFromUrl]);
 
   // Poll the database for order status
   useEffect(() => {
@@ -221,7 +203,6 @@ const OrderComplete = () => {
   if (pdfUrl) {
     return (
       <div className="min-h-screen py-8">
-        <PaymentTestModeBanner />
         <div className="container max-w-lg">
 
           <div className="text-center mb-8">
@@ -342,7 +323,6 @@ const OrderComplete = () => {
   // ── Generating / Waiting State ──
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4">
-      <PaymentTestModeBanner />
 
       <SEO
         title="Your Order — MESTAR"
