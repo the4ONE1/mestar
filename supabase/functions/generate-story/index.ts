@@ -263,6 +263,124 @@ Do not explain.
 Output story only.
 
 ========================================
+MESTAR V2 — PREMIUM STORY QUALITY RULES
+========================================
+
+These rules are ADDITIVE. They do NOT replace any rule above.
+They exist solely to elevate story quality from "AI generated"
+to "professionally authored children's keepsake."
+
+PRIMARY OBJECTIVE:
+Every story should feel like it was written by an award-winning
+children's author. It must never feel repetitive, mechanical,
+formulaic, or obviously AI-generated. Two customers choosing the
+same theme should receive noticeably different stories. The
+emotional experience should linger long after the story ends.
+
+NARRATIVE FLOW:
+Each paragraph must transition smoothly into the next.
+Avoid abrupt scene changes. Each scene builds naturally from
+the previous one. Never rush toward the ending.
+
+SHOW — DON'T TELL:
+Avoid simply stating emotions. Demonstrate emotions through
+facial expressions, body language, actions, dialogue, and
+sensory experiences.
+Example — instead of "She felt brave," prefer:
+"She took one careful step forward, lifted her chin, smiled
+softly, and reached out with steady hands."
+
+SENSORY IMMERSION:
+Every major scene should include multiple sensory details
+(sight, sound, touch, smell) distributed naturally throughout
+the story. Never overload a single paragraph.
+
+SENTENCE VARIETY:
+Mix short, medium, and longer descriptive sentences.
+Never begin multiple consecutive sentences with the child's
+name, a pronoun, or identical structures. Vary openings.
+
+CHARACTER DEPTH:
+The loved one should feel like a real child. Let curiosity,
+excitement, hesitation, determination, kindness, and imagination
+evolve naturally throughout the story.
+
+MEANINGFUL DIALOGUE:
+Use dialogue sparingly. Every spoken line must move the story
+forward, reveal personality, encourage confidence, or strengthen
+emotional connection. Avoid long conversations.
+
+UNIQUE STORY PATHS:
+Never recycle plot structure. Randomize naturally between
+discoveries, mysteries, rescues, creative inventions,
+celebrations, hidden places, community acts, learning
+experiences, helping others, and gentle puzzles — even
+within the same theme.
+
+MEMORABLE MOMENTS:
+Every story must contain at least ONE unforgettable moment
+(e.g., a glowing cave, a hidden underwater garden, a magical
+toolbox, a bridge made from giant flowers). These moments
+inspire imagination without becoming frightening.
+
+EMOTIONAL ARC:
+Follow this progression naturally and gradually:
+Wonder → Curiosity → Challenge → Growth → Confidence → Peace.
+
+CONFIDENCE BUILDING:
+Confidence must be earned through demonstrated kindness,
+creativity, patience, courage, persistence, or empathy.
+Never simply state "You are amazing."
+
+SUPPORTING CHARACTER AS MENTOR:
+Supporting characters ask questions more often than provide
+answers ("What do you think we should try?" / "I believe you
+already know." / "I'll be right here beside you.").
+This reinforces the loved one's independence.
+
+PACING:
+Middle sections must never feel repetitive. Each scene must
+introduce a new location, a new discovery, or a new emotional
+realization. Avoid filler paragraphs.
+
+ENDING QUALITY:
+The final two paragraphs must feel emotionally satisfying.
+Slow the pace. Use peaceful imagery. Reinforce personal growth.
+End with warmth rather than excitement. The last sentence should
+be memorable enough that parents would want to read it again.
+
+LANGUAGE QUALITY:
+Avoid repetitive words. Rotate naturally between synonyms.
+Examples: looked / noticed / glanced / observed —
+walked / wandered / strolled / tiptoed —
+happy / joyful / content / delighted —
+said / whispered / laughed / replied / answered —
+big / enormous / towering / grand —
+nice / gentle / beautiful / welcoming / peaceful.
+
+ANTI-AI RULES:
+Avoid repetitive phrasing, repeated paragraph structure,
+repeated sentence openings, generic compliments, overusing
+the child's name, overexplaining obvious events, predictable
+endings, clichés, and robotic transitions. The story must
+never feel generated from a template.
+
+FINAL QUALITY CHECK (internal — do not output):
+Before producing the final story, silently verify:
+✓ Story feels professionally written.
+✓ Emotional pacing is smooth.
+✓ Character growth feels earned.
+✓ Dialogue sounds natural.
+✓ Scene transitions are seamless.
+✓ Sensory descriptions are balanced.
+✓ Ending is calming and memorable.
+✓ Story is unique.
+✓ Story is emotionally meaningful.
+✓ Parents would gladly read it repeatedly as a treasured
+  bedtime keepsake.
+If any check fails, improve the story before returning output.
+
+========================================
 END OF STORY ENGINE
 ========================================`;
 
