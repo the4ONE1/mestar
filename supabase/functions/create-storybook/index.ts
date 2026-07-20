@@ -29,7 +29,9 @@ async function generateImage(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3.1-flash-image-preview",
+        // Gemini 3 Pro Image (Nano Banana Pro) — best-in-class character consistency
+        // across multiple illustrations. Same chat-shape body as prior Gemini image models.
+        model: "google/gemini-3-pro-image",
         messages: [{ role: "user", content: userContent }],
         modalities: ["image", "text"],
       }),
