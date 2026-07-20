@@ -7,7 +7,13 @@ import { ShoppingCart, Minus, Plus, Trash2, Loader2, Upload, Users, CheckCircle2
 import { useCartStore, type ShopifyProduct } from "@/stores/cartStore";
 import { supabase } from "@/integrations/supabase/client";
 import { SUPPORTING_CHARACTER_ADDON, SUPPORTING_CHARACTER_VARIANT_ID, AUDIOBOOK_VARIANT_ID } from "@/lib/products";
-import { STRIPE_PRICE_IDS } from "@/lib/stripe";
+// Payment integration removed — checkout page shows an "unavailable" notice for now.
+const STRIPE_PRICE_IDS = {
+  storybook: "personalized_storybook_onetime",
+  supportingCharacter: "supporting_character_addon_onetime",
+  coloring: "coloring_pages_addon_onetime",
+  audiobookBasic: "audiobook_basic_onetime",
+} as const;
 import { toast } from "sonner";
 
 export const CartDrawer = () => {

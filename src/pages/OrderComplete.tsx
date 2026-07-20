@@ -5,9 +5,7 @@ import { Loader2, BookOpen, Download, ArrowLeft, Sparkles, CheckCircle2, Mail, V
 import { toast } from "sonner";
 import SEO from "@/components/SEO";
 import RatingWidget from "@/components/RatingWidget";
-import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { supabase } from "@/integrations/supabase/client";
-import { getStripeEnvironment } from "@/lib/stripe";
 
 
 const PROGRESS_STAGES = [
