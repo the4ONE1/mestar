@@ -284,7 +284,7 @@ const HeroForm = () => {
             dragging ? "dropzone-active" : "border-border hover:border-primary/50 hover:bg-secondary/30"
           }`}
           onClick={() => fileInputRef.current?.click()}
-          onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && fileInputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
           onDragLeave={() => setDragging(false)}
           onDrop={handleDrop}

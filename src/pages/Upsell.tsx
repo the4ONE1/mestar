@@ -75,20 +75,15 @@ export default function Upsell() {
     persistAddons(wantsKaraoke, wantsColoring);
 
     if (selectedPrices.length === 0) {
-      // No add-ons selected — treat same as "skip"
+      // No add-ons selected (or price IDs not yet configured) — treat same as "skip"
       navigate(`/order-complete?order_id=${orderId}`);
       return;
     }
 
-    if (selectedPrices.length > 0) {
-      setLoading(true);
-      navigate(
-        `/checkout?order_id=${orderId}&prices=${encodeURIComponent(selectedPrices.join(","))}&next=${encodeURIComponent("/order-complete")}`,
-      );
-    } else {
-      // Price IDs not configured — still navigate to order-complete
-      navigate(`/order-complete?order_id=${orderId}`);
-    }
+    setLoading(true);
+    navigate(
+      `/checkout?order_id=${orderId}&prices=${encodeURIComponent(selectedPrices.join(","))}&next=${encodeURIComponent("/order-complete")}`,
+    );
   };
 
   const handleSkip = () => {

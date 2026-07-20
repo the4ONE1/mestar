@@ -51,10 +51,22 @@ export default function Checkout() {
       .finally(() => setConfirming(false));
   }, [sessionId, orderId]);
 
+  // Auto-redirect to `next` route once payment is confirmed
+  useEffect(() => {
+    if (!sessionId || !nextRoute || !confirmed) return;
+    const destination = nextRoute.includes("?")
+      ? `${nextRoute}&order_id=${orderId}`
+      : `${nextRoute}?order_id=${orderId}`;
+    const timer = setTimeout(() => {
+      window.location.href = destination;
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [confirmed, nextRoute, orderId, sessionId]);
+
   if (sessionId) {
-    // If a `next` redirect was requested (e.g. /upsell after the initial $19.99), redirect there
-    // once confirmation has settled (or immediately if no confirmation needed).
-    if (nextRoute && !confirming) {
+    // If a `next` redirect was requested (e.g. /upsell after the initial $19.99), show a
+    // "redirecting" screen while we wait for confirmation then auto-redirect via useEffect.
+    if (nextRoute) {
       const destination = nextRoute.includes("?")
         ? `${nextRoute}&order_id=${orderId}`
         : `${nextRoute}?order_id=${orderId}`;
@@ -70,8 +82,6 @@ export default function Checkout() {
                 <Link to={destination} className="text-primary underline">Click here</Link> if it takes too long.
               </p>
             )}
-            {/* Auto-redirect once confirmed */}
-            {confirmed && (() => { setTimeout(() => { window.location.href = destination; }, 500); return null; })()}
           </div>
         </>
       );
