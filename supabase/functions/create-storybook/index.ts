@@ -534,43 +534,50 @@ serve(async (req) => {
       return out;
     };
 
-    // For coloring pages, use the matching illustration as the reference (not the raw photo).
-    // This avoids the color-photo + B&W-output conflict that was returning 0 images.
+    // Scene coloring pages (ALWAYS free with every storybook).
+    // Use the matching illustration as the reference for character consistency.
     const runColoring = async (
-      enabled: boolean,
       prompts: string[] | undefined,
-      illustrations: (Uint8Array | null)[]
+      illustrations: (Uint8Array | null)[],
+      labelPrefix: string
     ): Promise<(Uint8Array | null)[]> => {
       const out: (Uint8Array | null)[] = [];
-      if (!enabled || !prompts?.length) return Array(5).fill(null);
-      for (let i = 0; i < Math.min(5, prompts.length); i++) {
+      if (!prompts?.length) return out;
+      for (let i = 0; i < prompts.length; i++) {
         const illusRef = bytesToDataUrl(illustrations[i] || null, "image/png");
-        const refs = illusRef ? [illusRef] : [];
+        // For bonus pages we don't have a matching illustration; fall back to the child photo
+        const refs = illusRef ? [illusRef] : (mainPhotoRef ? [mainPhotoRef] : []);
         const img = await generateImage(
           withColoringLock(prompts[i], refs.length > 0, childAge),
           LOVABLE_API_KEY,
           refs,
-          `coloring ${i + 1}/5`
+          `${labelPrefix} ${i + 1}/${prompts.length}`
         );
         out.push(img);
         await new Promise((r) => setTimeout(r, 400));
       }
-      while (out.length < 5) out.push(null);
       return out;
     };
 
     const illustrationImages = await runIllustrations(addons.illustrations, illustrationPrompts);
-    const coloringImages = await runColoring(addons.coloring, coloringPrompts, illustrationImages);
+    // Scene coloring pages: always generate, one per story scene
+    const coloringImages = await runColoring(coloringPrompts, illustrationImages, "scene-coloring");
+    // Bonus coloring book (paid add-on): 8 extra pages, only when addons.coloring
+    const bonusColoringImages: (Uint8Array | null)[] = addons.coloring
+      ? await runColoring(bonusColoringPrompts, [], "bonus-coloring")
+      : [];
 
     const illustrationCount = illustrationImages.filter(Boolean).length;
     const coloringCount = coloringImages.filter(Boolean).length;
+    const bonusColoringCount = bonusColoringImages.filter(Boolean).length;
 
-    // Expected counts come from the prompt arrays returned by generate-story (age-band aware).
     const expectedIllustrations = addons.illustrations ? (illustrationPrompts?.length || 0) : 0;
-    const expectedColoring = addons.coloring ? (coloringPrompts?.length || 0) : 0;
+    const expectedColoring = coloringPrompts?.length || 0;
+    const expectedBonusColoring = addons.coloring ? (bonusColoringPrompts?.length || 0) : 0;
     console.log(
       `Generated ${illustrationCount}/${expectedIllustrations || 5} illustrations, ` +
-        `${coloringCount}/${expectedColoring || 5} coloring pages`
+        `${coloringCount}/${expectedColoring} scene coloring, ` +
+        `${bonusColoringCount}/${expectedBonusColoring} bonus coloring`
     );
 
     // Upload illustrations to storage so the audiobook reader can show them.
