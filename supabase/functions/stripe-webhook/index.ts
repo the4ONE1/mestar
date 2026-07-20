@@ -77,6 +77,7 @@ async function fireGeneration(orderId: string) {
       title: story.title,
       story: story.story,
       coloringPrompts: story.coloringPrompts || [],
+      bonusColoringPrompts: story.bonusColoringPrompts || [],
       illustrationPrompts: (story.illustrationPrompts?.length ? story.illustrationPrompts : story.scenes) || [],
       selectedAddons,
       customerEmail: order.customer_email,

@@ -127,6 +127,7 @@ Deno.serve(async (req) => {
               supportingCharacterName: order.supporting_character_name || "",
               selectedAddons: order.selected_addons || {},
               coloringPrompts: story.coloringPrompts || [],
+      bonusColoringPrompts: story.bonusColoringPrompts || [],
               illustrationPrompts: (story.illustrationPrompts?.length ? story.illustrationPrompts : story.scenes) || [],
             }),
           });

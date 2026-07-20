@@ -220,8 +220,9 @@ async function buildStorybookPDF(
   storyText: string,
   illustrationImages: (Uint8Array | null)[],
   coloringImages: (Uint8Array | null)[],
+  bonusColoringImages: (Uint8Array | null)[],
   hasIllustrations: boolean,
-  hasColoring: boolean
+  hasBonusColoringBook: boolean
 ): Promise<{ pdf: Uint8Array; pageTexts: string[] }> {
   const pdfDoc = await PDFDocument.create();
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -333,10 +334,10 @@ async function buildStorybookPDF(
     pageTexts.push(...splitStoryIntoPages(storyText, 5));
   }
 
-  // ── Coloring Pages (if purchased) ──
-  if (hasColoring && coloringImages.some(Boolean)) {
+  // Helper to render a set of coloring pages with a title divider
+  const renderColoringSection = async (dividerText: string, images: (Uint8Array | null)[]) => {
+    if (!images.some(Boolean)) return;
     const dividerPage = pdfDoc.addPage([PAGE_W, PAGE_H]);
-    const dividerText = "Bonus Coloring Pages";
     const dividerSize = 28;
     const dividerWidth = helveticaBold.widthOfTextAtSize(dividerText, dividerSize);
     dividerPage.drawText(dividerText, {
@@ -346,8 +347,7 @@ async function buildStorybookPDF(
       font: helveticaBold,
       color: rgb(0.2, 0.2, 0.4),
     });
-
-    for (const imgBytes of coloringImages) {
+    for (const imgBytes of images) {
       if (!imgBytes) continue;
       try {
         const image = await pdfDoc.embedPng(imgBytes);
@@ -363,6 +363,14 @@ async function buildStorybookPDF(
         console.error("Failed to embed coloring image:", e);
       }
     }
+  };
+
+  // ── Scene coloring pages (ALWAYS included free — one per story scene) ──
+  await renderColoringSection("Your Story Coloring Pages", coloringImages);
+
+  // ── Bonus Coloring Book (paid add-on: extra pages across random themes) ──
+  if (hasBonusColoringBook) {
+    await renderColoringSection("Bonus Coloring Book", bonusColoringImages);
   }
 
   return { pdf: await pdfDoc.save(), pageTexts };
@@ -423,6 +431,7 @@ serve(async (req) => {
       title,
       story,
       coloringPrompts,
+      bonusColoringPrompts,
       illustrationPrompts,
       selectedAddons,
       customerEmail,
@@ -441,6 +450,9 @@ serve(async (req) => {
       );
     }
 
+    // NOTE: scene-derived coloring pages (one per story scene) are ALWAYS included
+    // free with every storybook. `addons.coloring` gates the PAID bonus coloring
+    // book (8 extra pages with the child across random themes).
     const addons = {
       illustrations: true,
       coloring: false,
@@ -530,43 +542,50 @@ serve(async (req) => {
       return out;
     };
 
-    // For coloring pages, use the matching illustration as the reference (not the raw photo).
-    // This avoids the color-photo + B&W-output conflict that was returning 0 images.
+    // Scene coloring pages (ALWAYS free with every storybook).
+    // Use the matching illustration as the reference for character consistency.
     const runColoring = async (
-      enabled: boolean,
       prompts: string[] | undefined,
-      illustrations: (Uint8Array | null)[]
+      illustrations: (Uint8Array | null)[],
+      labelPrefix: string
     ): Promise<(Uint8Array | null)[]> => {
       const out: (Uint8Array | null)[] = [];
-      if (!enabled || !prompts?.length) return Array(5).fill(null);
-      for (let i = 0; i < Math.min(5, prompts.length); i++) {
+      if (!prompts?.length) return out;
+      for (let i = 0; i < prompts.length; i++) {
         const illusRef = bytesToDataUrl(illustrations[i] || null, "image/png");
-        const refs = illusRef ? [illusRef] : [];
+        // For bonus pages we don't have a matching illustration; fall back to the child photo
+        const refs = illusRef ? [illusRef] : (mainPhotoRef ? [mainPhotoRef] : []);
         const img = await generateImage(
           withColoringLock(prompts[i], refs.length > 0, childAge),
           LOVABLE_API_KEY,
           refs,
-          `coloring ${i + 1}/5`
+          `${labelPrefix} ${i + 1}/${prompts.length}`
         );
         out.push(img);
         await new Promise((r) => setTimeout(r, 400));
       }
-      while (out.length < 5) out.push(null);
       return out;
     };
 
     const illustrationImages = await runIllustrations(addons.illustrations, illustrationPrompts);
-    const coloringImages = await runColoring(addons.coloring, coloringPrompts, illustrationImages);
+    // Scene coloring pages: always generate, one per story scene
+    const coloringImages = await runColoring(coloringPrompts, illustrationImages, "scene-coloring");
+    // Bonus coloring book (paid add-on): 8 extra pages, only when addons.coloring
+    const bonusColoringImages: (Uint8Array | null)[] = addons.coloring
+      ? await runColoring(bonusColoringPrompts, [], "bonus-coloring")
+      : [];
 
     const illustrationCount = illustrationImages.filter(Boolean).length;
     const coloringCount = coloringImages.filter(Boolean).length;
+    const bonusColoringCount = bonusColoringImages.filter(Boolean).length;
 
-    // Expected counts come from the prompt arrays returned by generate-story (age-band aware).
     const expectedIllustrations = addons.illustrations ? (illustrationPrompts?.length || 0) : 0;
-    const expectedColoring = addons.coloring ? (coloringPrompts?.length || 0) : 0;
+    const expectedColoring = coloringPrompts?.length || 0;
+    const expectedBonusColoring = addons.coloring ? (bonusColoringPrompts?.length || 0) : 0;
     console.log(
       `Generated ${illustrationCount}/${expectedIllustrations || 5} illustrations, ` +
-        `${coloringCount}/${expectedColoring || 5} coloring pages`
+        `${coloringCount}/${expectedColoring} scene coloring, ` +
+        `${bonusColoringCount}/${expectedBonusColoring} bonus coloring`
     );
 
     // Upload illustrations to storage so the audiobook reader can show them.
@@ -604,13 +623,14 @@ serve(async (req) => {
     }
 
 
-    // Build PDF
+    // Build PDF — scene coloring pages always included; bonus book appended when purchased
     console.log("Assembling PDF...");
     const { pdf: pdfBytes, pageTexts } = await buildStorybookPDF(
       title,
       story,
       illustrationImages,
       coloringImages,
+      bonusColoringImages,
       addons.illustrations,
       addons.coloring
     );
@@ -662,11 +682,12 @@ serve(async (req) => {
       // Safety net: if we didn't render the full expected count, flag the order for review
       // instead of silently marking it complete. PDF + email still go through as today.
       const illustrationsShort = addons.illustrations && illustrationCount < expectedIllustrations;
-      const coloringShort = addons.coloring && coloringCount < expectedColoring;
-      const finalStatus = illustrationsShort || coloringShort ? "needs_review" : "complete";
+      const coloringShort = coloringCount < expectedColoring;
+      const bonusShort = addons.coloring && bonusColoringCount < expectedBonusColoring;
+      const finalStatus = illustrationsShort || coloringShort || bonusShort ? "needs_review" : "complete";
       if (finalStatus === "needs_review") {
         console.error(
-          `Order ${orderId} flagged needs_review: illustrations ${illustrationCount}/${expectedIllustrations}, coloring ${coloringCount}/${expectedColoring}`
+          `Order ${orderId} flagged needs_review: illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}`
         );
       }
       await supabase
@@ -715,6 +736,7 @@ serve(async (req) => {
         orderId,
         illustrationsGenerated: illustrationCount,
         coloringPagesGenerated: coloringCount,
+        bonusColoringPagesGenerated: bonusColoringCount,
         addons,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

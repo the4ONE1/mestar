@@ -604,22 +604,22 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
       return null;
     };
 
-    // Run Layer 2 (coloring) and Layer 3 (illustrations) in parallel — only when needed
-    const layer2Promise = addons.coloring
-      ? callChatWithRetry(
+    // Layer 2 (scene coloring pages) ALWAYS runs — one coloring page per story scene
+    // is included FREE with every storybook. The paid `coloring` add-on generates an
+    // additional bonus coloring book featuring the child across random themes/backgrounds.
+    const layer2Promise = callChatWithRetry(
+      {
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: LAYER_2_SYSTEM_PROMPT },
           {
-            model: "google/gemini-2.5-flash",
-            messages: [
-              { role: "system", content: LAYER_2_SYSTEM_PROMPT },
-              {
-                role: "user",
-                content: `${storyOutput}\n\nPAGE COUNT OVERRIDE (CRITICAL):\nGenerate EXACTLY ${sceneCount} coloring page prompt${sceneCount === 1 ? "" : "s"} (COLOR_PAGE_1_PROMPT${sceneCount > 1 ? ` through COLOR_PAGE_${sceneCount}_PROMPT` : ""}). Do NOT output more than ${sceneCount}. Ignore any references to "5 pages" in the system prompt — the correct count is ${sceneCount}.\n\nCHARACTER DISTRIBUTION OVERRIDE:\n${distributionRule}`,
-              },
-            ],
+            role: "user",
+            content: `${storyOutput}\n\nPAGE COUNT OVERRIDE (CRITICAL):\nGenerate EXACTLY ${sceneCount} coloring page prompt${sceneCount === 1 ? "" : "s"} (COLOR_PAGE_1_PROMPT${sceneCount > 1 ? ` through COLOR_PAGE_${sceneCount}_PROMPT` : ""}). Do NOT output more than ${sceneCount}. Ignore any references to "5 pages" in the system prompt — the correct count is ${sceneCount}.\n\nCHARACTER DISTRIBUTION OVERRIDE:\n${distributionRule}`,
           },
-          "layer2-coloring"
-        )
-      : Promise.resolve(null);
+        ],
+      },
+      "layer2-coloring"
+    );
 
     const layer3Promise = addons.illustrations
       ? callChatWithRetry(
@@ -637,11 +637,30 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
         )
       : Promise.resolve(null);
 
+    // Bonus coloring book (PAID add-on): 8 extra coloring pages featuring the same child
+    // across a variety of random exciting themes/backgrounds — NOT tied to the story scenes.
+    const BONUS_COUNT = 8;
+    const bonusColoringPromise = addons.coloring
+      ? callChatWithRetry(
+          {
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: LAYER_2_SYSTEM_PROMPT },
+              {
+                role: "user",
+                content: `You are generating a BONUS COLORING BOOK featuring ${childName} (${pronouns.child}, age group ${childAge}) across 8 different fun scenes that are NOT from the story below — random themes and backgrounds for extra coloring fun. Use the character description from the story below to keep ${pronouns.object} looking IDENTICAL across all 8 pages.\n\nSTORY (for character appearance only):\n${storyOutput}\n\nPAGE COUNT OVERRIDE (CRITICAL):\nGenerate EXACTLY ${BONUS_COUNT} coloring page prompts (COLOR_PAGE_1_PROMPT through COLOR_PAGE_${BONUS_COUNT}_PROMPT). Do NOT output more than ${BONUS_COUNT}. Ignore any references to "5 pages" in the system prompt.\n\nTHEME VARIETY REQUIREMENT: Each of the 8 pages must feature a DIFFERENT random theme/background. Pick from: outer space, deep ocean, dinosaur jungle, superhero city, medieval castle, race car track, pirate ship, safari, enchanted forest, snowy mountain, farm, robot lab, magical bakery, treehouse. Each page = one theme. Do NOT repeat themes.\n\nCHARACTER: Main character ${childName} only on every bonus page (no supporting character).`,
+              },
+            ],
+          },
+          "layer2-bonus-coloring"
+        )
+      : Promise.resolve(null);
 
-    const [layer2Data, layer3Data] = await Promise.all([layer2Promise, layer3Promise]);
+    const [layer2Data, layer3Data, bonusData] = await Promise.all([layer2Promise, layer3Promise, bonusColoringPromise]);
 
     const coloringOutput: string | null = layer2Data?.choices?.[0]?.message?.content ?? null;
     const illustrationOutput: string | null = layer3Data?.choices?.[0]?.message?.content ?? null;
+    const bonusColoringOutput: string | null = bonusData?.choices?.[0]?.message?.content ?? null;
 
     console.log("All layers complete!");
 
@@ -678,6 +697,17 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
       }
     }
 
+    // Parse bonus coloring prompts (paid add-on)
+    const bonusColoringPrompts: string[] = [];
+    if (bonusColoringOutput) {
+      for (let i = 1; i <= 8; i++) {
+        const regex = new RegExp(`\\*{0,2}COLOR_PAGE_${i}_PROMPT\\*{0,2}:\\s*\\n?([\\s\\S]*?)(?=\\*{0,2}COLOR_PAGE_${i + 1}_PROMPT\\*{0,2}:|$)`, "i");
+        const match = bonusColoringOutput.match(regex);
+        const p = match?.[1]?.trim();
+        if (p) bonusColoringPrompts.push(p);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -685,10 +715,12 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
         story: storyMatch?.[1]?.trim() || storyOutput,
         scenes: sceneMatches,
         coloringPrompts,
+        bonusColoringPrompts,
         illustrationPrompts,
         addons,
         rawStoryOutput: storyOutput,
         rawColoringOutput: coloringOutput,
+        rawBonusColoringOutput: bonusColoringOutput,
         rawIllustrationOutput: illustrationOutput,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
