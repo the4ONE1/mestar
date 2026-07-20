@@ -736,6 +736,7 @@ serve(async (req) => {
         orderId,
         illustrationsGenerated: illustrationCount,
         coloringPagesGenerated: coloringCount,
+        bonusColoringPagesGenerated: bonusColoringCount,
         addons,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
