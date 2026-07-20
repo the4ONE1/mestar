@@ -203,7 +203,6 @@ const OrderComplete = () => {
   if (pdfUrl) {
     return (
       <div className="min-h-screen py-8">
-        <PaymentTestModeBanner />
         <div className="container max-w-lg">
 
           <div className="text-center mb-8">
@@ -324,7 +323,6 @@ const OrderComplete = () => {
   // ── Generating / Waiting State ──
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4">
-      <PaymentTestModeBanner />
 
       <SEO
         title="Your Order — MESTAR"
