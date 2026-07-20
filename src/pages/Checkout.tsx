@@ -1,30 +1,106 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
+import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
-const Checkout = () => {
+const clientToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined;
+
+function TestModeBanner() {
+  if (!clientToken) {
+    return (
+      <div className="w-full bg-red-100 border-b border-red-300 px-4 py-2 text-center text-sm text-red-800">
+        Production checkout is not configured. Complete Stripe go-live to accept real payments.
+      </div>
+    );
+  }
+  if (clientToken.startsWith("pk_test_")) {
+    return (
+      <div className="w-full bg-orange-100 border-b border-orange-300 px-4 py-2 text-center text-sm text-orange-800">
+        Test mode — use card 4242 4242 4242 4242, any future expiry, any CVC.
+      </div>
+    );
+  }
+  return null;
+}
+
+export default function Checkout() {
+  const [params] = useSearchParams();
+  const orderId = params.get("order_id");
+  const sessionId = params.get("session_id");
+  const pricesParam = params.get("prices") || "";
+  const email = params.get("email") || undefined;
+  const priceIds = pricesParam.split(",").filter(Boolean);
+
+  const [confirming, setConfirming] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+
+  // If returning from Stripe with session_id, confirm on server (webhook fallback)
+  useEffect(() => {
+    if (!sessionId || !orderId) return;
+    setConfirming(true);
+    supabase.functions
+      .invoke("confirm-checkout-payment", {
+        body: { sessionId, orderId, environment: clientToken?.startsWith("pk_live_") ? "live" : "sandbox" },
+      })
+      .then(() => setConfirmed(true))
+      .finally(() => setConfirming(false));
+  }, [sessionId, orderId]);
+
+  if (sessionId) {
+    return (
+      <>
+        <SEO title="Order Received — MESTAR" description="Your personalized storybook is being created." />
+        <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+          {confirming ? (
+            <>
+              <Loader2 className="w-10 h-10 animate-spin mx-auto mb-4 text-primary" />
+              <h1 className="font-display text-2xl mb-2">Confirming your payment…</h1>
+            </>
+          ) : (
+            <>
+              <h1 className="font-display text-3xl md:text-4xl mb-4">Payment received! 🎉</h1>
+              <p className="text-muted-foreground mb-6">
+                We're generating your personalized story now. You'll get an email with your PDF shortly, and you can also watch progress in your Library.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button asChild size="lg"><Link to={orderId ? `/library/${orderId}` : "/library"}>View My Story</Link></Button>
+                <Button asChild variant="outline" size="lg"><Link to="/">Back to Home</Link></Button>
+              </div>
+            </>
+          )}
+        </div>
+      </>
+    );
+  }
+
+  if (!orderId || priceIds.length === 0) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+        <h1 className="font-display text-3xl mb-4">Nothing to check out ⭐</h1>
+        <p className="text-muted-foreground mb-6">Add a personalized story to your cart first.</p>
+        <Button asChild size="lg"><Link to="/products">Browse Stories</Link></Button>
+      </div>
+    );
+  }
+
+  const returnUrl = `${window.location.origin}/checkout?order_id=${orderId}&session_id={CHECKOUT_SESSION_ID}`;
+
   return (
     <>
-      <SEO title="Checkout — MESTAR" description="Checkout is temporarily unavailable while we upgrade our payment system." />
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <h1 className="font-display text-3xl md:text-4xl mb-4">Checkout Temporarily Unavailable ⭐</h1>
-        <p className="text-muted-foreground mb-2">
-          We're upgrading our payment system to give you a smoother experience.
-        </p>
-        <p className="text-muted-foreground mb-8">
-          Your personalization details are saved. Please check back very soon — we'll be live again shortly.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button asChild size="lg">
-            <Link to="/">Back to Home</Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link to="/products">Browse Stories</Link>
-          </Button>
-        </div>
+      <SEO title="Checkout — MESTAR" description="Complete your personalized storybook purchase securely." />
+      <TestModeBanner />
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        <h1 className="font-display text-2xl md:text-3xl mb-6 text-center">Secure Checkout ⭐</h1>
+        <StripeEmbeddedCheckout
+          priceIds={priceIds}
+          orderId={orderId}
+          customerEmail={email}
+          returnUrl={returnUrl}
+        />
       </div>
     </>
   );
-};
-
-export default Checkout;
+}
