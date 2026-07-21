@@ -58,7 +58,9 @@ const Library = () => {
 
   // Per-order access token — required by get-audiobook. Read from URL first,
   // fall back to localStorage (set in the checkout flow).
-  const urlToken = new URLSearchParams(window.location.search).get("token");
+  const searchParams = new URLSearchParams(window.location.search);
+  const urlToken = searchParams.get("token");
+  const urlTier = searchParams.get("tier");
   let storedToken: string | null = null;
   let storedTier: AudioTier = "interactive";
   try {
@@ -71,8 +73,9 @@ const Library = () => {
     }
   } catch { /* ignore */ }
   const accessToken = urlToken || storedToken;
-  const tier: AudioTier = storedTier;
+  const tier: AudioTier = urlTier === "classic" ? "classic" : urlTier === "interactive" ? "interactive" : storedTier;
   const isInteractive = tier === "interactive";
+
 
   void storedTier;
 
