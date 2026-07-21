@@ -49,6 +49,19 @@ async function main() {
     },
   });
 
+  // Minimal browser globals so top-level module code (e.g. supabase client
+  // reading `localStorage`) doesn't crash during SSR import.
+  const noopStorage = {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+    clear: () => {},
+    key: () => null,
+    length: 0,
+  };
+  globalThis.localStorage = globalThis.localStorage || noopStorage;
+  globalThis.sessionStorage = globalThis.sessionStorage || noopStorage;
+
   const entryPath = resolve(serverDist, "entry-server.js");
   const entryUrl = pathToFileURL(entryPath).href;
   const { render } = await import(entryUrl);
