@@ -49,14 +49,14 @@ const DEMO_SLIDES: DemoSlide[] = [
   {
     childLabel: "Jaedan",
     beforeSrc: jaedanFishing.url,
-    afterSrc: jaedanFishing.url,
+    afterSrc: jaedanFishingStory,
     theme: "Great Outdoors",
     icon: "🎣",
   },
   {
     childLabel: "Jaedan",
     beforeSrc: jaedanCowboy.url,
-    afterSrc: jaedanCowboy.url,
+    afterSrc: jaedanCowboyStory,
     theme: "Wild West",
     icon: "🤠",
   },
