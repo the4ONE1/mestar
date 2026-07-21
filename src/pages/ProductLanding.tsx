@@ -255,7 +255,7 @@ export default function ProductLanding() {
 
       <div className="container max-w-4xl">
         {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground mb-6">
+        <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground mb-6 text-center">
           <Link to="/" className="hover:text-foreground">Home</Link>
           <span className="mx-2">/</span>
           <Link to="/products" className="hover:text-foreground">Shop</Link>
