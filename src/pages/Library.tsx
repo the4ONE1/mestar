@@ -433,8 +433,29 @@ const Library = () => {
           </Button>
         </div>
 
+        {/* Speed control */}
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold mr-1">Speed</span>
+          {[0.75, 1, 1.25].map((rate) => (
+            <button
+              key={rate}
+              type="button"
+              onClick={() => setPlaybackRate(rate)}
+              className={`text-xs font-bold rounded-full px-3 py-1 border transition-all ${
+                playbackRate === rate
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
+              }`}
+            >
+              {rate}x
+            </button>
+          ))}
+        </div>
+
         <p className="text-center text-xs text-muted-foreground mb-8">
-          Press play and follow along — each word lights up as it's spoken.
+          {isInteractive
+            ? "Press play and follow along — tap any word to hear it again."
+            : "Press play and enjoy — sit back and listen together."}
         </p>
 
         <div className="text-center">
