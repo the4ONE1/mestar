@@ -40,6 +40,8 @@ interface AudiobookData {
 const POLL_INTERVAL_MS = 5000;
 const SUPABASE_FN_BASE = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1`;
 
+type AudioTier = "classic" | "interactive";
+
 const Library = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
@@ -48,21 +50,29 @@ const Library = () => {
   const [pageIndex, setPageIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeWordIndex, setActiveWordIndex] = useState(-1);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [tappedWordIndex, setTappedWordIndex] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const wordReplayStopRef = useRef<number | null>(null);
 
   // Per-order access token — required by get-audiobook. Read from URL first,
   // fall back to localStorage (set in the checkout flow).
   const urlToken = new URLSearchParams(window.location.search).get("token");
   let storedToken: string | null = null;
+  let storedTier: AudioTier = "interactive";
   try {
     const saved = localStorage.getItem("mestar-pending-story");
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed?.orderId === orderId && parsed?.recoveryToken) storedToken = parsed.recoveryToken;
+      const t = parsed?.audiobookTier || parsed?.selectedAddons?.audiobookTier;
+      if (t === "classic" || t === "interactive") storedTier = t;
     }
   } catch { /* ignore */ }
   const accessToken = urlToken || storedToken;
+  const tier: AudioTier = storedTier;
+  const isInteractive = tier === "interactive";
 
   // Fetch + poll until audiobook is fully ready
   useEffect(() => {
@@ -198,6 +208,32 @@ const Library = () => {
     audioRef.current.play().catch(() => {});
   };
 
+  // Keep the <audio> element's playbackRate in sync with state
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = playbackRate;
+  }, [playbackRate, currentPage?.audioUrl]);
+
+  // Interactive-tier: tap a word to hear just that word (seek + play + auto-pause)
+  const handleWordTap = (index: number) => {
+    if (!isInteractive) return;
+    const audio = audioRef.current;
+    const timing = currentPage?.wordTimings[index];
+    if (!audio || !timing) return;
+    if (wordReplayStopRef.current) {
+      window.clearTimeout(wordReplayStopRef.current);
+      wordReplayStopRef.current = null;
+    }
+    setTappedWordIndex(index);
+    audio.currentTime = Math.max(0, timing.start - 0.02);
+    audio.play().catch(() => {});
+    const durationMs = Math.max(250, (timing.end - timing.start) * 1000 / playbackRate + 120);
+    wordReplayStopRef.current = window.setTimeout(() => {
+      audio.pause();
+      setTappedWordIndex(null);
+      wordReplayStopRef.current = null;
+    }, durationMs);
+  };
+
   const goPrev = () => setPageIndex((p) => Math.max(0, p - 1));
   const goNext = () =>
     setPageIndex((p) => Math.min((data?.pages.length ?? 1) - 1, p + 1));
@@ -268,7 +304,8 @@ const Library = () => {
 
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider rounded-full px-3 py-1 mb-3">
-            <Volume2 className="h-3 w-3" /> Karaoke Audiobook
+            <Volume2 className="h-3 w-3" />
+            {isInteractive ? "Interactive Read-Along" : "Classic Audiobook"}
           </div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold">
             {data.storyTitle || (data.childName ? `${data.childName}'s Story` : "Your Story")}
@@ -307,22 +344,39 @@ const Library = () => {
           </p>
           <div className="text-lg sm:text-2xl leading-relaxed sm:leading-loose text-foreground font-medium text-center">
             {currentPage?.wordTimings.length ? (
-              currentPage.wordTimings.map((w, i) => (
-                <span
-                  key={i}
-                  ref={(el) => (wordRefs.current[i] = el)}
-                  className={`inline-block transition-all duration-100 rounded px-1 py-0.5 ${
-                    i === activeWordIndex
-                      ? "bg-primary text-primary-foreground scale-110 shadow-md"
-                      : i < activeWordIndex
-                        ? "text-foreground/60"
-                        : "text-foreground"
-                  }`}
-                >
-                  {w.word}
-                  {" "}
-                </span>
-              ))
+              currentPage.wordTimings.map((w, i) => {
+                const isActive = isInteractive && i === activeWordIndex;
+                const isTapped = i === tappedWordIndex;
+                const isPast = isInteractive && i < activeWordIndex;
+                return (
+                  <span
+                    key={i}
+                    ref={(el) => (wordRefs.current[i] = el)}
+                    onClick={() => handleWordTap(i)}
+                    role={isInteractive ? "button" : undefined}
+                    tabIndex={isInteractive ? 0 : -1}
+                    onKeyDown={(e) => {
+                      if (isInteractive && (e.key === "Enter" || e.key === " ")) {
+                        e.preventDefault();
+                        handleWordTap(i);
+                      }
+                    }}
+                    className={`inline-block transition-all duration-100 rounded px-1 py-0.5 ${
+                      isInteractive ? "cursor-pointer hover:bg-primary/10" : ""
+                    } ${
+                      isTapped
+                        ? "bg-accent text-accent-foreground scale-110 shadow-md ring-2 ring-primary"
+                        : isActive
+                          ? "bg-primary text-primary-foreground scale-110 shadow-md"
+                          : isPast
+                            ? "text-foreground/60"
+                            : "text-foreground"
+                    }`}
+                  >
+                    {w.word}{" "}
+                  </span>
+                );
+              })
             ) : (
               <span className="text-muted-foreground">{currentPage?.text}</span>
             )}
@@ -379,8 +433,29 @@ const Library = () => {
           </Button>
         </div>
 
+        {/* Speed control */}
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold mr-1">Speed</span>
+          {[0.75, 1, 1.25].map((rate) => (
+            <button
+              key={rate}
+              type="button"
+              onClick={() => setPlaybackRate(rate)}
+              className={`text-xs font-bold rounded-full px-3 py-1 border transition-all ${
+                playbackRate === rate
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
+              }`}
+            >
+              {rate}x
+            </button>
+          ))}
+        </div>
+
         <p className="text-center text-xs text-muted-foreground mb-8">
-          Press play and follow along — each word lights up as it's spoken.
+          {isInteractive
+            ? "Press play and follow along — tap any word to hear it again."
+            : "Press play and enjoy — sit back and listen together."}
         </p>
 
         <div className="text-center">
