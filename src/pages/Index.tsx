@@ -93,31 +93,24 @@ const HeroDemo = () => {
     <div className="relative w-full max-w-sm mx-auto select-none">
       {/* Main transformation frame */}
       <div className="relative aspect-square rounded-3xl overflow-hidden border-2 border-primary/40 shadow-2xl shadow-primary/20">
-        {/* Before layer — illustrated child avatar */}
+        {/* Before layer — real child photo */}
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center gap-3 transition-opacity duration-700"
-          style={{
-            background: "hsl(220 20% 10%)",
-            opacity: phase === "before" ? 1 : 0,
-          }}
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 transition-opacity duration-700 bg-background"
+          style={{ opacity: phase === "before" ? 1 : 0 }}
         >
-          {/* Child silhouette avatar */}
-          <div
-            className="w-36 h-36 rounded-full border-4 border-primary/60 shadow-lg shadow-primary/20 flex items-center justify-center"
-            style={{ background: slide.beforeBg }}
-          >
-            {/* Simple face SVG */}
-            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" aria-hidden>
-              <circle cx="40" cy="32" r="22" fill="rgba(255,255,255,0.25)" />
-              <circle cx="32" cy="30" r="4" fill="rgba(255,255,255,0.7)" />
-              <circle cx="48" cy="30" r="4" fill="rgba(255,255,255,0.7)" />
-              <path d="M32 42 Q40 50 48 42" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-              <rect x="14" y="58" width="52" height="20" rx="10" fill="rgba(255,255,255,0.15)" />
-            </svg>
+          <img
+            src={slide.beforeSrc}
+            alt={`${slide.childLabel} — real photo uploaded by parent`}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="eager"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/10 to-transparent" />
+          <div className="relative z-10 mt-auto mb-4 text-center">
+            <span className="font-display font-bold text-foreground text-lg drop-shadow">{slide.childLabel}'s Real Photo</span>
+            <div className="text-xs text-muted-foreground">Tap to transform →</div>
           </div>
-          <span className="font-display font-bold text-foreground text-lg">{slide.childLabel}'s Photo</span>
-          <span className="text-xs text-muted-foreground">Tap to transform →</span>
         </div>
+
 
         {/* Transforming shimmer layer */}
         <div
