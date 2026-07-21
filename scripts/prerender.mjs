@@ -77,7 +77,7 @@ async function main() {
       console.log(`[prerender] ✓ ${route}`);
     } catch (err) {
       fail++;
-      console.warn(`[prerender] ✗ ${route}:`, (err as Error).message);
+      console.warn(`[prerender] ✗ ${route}:`, err && err.message ? err.message : err);
     }
   }
 
