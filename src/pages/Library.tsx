@@ -71,8 +71,10 @@ const Library = () => {
     }
   } catch { /* ignore */ }
   const accessToken = urlToken || storedToken;
-  const tier: AudioTier = storedTier;
-  const isInteractive = tier === "interactive";
+  // Interactive read-along temporarily disabled — force Classic playback for all orders.
+  const tier: AudioTier = "classic";
+  const isInteractive = false;
+  void storedTier;
 
   // Fetch + poll until audiobook is fully ready
   useEffect(() => {
