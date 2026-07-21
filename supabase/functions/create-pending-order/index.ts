@@ -54,21 +54,67 @@ serve(async (req) => {
     });
   }
 
+  const childName = typeof body.childName === "string" ? body.childName.trim() : "";
+  const childAge = typeof body.childAge === "string" && body.childAge.trim() ? body.childAge.trim() : "4-7";
+  const theme = typeof body.theme === "string" ? body.theme.trim() : "";
+  const strength = typeof body.strength === "string" ? body.strength.trim() : null;
+  const supportingCharacterName = typeof body.supportingCharacterName === "string" ? body.supportingCharacterName.trim() : null;
+  const customerEmail = typeof body.customerEmail === "string" ? body.customerEmail.trim().toLowerCase() : "";
+
+  if (!childName || childName.length > 100) {
+    return new Response(JSON.stringify({ error: "Invalid child name" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (!childAge || childAge.length > 20) {
+    return new Response(JSON.stringify({ error: "Invalid child age" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (!theme || theme.length > 200) {
+    return new Response(JSON.stringify({ error: "Invalid theme" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (strength && strength.length > 200) {
+    return new Response(JSON.stringify({ error: "Invalid strength" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (supportingCharacterName && supportingCharacterName.length > 100) {
+    return new Response(JSON.stringify({ error: "Invalid supporting character name" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (customerEmail && (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(customerEmail) || customerEmail.length > 254)) {
+    return new Response(JSON.stringify({ error: "Invalid customer email" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   // 1. Create the pending order first (no photo paths yet) so we get an orderId.
-  const { data: orderId, error } = await supabase.rpc("create_pending_order", {
-    _child_name: body.childName,
-    _child_age: body.childAge,
-    _theme: body.theme,
-    _strength: body.strength || "",
-    _supporting_character_name: body.supportingCharacterName || "",
-    _has_supporting_character: !!body.hasSupportingCharacter,
-    _selected_addons: body.selectedAddons || {},
-    _customer_email: body.customerEmail || "",
-    _child_photo_path: null,
-    _supporting_character_photo_path: null,
-  });
+  // Email is optional here because Stripe can collect it during checkout.
+  const { data: insertedOrder, error } = await supabase
+    .from("storybook_orders")
+    .insert({
+      child_name: childName,
+      child_age: childAge,
+      theme,
+      strength,
+      supporting_character_name: supportingCharacterName || null,
+      has_supporting_character: !!body.hasSupportingCharacter,
+      selected_addons: body.selectedAddons || {},
+      customer_email: customerEmail || null,
+      status: "pending_payment",
+      child_photo_path: null,
+      supporting_character_photo_path: null,
+    })
+    .select("id")
+    .maybeSingle();
+
+  const orderId = insertedOrder?.id;
 
   if (error || !orderId) {
     console.error("create_pending_order failed:", error);

@@ -36,8 +36,12 @@ serve(async (req) => {
     .maybeSingle();
 
   if (error || !order) {
-    return new Response(JSON.stringify({ error: "Order not found" }), {
-      status: 404,
+    return new Response(JSON.stringify({
+      status: "not_found",
+      has_error: true,
+      error: "Order not found",
+    }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

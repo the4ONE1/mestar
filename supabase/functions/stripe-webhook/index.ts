@@ -100,6 +100,9 @@ async function handlePaid(sessionOrIntent: any, env: StripeEnv, kind: "session" 
   // Resolve orderId
   let orderId: string | null = sessionOrIntent?.metadata?.orderId || null;
   let sessionId: string | null = kind === "session" ? sessionOrIntent.id : null;
+  let checkoutEmail: string | null = kind === "session"
+    ? (sessionOrIntent.customer_details?.email || sessionOrIntent.customer_email || null)
+    : null;
 
   if (!orderId && kind === "intent") {
     // Look up session by payment_intent
@@ -109,6 +112,7 @@ async function handlePaid(sessionOrIntent: any, env: StripeEnv, kind: "session" 
     if (s) {
       orderId = (s.metadata as any)?.orderId || null;
       sessionId = s.id;
+      checkoutEmail = s.customer_details?.email || s.customer_email || null;
     }
   }
   if (!orderId && sessionId) {
@@ -118,6 +122,14 @@ async function handlePaid(sessionOrIntent: any, env: StripeEnv, kind: "session" 
   if (!orderId) {
     console.warn("No orderId resolved for event");
     return { orderId: null, sessionId, result: "no_order" };
+  }
+
+  if (checkoutEmail) {
+    await svc()
+      .from("storybook_orders")
+      .update({ customer_email: String(checkoutEmail).toLowerCase() })
+      .eq("id", orderId)
+      .is("customer_email", null);
   }
 
   await fireGeneration(orderId);

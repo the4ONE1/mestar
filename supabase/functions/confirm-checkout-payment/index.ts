@@ -28,6 +28,14 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const checkoutEmail = session.customer_details?.email || session.customer_email || null;
+    if (checkoutEmail) {
+      await supabase
+        .from("storybook_orders")
+        .update({ customer_email: String(checkoutEmail).toLowerCase() })
+        .eq("id", orderId)
+        .is("customer_email", null);
+    }
     const { data: order } = await supabase.from("storybook_orders").select("status").eq("id", orderId).maybeSingle();
     if (order && ["complete", "generating_story", "generating_images"].includes((order as any).status)) {
       return new Response(JSON.stringify({ ok: true, alreadyProcessing: true }), {
