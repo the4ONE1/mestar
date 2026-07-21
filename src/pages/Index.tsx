@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, CheckCircle2, Volume2, Upload, ImageIcon, X } from "lucide-react";
 import { fetchProducts, ShopifyProduct } from "@/lib/shopify";
 import StoryPreview from "@/components/StoryPreview";
+import RealMagicShowcase from "@/components/RealMagicShowcase";
 import SEO from "@/components/SEO";
 import { toast } from "sonner";
 import type { PreviewDraft } from "./Preview";
