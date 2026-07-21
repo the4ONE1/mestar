@@ -30,33 +30,33 @@ const STORY_THEMES = [
 
 interface DemoSlide {
   childLabel: string;
-  beforeBg: string;  // CSS gradient representing a "real child photo"
-  afterSrc: string;  // actual storybook sample image
+  beforeSrc: string; // real parent-uploaded photo
+  afterSrc: string;  // storybook hero version
   theme: string;
   icon: string;
 }
 
 const DEMO_SLIDES: DemoSlide[] = [
   {
-    childLabel: "Sophie",
-    beforeBg: "linear-gradient(135deg, hsl(25 60% 55%), hsl(20 50% 45%))",
-    afterSrc: "/images/sample-page-1.jpg",
+    childLabel: "Izzy",
+    beforeSrc: izzyReal.url,
+    afterSrc: izzyStory,
     theme: "Fairy Tale",
     icon: "🧚",
   },
   {
-    childLabel: "Leo",
-    beforeBg: "linear-gradient(135deg, hsl(200 55% 50%), hsl(195 45% 40%))",
-    afterSrc: "/images/samples/ocean-1.jpg",
-    theme: "Ocean Adventure",
-    icon: "🌊",
+    childLabel: "Jaedan",
+    beforeSrc: jaedanFishing.url,
+    afterSrc: jaedanFishing.url,
+    theme: "Great Outdoors",
+    icon: "🎣",
   },
   {
-    childLabel: "Mia",
-    beforeBg: "linear-gradient(135deg, hsl(260 50% 55%), hsl(255 45% 40%))",
-    afterSrc: "/images/samples/space-1.jpg",
-    theme: "Outer Space",
-    icon: "🚀",
+    childLabel: "Jaedan",
+    beforeSrc: jaedanCowboy.url,
+    afterSrc: jaedanCowboy.url,
+    theme: "Wild West",
+    icon: "🤠",
   },
 ];
 
