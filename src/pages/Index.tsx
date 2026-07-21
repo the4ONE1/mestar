@@ -8,6 +8,10 @@ import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, C
 import { fetchProducts, ShopifyProduct } from "@/lib/shopify";
 import StoryPreview from "@/components/StoryPreview";
 import RealMagicShowcase from "@/components/RealMagicShowcase";
+import izzyReal from "@/assets/izzy-real.jpg.asset.json";
+import izzyStory from "@/assets/izzy-storybook.jpg";
+import jaedanFishing from "@/assets/jaedan-fishing.jpg.asset.json";
+import jaedanCowboy from "@/assets/jaedan-cowboy.jpg.asset.json";
 import SEO from "@/components/SEO";
 import { toast } from "sonner";
 import type { PreviewDraft } from "./Preview";
