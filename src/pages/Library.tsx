@@ -344,22 +344,39 @@ const Library = () => {
           </p>
           <div className="text-lg sm:text-2xl leading-relaxed sm:leading-loose text-foreground font-medium text-center">
             {currentPage?.wordTimings.length ? (
-              currentPage.wordTimings.map((w, i) => (
-                <span
-                  key={i}
-                  ref={(el) => (wordRefs.current[i] = el)}
-                  className={`inline-block transition-all duration-100 rounded px-1 py-0.5 ${
-                    i === activeWordIndex
-                      ? "bg-primary text-primary-foreground scale-110 shadow-md"
-                      : i < activeWordIndex
-                        ? "text-foreground/60"
-                        : "text-foreground"
-                  }`}
-                >
-                  {w.word}
-                  {" "}
-                </span>
-              ))
+              currentPage.wordTimings.map((w, i) => {
+                const isActive = isInteractive && i === activeWordIndex;
+                const isTapped = i === tappedWordIndex;
+                const isPast = isInteractive && i < activeWordIndex;
+                return (
+                  <span
+                    key={i}
+                    ref={(el) => (wordRefs.current[i] = el)}
+                    onClick={() => handleWordTap(i)}
+                    role={isInteractive ? "button" : undefined}
+                    tabIndex={isInteractive ? 0 : -1}
+                    onKeyDown={(e) => {
+                      if (isInteractive && (e.key === "Enter" || e.key === " ")) {
+                        e.preventDefault();
+                        handleWordTap(i);
+                      }
+                    }}
+                    className={`inline-block transition-all duration-100 rounded px-1 py-0.5 ${
+                      isInteractive ? "cursor-pointer hover:bg-primary/10" : ""
+                    } ${
+                      isTapped
+                        ? "bg-accent text-accent-foreground scale-110 shadow-md ring-2 ring-primary"
+                        : isActive
+                          ? "bg-primary text-primary-foreground scale-110 shadow-md"
+                          : isPast
+                            ? "text-foreground/60"
+                            : "text-foreground"
+                    }`}
+                  >
+                    {w.word}{" "}
+                  </span>
+                );
+              })
             ) : (
               <span className="text-muted-foreground">{currentPage?.text}</span>
             )}
