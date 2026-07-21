@@ -1,0 +1,18 @@
+# MESTAR — My Star Stories
+
+> Personalized digital PDF storybooks where your child is the hero. Upload a photo, pick a theme, and get an instant printable story plus bonus coloring pages.
+
+MESTAR creates one-of-a-kind children's storybooks featuring your child's name, likeness, and chosen adventure theme. Stories are non-violent, age-appropriate (1–11+), and delivered instantly as a downloadable PDF — no shipping, no waiting. Personalization includes the child's photo, name, gender, age group, story theme, and an optional supporting character.
+
+## Pages
+
+- [Home](/): Shop personalized storybooks and see how it works.
+- [About](/about): The story behind MESTAR and our approach to personalized stories.
+- [Why Read Together](/why-read-together): The benefits of bedtime stories and shared reading.
+- [Reviews](/reviews): What families say about their MESTAR storybooks.
+- [FAQ](/faq): Common questions about personalization, delivery, and what's included.
+- [Privacy Policy](/privacy-policy): How we handle photos, data, and payments.
+
+## Products
+
+- [Personalized Bedtime Story + Coloring Pages Included](/product/my-star-stories-personalized-bedtime-story-5-coloring-pages): The flagship product — a custom PDF storybook starring your child plus themed coloring pages.
