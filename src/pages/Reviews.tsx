@@ -83,9 +83,9 @@ const Reviews = () => {
           {reviews.map((review, i) => (
             <div
               key={i}
-              className="bg-card rounded-xl border border-border p-6 space-y-4 text-center sm:text-left"
+              className="bg-card rounded-xl border border-border p-6 space-y-4 text-center"
             >
-              <div className="flex gap-1 justify-center sm:justify-start">
+              <div className="flex gap-1 justify-center">
                 {[...Array(5)].map((_, s) => (
                   <Star key={s} className="h-5 w-5 text-primary fill-primary" />
                 ))}

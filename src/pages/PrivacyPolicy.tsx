@@ -17,26 +17,26 @@ const PrivacyPolicy = () => {
         </p>
       </div>
 
-      <div className="space-y-10">
+      <div className="space-y-10 text-center">
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             <h2 className="font-display text-xl font-bold">What We Collect</h2>
           </div>
           <p className="text-muted-foreground leading-relaxed">
             To create your child's personalized story, we collect:
           </p>
-          <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-2">
-            <li>Child's first name and age group</li>
-            <li>Gender selection (boy/girl)</li>
-            <li>Uploaded photo(s)</li>
-            <li>Story preferences (theme, strength, supporting character)</li>
-            <li>Email address (for order delivery)</li>
+          <ul className="text-muted-foreground space-y-1 inline-block text-left mx-auto">
+            <li>• Child's first name and age group</li>
+            <li>• Gender selection (boy/girl)</li>
+            <li>• Uploaded photo(s)</li>
+            <li>• Story preferences (theme, strength, supporting character)</li>
+            <li>• Email address (for order delivery)</li>
           </ul>
         </section>
 
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <Camera className="h-5 w-5 text-primary" />
             <h2 className="font-display text-xl font-bold">Photo Policy</h2>
           </div>
@@ -50,20 +50,20 @@ const PrivacyPolicy = () => {
         </section>
 
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <CreditCard className="h-5 w-5 text-primary" />
             <h2 className="font-display text-xl font-bold">Payment Information</h2>
           </div>
           <p className="text-muted-foreground leading-relaxed">
-            All payments are processed securely through Shopify's checkout system. 
+            All payments are processed securely through our payment provider. 
             My <span className="text-star-yellow">Star</span> Stories <strong>never sees or stores</strong> your credit card details, 
-            billing address, or any financial information. Shopify handles all payment 
-            security with industry-standard encryption.
+            billing address, or any financial information. All payments are handled 
+            with industry-standard encryption.
           </p>
         </section>
 
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
             <h2 className="font-display text-xl font-bold">No Data Sharing</h2>
           </div>
@@ -74,14 +74,14 @@ const PrivacyPolicy = () => {
         </section>
 
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <Mail className="h-5 w-5 text-primary" />
             <h2 className="font-display text-xl font-bold">Contact Us</h2>
           </div>
           <p className="text-muted-foreground leading-relaxed">
             Questions about your privacy? Reach out to us anytime at{" "}
-            <a href="mailto:notify@mystarstories.com" className="text-primary hover:underline">
-              notify@mystarstories.com
+            <a href="mailto:hello@mestar.pro" className="text-primary hover:underline">
+              hello@mestar.pro
             </a>
           </p>
         </section>

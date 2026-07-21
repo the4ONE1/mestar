@@ -51,11 +51,12 @@ export const Footer = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground mt-2">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground mt-2 text-center">
             <a href="/about" className="hover:text-foreground transition-colors">About</a>
             <a href="/faq" className="hover:text-foreground transition-colors">FAQ</a>
             <a href="/reviews" className="hover:text-foreground transition-colors">Reviews</a>
             <a href="/why-read-together" className="hover:text-foreground transition-colors">Why Read</a>
+            <a href="/products" className="hover:text-foreground transition-colors">Shop</a>
             <a href="/privacy-policy" className="hover:text-foreground transition-colors">Privacy Policy</a>
             <a href="mailto:hello@mestar.pro" className="hover:text-foreground transition-colors inline-flex items-center gap-1">
               <Mail className="h-3 w-3" /> Contact

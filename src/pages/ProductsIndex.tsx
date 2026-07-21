@@ -109,20 +109,20 @@ export default function ProductsIndex() {
             return (
               <div
                 key={p.slug}
-                className={`rounded-2xl border p-6 flex flex-col ${
+                className={`rounded-2xl border p-6 flex flex-col items-center text-center ${
                   p.comingSoon
                     ? "border-dashed border-border bg-muted/30"
                     : "border-border bg-card"
                 }`}
               >
-                <Link to={`/products/${p.slug}`} className="flex items-start gap-4 mb-4 group">
+                <Link to={`/products/${p.slug}`} className="flex flex-col items-center gap-3 mb-4 group">
                   <div className={`h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                     p.comingSoon ? "bg-muted" : "bg-primary/10"
                   }`}>
                     <Icon className={`h-6 w-6 ${p.comingSoon ? "text-muted-foreground" : "text-primary"}`} />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <div>
+                    <div className="flex flex-wrap items-center justify-center gap-2 mb-1">
                       <h2 className="font-display text-lg font-bold group-hover:text-primary transition-colors">{p.title}</h2>
                       {p.comingSoon && (
                         <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">

@@ -264,15 +264,15 @@ export default function ProductLanding() {
         </nav>
 
         {/* Hero */}
-        <header className="mb-10">
-          <div className="flex items-start gap-4 mb-4">
+        <header className="mb-10 text-center">
+          <div className="flex flex-col items-center gap-3 mb-4">
             <div className={`h-14 w-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${
               landing.comingSoon ? "bg-muted" : "bg-primary/10"
             }`}>
               <Icon className={`h-7 w-7 ${landing.comingSoon ? "text-muted-foreground" : "text-primary"}`} />
             </div>
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
+            <div>
+              <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
                 <span className="inline-flex items-center gap-1 bg-primary/15 text-primary text-xs font-bold uppercase tracking-wider rounded-full px-3 py-1">
                   <Sparkles className="h-3 w-3" />
                   {landing.addon ? "Add-On" : "Product"}
@@ -292,13 +292,15 @@ export default function ProductLanding() {
             </div>
           </div>
 
-          <p className="text-lg text-muted-foreground mb-6">{landing.shortPitch}</p>
+          <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">{landing.shortPitch}</p>
 
-          <Button asChild size="lg" disabled={landing.comingSoon} className="w-full sm:w-auto">
-            <Link to={landing.ctaHref}>
-              {landing.ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex justify-center">
+            <Button asChild size="lg" disabled={landing.comingSoon} className="w-full sm:w-auto">
+              <Link to={landing.ctaHref}>
+                {landing.ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
 
           {/* Trust row */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
@@ -317,9 +319,9 @@ export default function ProductLanding() {
         </header>
 
         {/* What's included */}
-        <section className="mb-10">
+        <section className="mb-10 text-center">
           <h2 className="font-display text-2xl font-bold mb-4">What's Included</h2>
-          <ul className="space-y-3">
+          <ul className="space-y-3 inline-block text-left mx-auto">
             {landing.bullets.map(b => (
               <li key={b} className="flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
@@ -330,11 +332,11 @@ export default function ProductLanding() {
         </section>
 
         {/* FAQ */}
-        <section className="mb-10">
+        <section className="mb-10 text-center">
           <h2 className="font-display text-2xl font-bold mb-4">Frequently Asked Questions</h2>
           <div className="space-y-4">
             {landing.faqs.map(f => (
-              <div key={f.q} className="rounded-xl border border-border p-5">
+              <div key={f.q} className="rounded-xl border border-border p-5 text-center">
                 <h3 className="font-bold mb-2">{f.q}</h3>
                 <p className="text-muted-foreground text-sm">{f.a}</p>
               </div>
