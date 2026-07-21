@@ -220,7 +220,11 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: 'shopify-cart',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() =>
+        typeof window !== 'undefined'
+          ? localStorage
+          : ({ getItem: () => null, setItem: () => {}, removeItem: () => {} } as Storage)
+      ),
       partialize: (state) => ({ items: state.items, cartId: state.cartId, checkoutUrl: state.checkoutUrl }),
     }
   )
