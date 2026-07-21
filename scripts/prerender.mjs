@@ -78,6 +78,14 @@ async function main() {
         `<div id="root">${html}</div>`
       );
       if (head) {
+        // Strip the static default title/description so Helmet's per-page
+        // tags are the only ones crawlers see.
+        if (/<title[^>]*data-rh/i.test(head)) {
+          out = out.replace(/<title>[\s\S]*?<\/title>\s*/i, "");
+        }
+        if (/<meta[^>]+data-rh[^>]+name="description"/i.test(head)) {
+          out = out.replace(/<meta\s+name="description"[^>]*>\s*/i, "");
+        }
         out = out.replace("</head>", `${head}\n</head>`);
       }
       const filePath =
