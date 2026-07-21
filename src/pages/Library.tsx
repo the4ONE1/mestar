@@ -208,6 +208,32 @@ const Library = () => {
     audioRef.current.play().catch(() => {});
   };
 
+  // Keep the <audio> element's playbackRate in sync with state
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = playbackRate;
+  }, [playbackRate, currentPage?.audioUrl]);
+
+  // Interactive-tier: tap a word to hear just that word (seek + play + auto-pause)
+  const handleWordTap = (index: number) => {
+    if (!isInteractive) return;
+    const audio = audioRef.current;
+    const timing = currentPage?.wordTimings[index];
+    if (!audio || !timing) return;
+    if (wordReplayStopRef.current) {
+      window.clearTimeout(wordReplayStopRef.current);
+      wordReplayStopRef.current = null;
+    }
+    setTappedWordIndex(index);
+    audio.currentTime = Math.max(0, timing.start - 0.02);
+    audio.play().catch(() => {});
+    const durationMs = Math.max(250, (timing.end - timing.start) * 1000 / playbackRate + 120);
+    wordReplayStopRef.current = window.setTimeout(() => {
+      audio.pause();
+      setTappedWordIndex(null);
+      wordReplayStopRef.current = null;
+    }, durationMs);
+  };
+
   const goPrev = () => setPageIndex((p) => Math.max(0, p - 1));
   const goNext = () =>
     setPageIndex((p) => Math.min((data?.pages.length ?? 1) - 1, p + 1));
