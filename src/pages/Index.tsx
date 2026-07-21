@@ -236,10 +236,10 @@ const HeroForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5 text-center" noValidate>
       {/* Child's Name */}
       <div className="space-y-1.5">
-        <Label htmlFor="hero-child-name" className="text-sm font-bold">
+        <Label htmlFor="hero-child-name" className="text-sm font-bold block text-center">
           Child's Name
         </Label>
         <Input
@@ -249,18 +249,18 @@ const HeroForm = () => {
           value={childName}
           onChange={(e) => setChildName(e.target.value)}
           maxLength={40}
-          className="rounded-xl bg-secondary/50 border-border h-11"
+          className="rounded-xl bg-secondary/50 border-border h-11 text-center"
           autoComplete="off"
         />
       </div>
 
       {/* Story Theme */}
       <div className="space-y-1.5">
-        <Label htmlFor="hero-theme" className="text-sm font-bold">
+        <Label htmlFor="hero-theme" className="text-sm font-bold block text-center">
           Story Theme
         </Label>
         <Select value={theme} onValueChange={setTheme}>
-          <SelectTrigger id="hero-theme" className="rounded-xl bg-secondary/50 border-border h-11">
+          <SelectTrigger id="hero-theme" className="rounded-xl bg-secondary/50 border-border h-11 justify-center">
             <SelectValue placeholder="Choose a theme…" />
           </SelectTrigger>
           <SelectContent>
@@ -275,7 +275,7 @@ const HeroForm = () => {
 
       {/* Photo Upload */}
       <div className="space-y-1.5">
-        <Label className="text-sm font-bold">Upload Your Child's Photo</Label>
+        <Label className="text-sm font-bold block text-center">Upload Your Child's Photo</Label>
         <div
           role="button"
           tabIndex={0}
@@ -552,8 +552,8 @@ const Index = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
 
             {/* Left — form column */}
-            <div className="flex flex-col gap-6">
-              <div>
+            <div className="flex flex-col gap-6 items-center text-center">
+              <div className="flex flex-col items-center">
                 <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm border border-primary/30 rounded-full px-4 py-2 mb-5">
                   <Sparkles className="h-4 w-4 text-primary" />
                   <span className="text-sm font-bold text-primary">Personalized Bedtime Magic</span>
@@ -571,12 +571,12 @@ const Index = () => {
               </div>
 
               {/* Quick-start form */}
-              <div className="bg-card/70 backdrop-blur-md rounded-2xl border border-border p-6 shadow-xl">
+              <div className="bg-card/70 backdrop-blur-md rounded-2xl border border-border p-6 shadow-xl w-full">
                 <HeroForm />
               </div>
 
               {/* Social proof */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <div className="flex">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 text-primary fill-primary" />
