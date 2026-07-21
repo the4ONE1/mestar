@@ -24,6 +24,17 @@ Deno.serve(async (req) => {
 
     const stripe = createStripeClient(environment);
 
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: order } = await supabase
+      .from("storybook_orders")
+      .select("id")
+      .eq("id", orderId)
+      .maybeSingle();
+    if (!order) throw new Error("Order was not created. Please restart checkout from the story preview.");
+
     // Resolve prices via lookup_keys
     const prices = await stripe.prices.list({ lookup_keys: priceIds, limit: 20 });
     if (prices.data.length === 0) throw new Error("No matching prices");
@@ -47,10 +58,6 @@ Deno.serve(async (req) => {
     } as any);
 
     // Persist stripe_session_id on the order
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
     await supabase.from("storybook_orders").update({ stripe_session_id: session.id }).eq("id", orderId);
 
     return new Response(JSON.stringify({ clientSecret: session.client_secret, sessionId: session.id }), {

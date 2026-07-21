@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Lock, Shield, ArrowLeft, Loader2 } from "lucide-react";
 import SEO from "@/components/SEO";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Storybook page 1 images per theme (served from /public)
 const THEME_BG: Record<string, string> = {
@@ -155,6 +157,7 @@ export default function Preview() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [draft, setDraft] = useState<PreviewDraft | null>(null);
   const [rendering, setRendering] = useState(true);
+  const [unlocking, setUnlocking] = useState(false);
 
   useEffect(() => {
     const d = loadDraft();
@@ -174,27 +177,58 @@ export default function Preview() {
       .finally(() => setRendering(false));
   }, [draft]);
 
-  const handleUnlock = () => {
-    if (!draft) return;
-    // Generate a unique order ID for this transaction
-    const orderId = crypto.randomUUID();
-    // Persist the draft context as the pending story so Checkout + OrderComplete can use it
-    const pendingStory = {
-      orderId,
-      childName: draft.childName,
-      theme: draft.theme,
-      photoData: draft.photoData,
-      savedAt: Date.now(),
-    };
-    localStorage.setItem("mestar-pending-story", JSON.stringify(pendingStory));
+  const handleUnlock = async () => {
+    if (!draft || unlocking) return;
 
-    if (STRIPE_BASE_PRICE) {
+    if (!STRIPE_BASE_PRICE) {
+      navigate("/product/personalized-storybook#personalize");
+      return;
+    }
+
+    setUnlocking(true);
+    try {
+      const { data: orderData, error } = await supabase.functions.invoke("create-pending-order", {
+        body: {
+          childName: draft.childName,
+          childAge: "4-7",
+          theme: draft.theme,
+          strength: "",
+          supportingCharacterName: "",
+          hasSupportingCharacter: false,
+          selectedAddons: { illustrations: true, coloring: true, character: false, audiobook: false },
+          customerEmail: "",
+          childPhotoDataUrl: draft.photoData,
+          supportingCharacterPhotoDataUrl: null,
+        },
+      });
+
+      if (error || !orderData?.orderId) {
+        throw new Error(error?.message || "Order could not be created");
+      }
+
+      const orderId = orderData.orderId as string;
+      const recoveryToken = (orderData as { recoveryToken?: string })?.recoveryToken || null;
+      const pendingStory = {
+        orderId,
+        recoveryToken,
+        childName: draft.childName,
+        childAge: "4-7",
+        theme: draft.theme,
+        photoData: draft.photoData,
+        photoUrl: draft.photoData,
+        selectedAddons: { illustrations: true, coloring: true, character: false, audiobook: false },
+        savedAt: Date.now(),
+      };
+      localStorage.setItem("mestar-pending-story", JSON.stringify(pendingStory));
+
       navigate(
         `/checkout?order_id=${orderId}&prices=${encodeURIComponent(STRIPE_BASE_PRICE)}&next=${encodeURIComponent("/upsell")}`,
       );
-    } else {
-      // Fallback: route through existing Shopify product flow
-      navigate("/product/personalized-storybook#personalize");
+    } catch (error) {
+      console.error("Preview checkout start failed:", error);
+      toast.error("Could not start checkout. Please try again.", { position: "top-center" });
+    } finally {
+      setUnlocking(false);
     }
   };
 
@@ -308,11 +342,12 @@ export default function Preview() {
             {/* Unlock CTA */}
             <Button
               onClick={handleUnlock}
+              disabled={unlocking}
               size="lg"
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full py-7 shadow-xl shadow-primary/30 hover:scale-105 transition-all duration-300"
             >
-              <Lock className="h-5 w-5 mr-2" />
-              Unlock Full Bedtime Adventure — $19.99
+              {unlocking ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Lock className="h-5 w-5 mr-2" />}
+              {unlocking ? "Starting Secure Checkout…" : "Unlock Full Bedtime Adventure — $19.99"}
             </Button>
 
             {/* Trust footer */}
