@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /order-complete
-
-Sitemap: https://mestar.pro/sitemap.xml
