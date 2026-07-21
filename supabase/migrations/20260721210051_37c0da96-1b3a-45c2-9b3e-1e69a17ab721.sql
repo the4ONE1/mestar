@@ -1,0 +1,1 @@
+UPDATE public.storybook_orders SET access_expires_at = now() + interval '30 days' WHERE id IN ('d696aab7-c3a2-42a6-a00f-da7cf8af7eed','e928827b-dc01-44ec-a8ad-c28e34ef6007');
