@@ -26,15 +26,15 @@ const EXAMPLES: Example[] = [
     name: "Jaedan",
     realPhoto: jaedanFishing.url,
     characterImage: jaedanFishingStory,
-    caption: "His real fishing day — reimagined as a storybook scene.",
-    themeLabel: "Great Outdoors",
+    caption: "His real fishing day — reimagined as a pirate captain's adventure.",
+    themeLabel: "Ocean Adventure & Pirates",
   },
   {
     name: "Jaedan",
     realPhoto: jaedanCowboy.url,
     characterImage: jaedanCowboyStory,
-    caption: "One photo becomes a cowboy hero he actually recognizes.",
-    themeLabel: "Wild West",
+    caption: "One photo becomes a young prince he actually recognizes.",
+    themeLabel: "Prince & Princess",
   },
 ];
 
