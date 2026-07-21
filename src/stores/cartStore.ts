@@ -223,7 +223,7 @@ export const useCartStore = create<CartStore>()(
       storage: createJSONStorage(() =>
         typeof window !== 'undefined'
           ? localStorage
-          : ({ getItem: () => null, setItem: () => {}, removeItem: () => {} } as Storage)
+          : ({ getItem: () => null, setItem: () => {}, removeItem: () => {} } as unknown as Storage)
       ),
       partialize: (state) => ({ items: state.items, cartId: state.cartId, checkoutUrl: state.checkoutUrl }),
     }
