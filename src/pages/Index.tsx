@@ -552,8 +552,8 @@ const Index = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
 
             {/* Left — form column */}
-            <div className="flex flex-col gap-6">
-              <div>
+            <div className="flex flex-col gap-6 items-center text-center">
+              <div className="flex flex-col items-center">
                 <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm border border-primary/30 rounded-full px-4 py-2 mb-5">
                   <Sparkles className="h-4 w-4 text-primary" />
                   <span className="text-sm font-bold text-primary">Personalized Bedtime Magic</span>
@@ -571,12 +571,12 @@ const Index = () => {
               </div>
 
               {/* Quick-start form */}
-              <div className="bg-card/70 backdrop-blur-md rounded-2xl border border-border p-6 shadow-xl">
+              <div className="bg-card/70 backdrop-blur-md rounded-2xl border border-border p-6 shadow-xl w-full">
                 <HeroForm />
               </div>
 
               {/* Social proof */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <div className="flex">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 text-primary fill-primary" />
