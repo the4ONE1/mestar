@@ -139,6 +139,14 @@ const OrderComplete = () => {
       if (res.status === 404) {
         notFoundCount += 1;
         if (notFoundCount >= NOT_FOUND_MAX) {
+          // Clear the stale pending order so we don't keep re-polling a ghost id on future visits
+          try {
+            const saved = localStorage.getItem("mestar-pending-story");
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (parsed?.orderId === orderId) localStorage.removeItem("mestar-pending-story");
+            }
+          } catch { /* ignore */ }
           setError(
             "We couldn't find this order in our system. If you were charged, please email mestar.orders@gmail.com with your payment confirmation and we'll get your storybook to you right away.",
           );
