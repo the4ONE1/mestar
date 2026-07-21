@@ -168,23 +168,18 @@ export default function Upsell() {
               Simple play, pause, and seek — perfect for bedtime listening.
             </>,
           )}
-          <div className="w-full flex items-start gap-4 bg-muted/40 rounded-2xl border-2 border-dashed border-border p-5 opacity-80">
-            <div className="mt-0.5 h-5 w-5 rounded-full border-2 border-muted-foreground/40 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <Volume2 className="h-5 w-5 text-muted-foreground shrink-0" />
-                <span className="font-display font-bold text-base sm:text-lg leading-tight text-muted-foreground">
-                  Interactive Read-Along
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                  Coming Soon
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Karaoke-style word highlighting and tap-any-word replay are under construction. Choose Classic for now — you'll still get the full narrated story.
-              </p>
-            </div>
-          </div>
+          {audioCard(
+            "interactive",
+            "Interactive Read-Along",
+            INTERACTIVE_PRICE,
+            Volume2,
+            <>
+              Karaoke-style word highlighting that follows the narration, plus tap-any-word to hear it replayed.
+              Designed to help early readers learn to read while enjoying <strong className="text-foreground capitalize">{childName}'s</strong> story.
+            </>,
+            "Best for Learning",
+          )}
+
         </div>
 
 
