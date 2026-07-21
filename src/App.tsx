@@ -24,6 +24,7 @@ import Checkout from "./pages/Checkout";
 import ProductsIndex from "./pages/ProductsIndex";
 import ProductLanding from "./pages/ProductLanding";
 import AdminPayments from "./pages/AdminPayments";
+import Membership from "./pages/Membership";
 
 
 
