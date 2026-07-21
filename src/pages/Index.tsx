@@ -649,6 +649,10 @@ const Index = () => {
       {/* Story Preview / Trailer */}
       <StoryPreview productHandle={products[0]?.node.handle} />
 
+      {/* Real Kids, Real Magic — actual before/after examples */}
+      <RealMagicShowcase />
+
+
       {/* Products */}
       <section id="products" className="py-16 bg-card/30">
         <div className="container">
