@@ -10,6 +10,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const jsonHeaders = {
+  ...corsHeaders,
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+  "Pragma": "no-cache",
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -20,7 +27,7 @@ serve(async (req) => {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return new Response(JSON.stringify({ error: "Server misconfigured" }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   }
 
@@ -30,13 +37,13 @@ serve(async (req) => {
   if (!orderId || !/^[0-9a-f-]{36}$/i.test(orderId)) {
     return new Response(JSON.stringify({ error: "Invalid orderId" }), {
       status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   }
   if (!token || !/^[0-9a-f-]{36}$/i.test(token)) {
     return new Response(JSON.stringify({ error: "Missing or invalid access token" }), {
       status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   }
 
@@ -52,7 +59,7 @@ serve(async (req) => {
   if (orderErr || !order) {
     return new Response(JSON.stringify({ error: "Order not found" }), {
       status: 404,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   }
 
@@ -62,7 +69,7 @@ serve(async (req) => {
   if (!order.recovery_token || String(order.recovery_token) !== token) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   }
 
@@ -70,7 +77,7 @@ serve(async (req) => {
   if (!addons.audiobook) {
     return new Response(
       JSON.stringify({ error: "Audiobook was not purchased for this order" }),
-      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 403, headers: jsonHeaders },
     );
   }
 
@@ -82,13 +89,13 @@ serve(async (req) => {
   if (order.refunded_at) {
     return new Response(
       JSON.stringify({ error: "This order was refunded. Access has been revoked." }),
-      { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 410, headers: jsonHeaders },
     );
   }
   if (expiresAt !== null && Date.now() > expiresAt) {
     return new Response(
       JSON.stringify({ error: "Download link expired. Please contact support if you need access." }),
-      { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 410, headers: jsonHeaders },
     );
   }
 
@@ -103,7 +110,7 @@ serve(async (req) => {
   if (pagesErr) {
     return new Response(JSON.stringify({ error: pagesErr.message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   }
 
@@ -147,6 +154,6 @@ serve(async (req) => {
       totalPages,
       pages: signedPages,
     }),
-    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    { status: 200, headers: jsonHeaders },
   );
 });
