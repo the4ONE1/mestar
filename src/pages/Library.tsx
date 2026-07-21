@@ -40,6 +40,8 @@ interface AudiobookData {
 const POLL_INTERVAL_MS = 5000;
 const SUPABASE_FN_BASE = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1`;
 
+type AudioTier = "classic" | "interactive";
+
 const Library = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
@@ -48,21 +50,29 @@ const Library = () => {
   const [pageIndex, setPageIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeWordIndex, setActiveWordIndex] = useState(-1);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [tappedWordIndex, setTappedWordIndex] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const wordReplayStopRef = useRef<number | null>(null);
 
   // Per-order access token — required by get-audiobook. Read from URL first,
   // fall back to localStorage (set in the checkout flow).
   const urlToken = new URLSearchParams(window.location.search).get("token");
   let storedToken: string | null = null;
+  let storedTier: AudioTier = "interactive";
   try {
     const saved = localStorage.getItem("mestar-pending-story");
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed?.orderId === orderId && parsed?.recoveryToken) storedToken = parsed.recoveryToken;
+      const t = parsed?.audiobookTier || parsed?.selectedAddons?.audiobookTier;
+      if (t === "classic" || t === "interactive") storedTier = t;
     }
   } catch { /* ignore */ }
   const accessToken = urlToken || storedToken;
+  const tier: AudioTier = storedTier;
+  const isInteractive = tier === "interactive";
 
   // Fetch + poll until audiobook is fully ready
   useEffect(() => {
