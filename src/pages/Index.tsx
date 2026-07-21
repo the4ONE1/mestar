@@ -236,10 +236,10 @@ const HeroForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5 text-center" noValidate>
       {/* Child's Name */}
       <div className="space-y-1.5">
-        <Label htmlFor="hero-child-name" className="text-sm font-bold">
+        <Label htmlFor="hero-child-name" className="text-sm font-bold block text-center">
           Child's Name
         </Label>
         <Input
@@ -249,18 +249,18 @@ const HeroForm = () => {
           value={childName}
           onChange={(e) => setChildName(e.target.value)}
           maxLength={40}
-          className="rounded-xl bg-secondary/50 border-border h-11"
+          className="rounded-xl bg-secondary/50 border-border h-11 text-center"
           autoComplete="off"
         />
       </div>
 
       {/* Story Theme */}
       <div className="space-y-1.5">
-        <Label htmlFor="hero-theme" className="text-sm font-bold">
+        <Label htmlFor="hero-theme" className="text-sm font-bold block text-center">
           Story Theme
         </Label>
         <Select value={theme} onValueChange={setTheme}>
-          <SelectTrigger id="hero-theme" className="rounded-xl bg-secondary/50 border-border h-11">
+          <SelectTrigger id="hero-theme" className="rounded-xl bg-secondary/50 border-border h-11 justify-center">
             <SelectValue placeholder="Choose a theme…" />
           </SelectTrigger>
           <SelectContent>
@@ -275,7 +275,7 @@ const HeroForm = () => {
 
       {/* Photo Upload */}
       <div className="space-y-1.5">
-        <Label className="text-sm font-bold">Upload Your Child's Photo</Label>
+        <Label className="text-sm font-bold block text-center">Upload Your Child's Photo</Label>
         <div
           role="button"
           tabIndex={0}
