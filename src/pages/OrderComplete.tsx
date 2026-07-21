@@ -125,6 +125,8 @@ const OrderComplete = () => {
 
     let cancelled = false;
     const startedAt = Date.now();
+    let notFoundCount = 0;
+    const NOT_FOUND_MAX = 5; // ~15s of 404s before giving up
 
     const poll = async () => {
       if (cancelled) return;
@@ -134,9 +136,18 @@ const OrderComplete = () => {
 
       if (cancelled) return;
 
-      if (!res.ok) {
+      if (res.status === 404) {
+        notFoundCount += 1;
+        if (notFoundCount >= NOT_FOUND_MAX) {
+          setError(
+            "We couldn't find this order in our system. If you were charged, please email mestar.orders@gmail.com with your payment confirmation and we'll get your storybook to you right away.",
+          );
+          return; // stop polling
+        }
+      } else if (!res.ok) {
         console.error("Polling error:", data?.error || res.statusText);
       } else if (data) {
+        notFoundCount = 0;
         const row = data;
         setStatus(row.status);
         if (row.story_title) setStoryTitle(row.story_title);
@@ -150,8 +161,6 @@ const OrderComplete = () => {
             pdfOpenedRef.current = true;
             window.open(row.pdf_url, "_blank");
             toast.success("Your storybook PDF is ready! 🎉", { position: "top-center" });
-            // Keep mestar-pending-story so recoveryToken remains available
-            // for audiobook access on /library/<id>. It's cleared on new orders.
           }
           return; // stop polling
         }
