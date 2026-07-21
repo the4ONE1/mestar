@@ -304,7 +304,8 @@ const Library = () => {
 
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider rounded-full px-3 py-1 mb-3">
-            <Volume2 className="h-3 w-3" /> Karaoke Audiobook
+            <Volume2 className="h-3 w-3" />
+            {isInteractive ? "Interactive Read-Along" : "Classic Audiobook"}
           </div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold">
             {data.storyTitle || (data.childName ? `${data.childName}'s Story` : "Your Story")}
