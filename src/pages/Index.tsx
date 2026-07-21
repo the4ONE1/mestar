@@ -11,7 +11,9 @@ import RealMagicShowcase from "@/components/RealMagicShowcase";
 import izzyReal from "@/assets/izzy-real.jpg.asset.json";
 import izzyStory from "@/assets/izzy-storybook.jpg";
 import jaedanFishing from "@/assets/jaedan-fishing.jpg.asset.json";
+import jaedanFishingStory from "@/assets/jaedan-fishing-story.jpg";
 import jaedanCowboy from "@/assets/jaedan-cowboy.jpg.asset.json";
+import jaedanCowboyStory from "@/assets/jaedan-cowboy-story.jpg";
 import SEO from "@/components/SEO";
 import { toast } from "sonner";
 import type { PreviewDraft } from "./Preview";
@@ -47,14 +49,14 @@ const DEMO_SLIDES: DemoSlide[] = [
   {
     childLabel: "Jaedan",
     beforeSrc: jaedanFishing.url,
-    afterSrc: jaedanFishing.url,
+    afterSrc: jaedanFishingStory,
     theme: "Great Outdoors",
     icon: "🎣",
   },
   {
     childLabel: "Jaedan",
     beforeSrc: jaedanCowboy.url,
-    afterSrc: jaedanCowboy.url,
+    afterSrc: jaedanCowboyStory,
     theme: "Wild West",
     icon: "🤠",
   },

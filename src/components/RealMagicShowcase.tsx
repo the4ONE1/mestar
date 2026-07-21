@@ -2,7 +2,9 @@ import { ArrowRight, Sparkles, Camera, Wand2 } from "lucide-react";
 import izzyReal from "@/assets/izzy-real.jpg.asset.json";
 import izzyStory from "@/assets/izzy-storybook.jpg";
 import jaedanFishing from "@/assets/jaedan-fishing.jpg.asset.json";
+import jaedanFishingStory from "@/assets/jaedan-fishing-story.jpg";
 import jaedanCowboy from "@/assets/jaedan-cowboy.jpg.asset.json";
+import jaedanCowboyStory from "@/assets/jaedan-cowboy-story.jpg";
 
 type Example = {
   name: string;
@@ -23,14 +25,14 @@ const EXAMPLES: Example[] = [
   {
     name: "Jaedan",
     realPhoto: jaedanFishing.url,
-    characterImage: jaedanFishing.url,
+    characterImage: jaedanFishingStory,
     caption: "His real fishing day — reimagined as a storybook scene.",
     themeLabel: "Great Outdoors",
   },
   {
     name: "Jaedan",
     realPhoto: jaedanCowboy.url,
-    characterImage: jaedanCowboy.url,
+    characterImage: jaedanCowboyStory,
     caption: "One photo becomes a cowboy hero he actually recognizes.",
     themeLabel: "Wild West",
   },
