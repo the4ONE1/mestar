@@ -79,6 +79,7 @@ const Library = () => {
   const [activeWordIndex, setActiveWordIndex] = useState(-1);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [tappedWordIndex, setTappedWordIndex] = useState<number | null>(null);
+  const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const wordReplayStopRef = useRef<number | null>(null);
@@ -140,7 +141,7 @@ const Library = () => {
   }, [orderId]);
 
   const currentPage = data?.pages[pageIndex];
-  const focusIndex = tappedWordIndex ?? activeWordIndex;
+  const focusIndex = tappedWordIndex ?? selectedWordIndex ?? activeWordIndex;
   const focusWord = isInteractive && currentPage?.wordTimings?.[focusIndex]
     ? currentPage.wordTimings[focusIndex].word
     : null;
@@ -261,6 +262,7 @@ const Library = () => {
       wordReplayStopRef.current = null;
     }
     setTappedWordIndex(index);
+    setSelectedWordIndex(index);
     audio.currentTime = Math.max(0, timing.start - 0.02);
     audio.play().catch(() => {});
     const durationMs = Math.max(250, (timing.end - timing.start) * 1000 / playbackRate + 120);
@@ -394,6 +396,35 @@ const Library = () => {
           </div>
         )}
 
+        {isInteractive && (
+          <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5 mb-4 min-h-[132px]">
+            {focusWord ? (
+              <div className="grid sm:grid-cols-[1fr_1.2fr] gap-4 items-center">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Reading Help</p>
+                  <p className="font-display text-2xl font-extrabold text-primary">{focusWord.replace(/\s+/g, "")}</p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {syllables.map((part, index) => (
+                      <span key={`${part}-${index}`} className="rounded-full bg-background border border-primary/30 px-3 py-1 text-sm font-bold text-foreground">
+                        {part}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-background/70 border border-border p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Sound it out</p>
+                  <p className="text-sm font-medium text-foreground">{phonicsHint(focusWord)}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-3">
+                <p className="font-display font-bold text-foreground">Press play or tap a word to start Learning Mode</p>
+                <p className="text-sm text-muted-foreground mt-1">The active word will appear here with syllables and a sound-it-out hint.</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Text card with karaoke highlighting */}
         <div className="bg-card rounded-3xl border border-border p-6 sm:p-10 mb-4 min-h-[280px] shadow-lg">
           <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-4 text-center">
@@ -439,35 +470,6 @@ const Library = () => {
             )}
           </div>
         </div>
-
-        {isInteractive && (
-          <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5 mb-6 min-h-[132px]">
-            {focusWord ? (
-              <div className="grid sm:grid-cols-[1fr_1.2fr] gap-4 items-center">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Reading Help</p>
-                  <p className="font-display text-2xl font-extrabold text-primary">{focusWord.replace(/\s+/g, "")}</p>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {syllables.map((part, index) => (
-                      <span key={`${part}-${index}`} className="rounded-full bg-background border border-primary/30 px-3 py-1 text-sm font-bold text-foreground">
-                        {part}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="rounded-2xl bg-background/70 border border-border p-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Sound it out</p>
-                  <p className="text-sm font-medium text-foreground">{phonicsHint(focusWord)}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-3">
-                <p className="font-display font-bold text-foreground">Press play to start Learning Mode</p>
-                <p className="text-sm text-muted-foreground mt-1">The active word will appear here with syllables and a sound-it-out hint.</p>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Hidden audio element */}
         {currentPage?.audioUrl && (
