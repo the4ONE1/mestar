@@ -12,7 +12,7 @@ import {
   Volume2,
   BookOpen,
   GraduationCap,
-  HandPointer,
+  MousePointerClick,
   Languages,
 } from "lucide-react";
 import SEO from "@/components/SEO";
@@ -377,7 +377,7 @@ const Library = () => {
         {isInteractive && (
           <div className="grid sm:grid-cols-3 gap-3 mb-4">
             <div className="bg-card border border-primary/30 rounded-2xl p-4">
-              <HandPointer className="h-5 w-5 text-primary mb-2" />
+              <MousePointerClick className="h-5 w-5 text-primary mb-2" />
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tap Words</p>
               <p className="text-sm font-semibold text-foreground">Hear any word again</p>
             </div>

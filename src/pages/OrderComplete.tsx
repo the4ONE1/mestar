@@ -36,6 +36,7 @@ const OrderComplete = () => {
   const [error, setError] = useState<string | null>(null);
   const [customerEmail, setCustomerEmail] = useState<string>("");
   const [hasAudiobook, setHasAudiobook] = useState<boolean>(false);
+  const [audiobookTier, setAudiobookTier] = useState<"classic" | "interactive" | null>(null);
   const [confirmed, setConfirmed] = useState<boolean>(false);
   const [confirming, setConfirming] = useState<boolean>(false);
   const pdfOpenedRef = useRef(false);
@@ -107,6 +108,7 @@ const OrderComplete = () => {
       if (savedOrderId === orderIdFromUrl && savedToken) setRecoveryToken(savedToken);
       if (savedEmail) setCustomerEmail(savedEmail);
       if (savedHasAudiobook) setHasAudiobook(true);
+      if (savedAudiobookTier) setAudiobookTier(savedAudiobookTier);
       return;
     }
     if (savedOrderId) {
@@ -114,6 +116,7 @@ const OrderComplete = () => {
       if (savedToken) setRecoveryToken(savedToken);
       if (savedEmail) setCustomerEmail(savedEmail);
       if (savedHasAudiobook) setHasAudiobook(true);
+      if (savedAudiobookTier) setAudiobookTier(savedAudiobookTier);
     } else {
       setError("No order found. If you just paid, check your email — your storybook will arrive there shortly.");
     }
@@ -305,7 +308,7 @@ const OrderComplete = () => {
                 (Audio may take 1–2 extra minutes to finish recording.)
               </p>
               <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                <Link to={`/library/${orderId}${recoveryToken ? `?token=${recoveryToken}` : ""}${savedAudiobookTier ? `${recoveryToken ? "&" : "?"}tier=${savedAudiobookTier}` : ""}`}>
+                <Link to={`/library/${orderId}${recoveryToken ? `?token=${recoveryToken}` : ""}${audiobookTier ? `${recoveryToken ? "&" : "?"}tier=${audiobookTier}` : ""}`}>
                   <Volume2 className="h-5 w-5 mr-2" />
                   Listen Now
                 </Link>
