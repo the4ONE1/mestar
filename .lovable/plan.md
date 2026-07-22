@@ -1,30 +1,41 @@
-## Fix mismatched themes in "Watch the Transformation"
+## Plan: Make the $9.99 Premium Audiobook Actually Premium
 
-The showcase currently uses two themes that aren't in the offered catalog. Real photos stay the same — only the storybook side and label change.
+### What I confirmed
+- The Library page already has a basic word-highlight/tap-word system, but the visible experience is too close to the simple read-along.
+- Both Classic and Interactive currently use the same generated audio data.
+- The live environment currently only lists one audiobook price lookup key, so the two audiobook products need to be separated cleanly.
 
-### Changes
+### Changes I will make
+1. **Separate the products clearly**
+   - Keep **Classic Audiobook** as the lower-priced simple listening option.
+   - Keep **Interactive Read-Along** as the premium $9.99 option.
+   - Make sure checkout stores which tier was purchased so the customer lands in the correct player.
 
-**Card 2 — Jaedan fishing photo**
-- New theme: **Ocean Adventure & Pirates**
-- Regenerate `src/assets/jaedan-fishing-story.jpg` as Jaedan holding a fish on the deck of a small pirate ship, tricorn hat, treasure map, sunset ocean — preserving his face/likeness from the source photo.
-- Update label: `"Great Outdoors"` → `"Ocean Adventure & Pirates"`
-- Update caption to match new theme.
+2. **Upgrade the premium player UI**
+   - Add a clearly visible “Learning Mode” experience for Interactive.
+   - Keep karaoke-style highlighting active while narration plays.
+   - Add tappable words with replay behavior.
+   - Add helpful reading tools beside the active/tapped word, such as:
+     - word replay
+     - syllable-style breakdown
+     - simple phonics hint
+     - child-friendly “sound it out” prompt
+   - Keep Classic as a clean simple player without those learning tools.
 
-**Card 3 — Jaedan cowboy photo**
-- New theme: **Prince & Princess**
-- Regenerate `src/assets/jaedan-cowboy-story.jpg` as Jaedan as a young prince on horseback outside a castle at golden hour, royal cape, small crown — preserving his face/likeness (the cowboy hat becomes a crown, horse stays).
-- Update label: `"Wild West"` → `"Prince & Princess"`
-- Update caption to match new theme.
+3. **Improve the premium sample link behavior**
+   - Make `?tier=interactive` reliably force the premium learning player for sample/demo links.
+   - Make `?tier=classic` reliably show the basic player.
 
-**Card 1 — Izzy Fairy Tale** stays as-is (already matches offered themes).
+4. **Make the upsell copy match reality**
+   - Rename/copy so the customer understands:
+     - Classic = narration/player
+     - Interactive = karaoke highlighting + tap words + reading help
+   - Avoid selling the premium tier as educational unless the page truly shows the educational tools.
 
-### File touched
-- `src/components/RealMagicShowcase.tsx` — update `themeLabel` and `caption` for cards 2 and 3.
-- `src/assets/jaedan-fishing-story.jpg` — regenerated via `edit_image` from real photo (keeps likeness).
-- `src/assets/jaedan-cowboy-story.jpg` — regenerated via `edit_image` from real photo (keeps likeness).
+5. **Verify end-to-end**
+   - Test the Library page with the existing sample order link in both Classic and Interactive modes.
+   - Confirm the premium page visibly shows karaoke/learning tools and the basic page does not.
 
-### Cost estimate
-- 2 image edits at standard quality ≈ **2 credits (~$0.30)**. Fits well within your 45.91 remaining.
-
-### After I ship
-You'll see three cards in the "Watch the Transformation" section that each map to a real offered theme (Fairy Tale, Ocean Adventure & Pirates, Prince & Princess), so nothing on the page promises a theme customers can't actually buy.
+### Technical notes
+- Files likely touched: `src/pages/Library.tsx`, `src/pages/Upsell.tsx`, and Stripe price environment mapping if needed.
+- I will not change unrelated story generation, image generation, or PDF behavior.
