@@ -73,13 +73,17 @@ serve(async (req) => {
     });
   }
 
-  const addons = (order.selected_addons as Record<string, boolean>) || {};
+  const addons = (order.selected_addons as Record<string, unknown>) || {};
   if (!addons.audiobook) {
     return new Response(
       JSON.stringify({ error: "Audiobook was not purchased for this order" }),
       { status: 403, headers: jsonHeaders },
     );
   }
+  // Server-authoritative tier: derived from the paid add-ons on the order.
+  // The client MUST use this value and ignore any URL/localStorage override.
+  const rawTier = typeof addons.audiobookTier === "string" ? (addons.audiobookTier as string).toLowerCase() : "";
+  const tier: "classic" | "interactive" = rawTier === "interactive" ? "interactive" : "classic";
 
   // Access control: block refunded orders and links older than 30 days
   const ACCESS_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
