@@ -89,24 +89,21 @@ const Library = () => {
   // fall back to localStorage (set in the checkout flow).
   const searchParams = new URLSearchParams(window.location.search);
   const urlToken = searchParams.get("token");
-  const urlTier = searchParams.get("tier");
   let storedToken: string | null = null;
-  let storedTier: AudioTier = "interactive";
   try {
     const saved = localStorage.getItem("mestar-pending-story");
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed?.orderId === orderId && parsed?.recoveryToken) storedToken = parsed.recoveryToken;
-      const t = parsed?.audiobookTier || parsed?.selectedAddons?.audiobookTier;
-      if (t === "classic" || t === "interactive") storedTier = t;
     }
   } catch { /* ignore */ }
   const accessToken = urlToken || storedToken;
-  const tier: AudioTier = urlTier === "classic" ? "classic" : urlTier === "interactive" ? "interactive" : storedTier;
+
+  // Tier is server-authoritative: it comes from the order's paid add-ons.
+  // URL/localStorage values are ignored so a customer can never upgrade
+  // themselves to Interactive by editing the query string.
+  const tier: AudioTier = data?.tier === "interactive" ? "interactive" : "classic";
   const isInteractive = tier === "interactive";
-
-
-  void storedTier;
 
   // Fetch + poll until audiobook is fully ready
   useEffect(() => {
