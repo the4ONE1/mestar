@@ -153,6 +153,7 @@ serve(async (req) => {
       orderId,
       storyTitle: order.story_title,
       childName: order.child_name,
+      tier,
       status,
       readyPages: readyCount,
       totalPages,
