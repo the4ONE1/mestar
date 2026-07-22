@@ -89,6 +89,7 @@ const OrderComplete = () => {
     let savedToken: string | null = null;
     let savedEmail: string | null = null;
     let savedHasAudiobook = false;
+    let savedAudiobookTier: "classic" | "interactive" | null = null;
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -96,6 +97,8 @@ const OrderComplete = () => {
         if (parsed.recoveryToken) savedToken = parsed.recoveryToken as string;
         if (parsed.customerEmail) savedEmail = parsed.customerEmail as string;
         if (parsed.selectedAddons?.audiobook) savedHasAudiobook = true;
+        const tier = parsed.audiobookTier || parsed.selectedAddons?.audiobookTier;
+        if (tier === "classic" || tier === "interactive") savedAudiobookTier = tier;
       } catch { /* ignore */ }
     }
 
@@ -302,7 +305,7 @@ const OrderComplete = () => {
                 (Audio may take 1–2 extra minutes to finish recording.)
               </p>
               <Button asChild size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                <Link to={`/library/${orderId}${recoveryToken ? `?token=${recoveryToken}` : ""}`}>
+                <Link to={`/library/${orderId}${recoveryToken ? `?token=${recoveryToken}` : ""}${savedAudiobookTier ? `${recoveryToken ? "&" : "?"}tier=${savedAudiobookTier}` : ""}`}>
                   <Volume2 className="h-5 w-5 mr-2" />
                   Listen Now
                 </Link>

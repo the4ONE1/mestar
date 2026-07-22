@@ -8,7 +8,7 @@ const STRIPE_CLASSIC_PRICE = import.meta.env.VITE_STRIPE_PRICE_CLASSIC as string
 const STRIPE_INTERACTIVE_PRICE = import.meta.env.VITE_STRIPE_PRICE_INTERACTIVE as string | undefined;
 const STRIPE_COLORING_PRICE = import.meta.env.VITE_STRIPE_PRICE_COLORING as string | undefined;
 
-const CLASSIC_PRICE = 3.99;
+const CLASSIC_PRICE = 4.99;
 const INTERACTIVE_PRICE = 9.99;
 const COLORING_PRICE = 4.99;
 
@@ -174,8 +174,7 @@ export default function Upsell() {
             INTERACTIVE_PRICE,
             Volume2,
             <>
-              Karaoke-style word highlighting that follows the narration, plus tap-any-word to hear it replayed.
-              Designed to help early readers learn to read while enjoying <strong className="text-foreground capitalize">{childName}'s</strong> story.
+              Karaoke word highlighting, tap-any-word replay, syllable breakdown, and sound-it-out reading help while <strong className="text-foreground capitalize">{childName}'s</strong> story plays.
             </>,
             "Best for Learning",
           )}
