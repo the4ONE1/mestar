@@ -6,6 +6,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const CLASSIC_AUDIOBOOK_PRICE_ID = "audiobook_classic_onetime";
+const INTERACTIVE_AUDIOBOOK_PRICE_ID = "audiobook_interactive_read_along_onetime";
+const COLORING_PRICE_ID = "coloring_pages_addon_onetime";
+const SUPPORTING_CHARACTER_PRICE_ID = "supporting_character_addon_onetime";
+
+function addonsForPrices(priceIds: string[]) {
+  const hasClassic = priceIds.includes(CLASSIC_AUDIOBOOK_PRICE_ID);
+  const hasInteractive = priceIds.includes(INTERACTIVE_AUDIOBOOK_PRICE_ID);
+  return {
+    ...(priceIds.includes(COLORING_PRICE_ID) && { coloring: true, coloringPages: true }),
+    ...(priceIds.includes(SUPPORTING_CHARACTER_PRICE_ID) && { character: true }),
+    ...((hasClassic || hasInteractive) && {
+      audiobook: true,
+      audiobookTier: hasInteractive ? "interactive" : "classic",
+    }),
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers: corsHeaders });
@@ -30,10 +48,18 @@ Deno.serve(async (req) => {
     );
     const { data: order } = await supabase
       .from("storybook_orders")
-      .select("id")
+      .select("id, selected_addons")
       .eq("id", orderId)
       .maybeSingle();
     if (!order) throw new Error("Order was not created. Please restart checkout from the story preview.");
+
+    const purchasedAddons = addonsForPrices(priceIds);
+    if (Object.keys(purchasedAddons).length > 0) {
+      await supabase
+        .from("storybook_orders")
+        .update({ selected_addons: { ...((order as any).selected_addons || {}), ...purchasedAddons } })
+        .eq("id", orderId);
+    }
 
     // Resolve prices via lookup_keys
     const prices = await stripe.prices.list({ lookup_keys: priceIds, limit: 20 });
@@ -53,7 +79,7 @@ Deno.serve(async (req) => {
       return_url: returnUrl,
       ...(customerEmail && { customer_email: customerEmail }),
       payment_intent_data: { description: product.name },
-      metadata: { orderId },
+      metadata: { orderId, priceIds: priceIds.join(",") },
       managed_payments: { enabled: true },
     } as any);
 

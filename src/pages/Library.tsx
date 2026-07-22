@@ -11,6 +11,9 @@ import {
   ArrowLeft,
   Volume2,
   BookOpen,
+  GraduationCap,
+  MousePointerClick,
+  Languages,
 } from "lucide-react";
 import SEO from "@/components/SEO";
 
@@ -42,6 +45,30 @@ const SUPABASE_FN_BASE = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.su
 
 type AudioTier = "classic" | "interactive";
 
+function cleanWord(word: string) {
+  return word.toLowerCase().replace(/[^a-z']/g, "");
+}
+
+function splitSyllables(word: string) {
+  const cleaned = cleanWord(word);
+  if (!cleaned) return [word];
+  if (cleaned.length <= 4) return [cleaned];
+  const parts = cleaned.match(/[^aeiouy]*[aeiouy]+(?:[^aeiouy]*$|[^aeiouy](?=[^aeiouy]))?/g);
+  return parts && parts.length > 1 ? parts : [cleaned];
+}
+
+function phonicsHint(word: string) {
+  const cleaned = cleanWord(word);
+  if (!cleaned) return "Listen and repeat the word.";
+  if (cleaned.includes("sh")) return "Notice the sh sound, like in shine.";
+  if (cleaned.includes("ch")) return "Notice the ch sound, like in chair.";
+  if (cleaned.includes("th")) return "Put your tongue gently between your teeth for th.";
+  if (cleaned.includes("oo")) return "The oo sound can be heard in moon or book.";
+  if (cleaned.endsWith("ing")) return "Break off the ending: ing.";
+  const first = cleaned[0];
+  return `Start with the ${first.toUpperCase()} sound, then blend the rest.`;
+}
+
 const Library = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
@@ -52,6 +79,7 @@ const Library = () => {
   const [activeWordIndex, setActiveWordIndex] = useState(-1);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [tappedWordIndex, setTappedWordIndex] = useState<number | null>(null);
+  const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const wordReplayStopRef = useRef<number | null>(null);
@@ -113,6 +141,11 @@ const Library = () => {
   }, [orderId]);
 
   const currentPage = data?.pages[pageIndex];
+  const focusIndex = tappedWordIndex ?? selectedWordIndex ?? activeWordIndex;
+  const focusWord = isInteractive && currentPage?.wordTimings?.[focusIndex]
+    ? currentPage.wordTimings[focusIndex].word
+    : null;
+  const syllables = focusWord ? splitSyllables(focusWord) : [];
 
   // Reset state when changing pages
   useEffect(() => {
@@ -229,6 +262,7 @@ const Library = () => {
       wordReplayStopRef.current = null;
     }
     setTappedWordIndex(index);
+    setSelectedWordIndex(index);
     audio.currentTime = Math.max(0, timing.start - 0.02);
     audio.play().catch(() => {});
     const durationMs = Math.max(250, (timing.end - timing.start) * 1000 / playbackRate + 120);
@@ -309,7 +343,7 @@ const Library = () => {
 
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider rounded-full px-3 py-1 mb-3">
-            <Volume2 className="h-3 w-3" />
+            {isInteractive ? <GraduationCap className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
             {isInteractive ? "Interactive Read-Along" : "Classic Audiobook"}
           </div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold">
@@ -342,8 +376,57 @@ const Library = () => {
           ))}
         </div>
 
+        {isInteractive && (
+          <div className="grid sm:grid-cols-3 gap-3 mb-4">
+            <div className="bg-card border border-primary/30 rounded-2xl p-4">
+              <MousePointerClick className="h-5 w-5 text-primary mb-2" />
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tap Words</p>
+              <p className="text-sm font-semibold text-foreground">Hear any word again</p>
+            </div>
+            <div className="bg-card border border-primary/30 rounded-2xl p-4">
+              <Languages className="h-5 w-5 text-primary mb-2" />
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Syllables</p>
+              <p className="text-sm font-semibold text-foreground">Break big words apart</p>
+            </div>
+            <div className="bg-card border border-primary/30 rounded-2xl p-4">
+              <GraduationCap className="h-5 w-5 text-primary mb-2" />
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Phonics</p>
+              <p className="text-sm font-semibold text-foreground">Sound-it-out help</p>
+            </div>
+          </div>
+        )}
+
+        {isInteractive && (
+          <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5 mb-4 min-h-[132px]">
+            {focusWord ? (
+              <div className="grid sm:grid-cols-[1fr_1.2fr] gap-4 items-center">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Reading Help</p>
+                  <p className="font-display text-2xl font-extrabold text-primary">{focusWord.replace(/\s+/g, "")}</p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {syllables.map((part, index) => (
+                      <span key={`${part}-${index}`} className="rounded-full bg-background border border-primary/30 px-3 py-1 text-sm font-bold text-foreground">
+                        {part}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-background/70 border border-border p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Sound it out</p>
+                  <p className="text-sm font-medium text-foreground">{phonicsHint(focusWord)}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-3">
+                <p className="font-display font-bold text-foreground">Press play or tap a word to start Learning Mode</p>
+                <p className="text-sm text-muted-foreground mt-1">The active word will appear here with syllables and a sound-it-out hint.</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Text card with karaoke highlighting */}
-        <div className="bg-card rounded-3xl border border-border p-6 sm:p-10 mb-6 min-h-[280px] shadow-lg">
+        <div className="bg-card rounded-3xl border border-border p-6 sm:p-10 mb-4 min-h-[280px] shadow-lg">
           <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-4 text-center">
             Page {currentPage?.pageNumber} of {data.totalPages}
           </p>
@@ -372,7 +455,7 @@ const Library = () => {
                       isTapped
                         ? "bg-accent text-accent-foreground scale-110 shadow-md ring-2 ring-primary"
                         : isActive
-                          ? "bg-primary text-primary-foreground scale-110 shadow-md"
+                          ? "bg-primary text-primary-foreground scale-110 shadow-md underline decoration-primary-foreground/70 decoration-4 underline-offset-4"
                           : isPast
                             ? "text-foreground/60"
                             : "text-foreground"
@@ -459,7 +542,7 @@ const Library = () => {
 
         <p className="text-center text-xs text-muted-foreground mb-8">
           {isInteractive
-            ? "Press play and follow along — tap any word to hear it again."
+            ? "Press play for karaoke highlighting — tap any word for replay, syllables, and sound-it-out help."
             : "Press play and enjoy — sit back and listen together."}
         </p>
 

@@ -12,7 +12,7 @@ const STRIPE_PRICE_IDS = {
   storybook: "personalized_storybook_onetime",
   supportingCharacter: "supporting_character_addon_onetime",
   coloring: "coloring_pages_addon_onetime",
-  audiobookBasic: "audiobook_basic_onetime",
+  audiobookBasic: "audiobook_classic_onetime",
 } as const;
 import { toast } from "sonner";
 
