@@ -34,6 +34,7 @@ interface AudiobookData {
   orderId: string;
   storyTitle: string | null;
   childName: string | null;
+  tier?: AudioTier;
   status: "pending" | "partial" | "ready";
   readyPages: number;
   totalPages: number;
