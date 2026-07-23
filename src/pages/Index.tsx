@@ -436,38 +436,29 @@ const Index = () => {
   const [products, setProducts] = useState<ShopifyProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [showIntro, setShowIntro] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     fetchProducts(20).then(setProducts).catch(console.error).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
-    if (showIntro && videoRef.current) {
-      const video = videoRef.current;
-      video.muted = false;
-      video.play().catch(() => {
-        video.muted = true;
-        setIsMuted(true);
-        video.play().catch(console.error);
-      });
-    }
+    if (!showIntro) return;
+    const t = setTimeout(() => setShowIntro(false), 4000);
+    return () => clearTimeout(t);
   }, [showIntro]);
 
-  const handleVideoEnd = () => {
-    setShowIntro(false);
-  };
-
-  const handleUnmute = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (videoRef.current) {
-      videoRef.current.muted = false;
-      setIsMuted(false);
-    }
-  };
+  const dismissIntro = () => setShowIntro(false);
 
   if (showIntro) {
+    const rows: Array<{
+      name: string;
+      theme: string;
+      realSrc: string;
+      heroSrc: string;
+    }> = [
+      { name: "Izzy", theme: "Fairy Tale", realSrc: izzyReal.url, heroSrc: izzyStory },
+      { name: "Jaedan", theme: "Ocean Adventure & Pirates", realSrc: jaedanFishing.url, heroSrc: jaedanFishingStory },
+    ];
     return (
       <>
         <SEO
@@ -484,39 +475,62 @@ const Index = () => {
         />
         <h1 className="sr-only">MESTAR — Personalized Storybooks Starring Your Child</h1>
         <div
-          className="fixed inset-0 z-50 bg-black flex items-center justify-center cursor-pointer overflow-hidden"
-          onClick={handleVideoEnd}
+          className="fixed inset-0 z-50 bg-background cursor-pointer overflow-hidden flex flex-col"
+          onClick={dismissIntro}
+          role="button"
+          aria-label="Enter site"
         >
-          <video
-            src="/videos/promo-ad.mp4"
-            playsInline
-            muted
-            autoPlay
-            loop
-            aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50 pointer-events-none"
-          />
-          <video
-            ref={videoRef}
-            src="/videos/promo-ad.mp4"
-            playsInline
-            onEnded={handleVideoEnd}
-            className="relative w-full h-full object-contain"
-          />
-          {isMuted && (
-            <button
-              onClick={handleUnmute}
-              className="absolute bottom-8 right-8 bg-cream/20 backdrop-blur-sm text-cream rounded-full p-4 hover:bg-cream/30 transition-colors z-10"
+          {rows.map((row, i) => (
+            <div
+              key={row.name + i}
+              className={`flex-1 min-h-0 grid grid-cols-2 gap-0.5 bg-border ${
+                i === 0 ? "border-b border-border" : ""
+              }`}
             >
-              <Volume2 className="h-6 w-6" />
-              <span className="sr-only">Tap for sound</span>
-            </button>
-          )}
+              {/* Real photo */}
+              <div className="relative bg-background overflow-hidden animate-fade-in">
+                <img
+                  src={row.realSrc}
+                  alt={`${row.name} — real photo`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 left-2 flex items-center gap-1 bg-background/85 backdrop-blur-sm border border-border rounded-full px-2 py-0.5">
+                  <Sparkles className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    Real Photo
+                  </span>
+                </div>
+              </div>
+              {/* Story hero */}
+              <div
+                className="relative bg-background overflow-hidden animate-scale-in"
+                style={{ animationDelay: `${0.3 + i * 0.15}s`, animationFillMode: "both" }}
+              >
+                <img
+                  src={row.heroSrc}
+                  alt={`${row.name} illustrated as a storybook hero`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 left-2 flex items-center gap-1 bg-primary/90 backdrop-blur-sm rounded-full px-2 py-0.5">
+                  <Sparkles className="h-3 w-3 text-primary-foreground" />
+                  <span className="text-[10px] font-bold text-primary-foreground uppercase tracking-wider">
+                    Story Hero
+                  </span>
+                </div>
+                <div className="absolute bottom-2 right-2 flex items-center gap-2 bg-background/85 backdrop-blur-sm border border-border rounded-full px-3 py-1">
+                  <span className="font-display font-bold text-sm text-foreground">{row.name}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 rounded-full px-2 py-0.5">
+                    {row.theme}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
           <button
-            onClick={(e) => { e.stopPropagation(); handleVideoEnd(); }}
-            className="absolute top-6 right-6 bg-white/10 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full hover:bg-white/20 transition-colors z-10"
+            onClick={(e) => { e.stopPropagation(); dismissIntro(); }}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-sm font-bold px-5 py-2 rounded-full shadow-lg hover:brightness-110 transition-all z-10"
           >
-            Skip intro →
+            Enter site →
           </button>
         </div>
       </>
