@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, CheckCircle2, Volume2, Upload, ImageIcon, X } from "lucide-react";
+import { Star, Sparkles, BookOpen, Loader2, Shield, Download, FileText, Clock, CheckCircle2, Volume2, Upload, ImageIcon, X, Camera } from "lucide-react";
 import { fetchProducts, ShopifyProduct } from "@/lib/shopify";
 import StoryPreview from "@/components/StoryPreview";
 import RealMagicShowcase from "@/components/RealMagicShowcase";
