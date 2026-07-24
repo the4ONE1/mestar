@@ -25,6 +25,7 @@ import ProductsIndex from "./pages/ProductsIndex";
 import ProductLanding from "./pages/ProductLanding";
 import AdminPayments from "./pages/AdminPayments";
 import Membership from "./pages/Membership";
+import AdLinks from "./pages/AdLinks";
 
 
 
@@ -57,6 +58,7 @@ const AppContent = () => {
           <Route path="/library/:orderId" element={<Library />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/membership" element={<Membership />} />
+          <Route path="/ad-links" element={<AdLinks />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="/admin/payments" element={<AdminPayments />} />
 
