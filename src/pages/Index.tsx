@@ -455,9 +455,22 @@ const Index = () => {
       theme: string;
       realSrc: string;
       heroSrc: string;
+      caption: string;
     }> = [
-      { name: "Izzy", theme: "Fairy Tale", realSrc: izzyReal.url, heroSrc: izzyStory },
-      { name: "Jaedan", theme: "Ocean Adventure & Pirates", realSrc: jaedanFishing.url, heroSrc: jaedanFishingStory },
+      {
+        name: "Izzy",
+        theme: "Fairy Tale",
+        realSrc: izzyReal.url,
+        heroSrc: izzyStory,
+        caption: "Same bow. Same big eyes. Same little hero.",
+      },
+      {
+        name: "Jaedan",
+        theme: "Ocean Adventure & Pirates",
+        realSrc: jaedanFishing.url,
+        heroSrc: jaedanFishingStory,
+        caption: "His real fishing day — reimagined as a pirate captain's adventure.",
+      },
     ];
     return (
       <>
@@ -475,63 +488,66 @@ const Index = () => {
         />
         <h1 className="sr-only">MESTAR — Personalized Storybooks Starring Your Child</h1>
         <div
-          className="fixed inset-0 z-50 bg-background cursor-pointer overflow-hidden flex flex-col"
+          className="fixed inset-0 z-[100] bg-background cursor-pointer overflow-hidden flex flex-col gap-3 p-3"
           onClick={dismissIntro}
           role="button"
           aria-label="Enter site"
         >
+          <button
+            onClick={(e) => { e.stopPropagation(); dismissIntro(); }}
+            className="absolute top-3 right-3 z-10 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-bold px-3 py-1.5 rounded-full hover:bg-background transition-all"
+          >
+            Skip →
+          </button>
+
           {rows.map((row, i) => (
             <div
               key={row.name + i}
-              className={`flex-1 min-h-0 grid grid-cols-2 gap-0.5 bg-border ${
-                i === 0 ? "border-b border-border" : ""
-              }`}
+              className="flex-1 min-h-0 rounded-2xl border border-border bg-card overflow-hidden flex flex-col animate-fade-in"
+              style={{ animationDelay: `${i * 0.15}s`, animationFillMode: "both" }}
             >
-              {/* Real photo */}
-              <div className="relative bg-background overflow-hidden animate-fade-in">
-                <img
-                  src={row.realSrc}
-                  alt={`${row.name} — real photo`}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2 left-2 flex items-center gap-1 bg-background/85 backdrop-blur-sm border border-border rounded-full px-2 py-0.5">
-                  <Sparkles className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Real Photo
-                  </span>
+              <div className="grid grid-cols-2 gap-0.5 bg-border flex-1 min-h-0">
+                {/* Real photo */}
+                <div className="relative bg-background overflow-hidden">
+                  <img
+                    src={row.realSrc}
+                    alt={`${row.name} — real photo`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 left-2 flex items-center gap-1 bg-background/85 backdrop-blur-sm border border-border rounded-full px-2 py-0.5">
+                    <Camera className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Real Photo
+                    </span>
+                  </div>
+                </div>
+                {/* Story hero */}
+                <div className="relative bg-background overflow-hidden">
+                  <img
+                    src={row.heroSrc}
+                    alt={`${row.name} illustrated as a storybook hero`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 left-2 flex items-center gap-1 bg-primary/90 backdrop-blur-sm rounded-full px-2 py-0.5">
+                    <Sparkles className="h-3 w-3 text-primary-foreground" />
+                    <span className="text-[10px] font-bold text-primary-foreground uppercase tracking-wider">
+                      Story Hero
+                    </span>
+                  </div>
                 </div>
               </div>
-              {/* Story hero */}
-              <div
-                className="relative bg-background overflow-hidden animate-scale-in"
-                style={{ animationDelay: `${0.3 + i * 0.15}s`, animationFillMode: "both" }}
-              >
-                <img
-                  src={row.heroSrc}
-                  alt={`${row.name} illustrated as a storybook hero`}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2 left-2 flex items-center gap-1 bg-primary/90 backdrop-blur-sm rounded-full px-2 py-0.5">
-                  <Sparkles className="h-3 w-3 text-primary-foreground" />
-                  <span className="text-[10px] font-bold text-primary-foreground uppercase tracking-wider">
-                    Story Hero
-                  </span>
-                </div>
-                <div className="absolute bottom-2 right-2 flex items-center gap-2 bg-background/85 backdrop-blur-sm border border-border rounded-full px-3 py-1">
-                  <span className="font-display font-bold text-sm text-foreground">{row.name}</span>
+              {/* Caption bar */}
+              <div className="px-3 py-2 flex flex-col gap-1 shrink-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-display font-bold text-base text-foreground">{row.name}</span>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 rounded-full px-2 py-0.5">
                     {row.theme}
                   </span>
                 </div>
+                <p className="text-xs text-muted-foreground leading-snug">{row.caption}</p>
               </div>
             </div>
           ))}
-          <button
-            onClick={(e) => { e.stopPropagation(); dismissIntro(); }}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-sm font-bold px-5 py-2 rounded-full shadow-lg hover:brightness-110 transition-all z-10"
-          >
-            Enter site →
-          </button>
         </div>
       </>
     );
