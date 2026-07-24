@@ -1,33 +1,39 @@
-## Goal
-When a visitor lands on mestar.pro, instead of the promo video they immediately see a full-screen "real photo → storybook hero" reveal for Izzy and Jaedan, then continue into the normal homepage. Keep the commercial video file in place (unused) so it can be re-enabled later.
+## What the user wants
+The screenshot they attached is the `RealMagicShowcase` section further down the homepage — two card-style before/after examples (Izzy + Jaedan fishing) with "Real Photo" / "Story Hero" labels, name, theme chip, and caption. They want **exactly that visual** — but with **no header text** ("These are real MESTAR kids…" etc. removed) — to be the full-screen intro for the first 4 seconds when someone opens mestar.pro, then auto-dismiss into the normal homepage like the commercial used to.
+
+## Why they didn't see my previous change
+My earlier intro was a raw full-bleed split (no card frame, no labels the way the screenshot shows), so it didn't match what they had in mind. This plan replaces that intro with the card layout from the screenshot.
 
 ## Changes — single file: `src/pages/Index.tsx`
 
-1. **Replace the video intro block** (currently the `if (showIntro) { return <video …/> }` return at ~lines 470–524) with a new full-screen "MagicReveal" intro:
-   - Fixed, full-viewport overlay (`fixed inset-0 z-50`) on a dark background.
-   - Split vertically into two equal halves:
-     - **Top half — Izzy:** real photo (`izzyReal.url`) on the left, storybook character (`izzyStory`) on the right, with a small label under each ("Real photo" / "Story hero") and Izzy's name + theme chip ("Fairy Tale").
-     - **Bottom half — Jaedan (fishing):** `jaedanFishing.url` on the left, `jaedanFishingStory` on the right, labeled the same way, name + theme chip ("Ocean Adventure & Pirates").
-   - Fast entrance so the magic is visible within ~1–2s: real photos fade in first (~0.3s), then the story-hero side slides/fades in (~0.6s) with a subtle sparkle accent.
-   - A single "Enter site →" button (bottom center) and tap-anywhere-to-continue, mirroring the current skip-to-dismiss behavior.
-   - Auto-advance to the homepage after ~4 seconds so nobody gets stuck on the reveal.
+Replace the current intro `if (showIntro) { … }` block with a new intro that:
 
-2. **Remove video-only logic that is no longer needed:**
-   - Delete `videoRef`, `isMuted`, `handleUnmute`, and the `useEffect` that plays the video.
-   - Keep `showIntro` state + `handleVideoEnd` (rename usage kept internally; still toggles the intro off).
-   - Do **not** delete `/public/videos/promo-ad.mp4` — the file stays so the commercial can be re-enabled later; only the reference to it is removed.
+1. **Full-viewport dark overlay** (`fixed inset-0 z-50 bg-background`) sitting above everything for 4 seconds, then auto-dismisses (existing 4s timer stays).
+2. **No text/headline/navbar** — the overlay covers the navbar so the user sees only the two example cards. No "Real Kids, Real Magic" chip, no "One Photo. One Hero…" headline, no explanation line — just the cards.
+3. **Two cards, stacked vertically** filling the screen, styled to match the `RealMagicShowcase` card exactly:
+   - Rounded card with border, real photo on the left half, story hero on the right half.
+   - "REAL PHOTO" chip (camera icon) top-left over the real photo.
+   - "STORY HERO" chip (sparkles icon) top-left over the story hero.
+   - Below the images: name (bold display font) on the left, theme chip on the right, then a one-line caption.
+   - **Card 1:** Izzy · Fairy Tale · "Same bow. Same big eyes. Same little hero."
+   - **Card 2:** Jaedan · Ocean Adventure & Pirates · "His real fishing day — reimagined as a pirate captain's adventure."
+4. **Tap-anywhere-to-dismiss** and a small "Skip →" button (top-right) so nobody feels trapped, mirroring the old commercial's skip affordance.
+5. **Mobile-first sizing**: cards use `flex-1` inside a vertical flex column with small padding so both fit on a phone without scrolling; images use `object-cover` and clamp their height so the card + caption always fit.
+6. **Auto-advance to homepage after 4s** — same timer already in place.
 
-3. **No changes** to:
-   - The rest of the homepage (headline, CTA, `RealMagicShowcase`, product grid) — it renders exactly as it does today after the intro dismisses.
-   - Routing, SEO tags, cart, checkout, edge functions, or any backend logic.
-   - Mobile responsiveness: the split stays 50/50 top/bottom on all sizes; on very small screens the two images inside each half stack tightly side-by-side (`grid-cols-2`) so both real + hero are always visible together.
+## What is NOT changing
+- The `RealMagicShowcase` section further down the homepage stays exactly as it is (that's the section shown in the screenshot; it will still appear after the intro dismisses).
+- The commercial file `/public/videos/promo-ad.mp4` stays in place, unreferenced, for future use.
+- No routing, SEO, checkout, or backend changes.
+- Uses image imports already in `Index.tsx` — no new assets.
 
 ## Technical notes
-- Purely frontend/presentation change in one file.
-- Uses existing image imports already at the top of `Index.tsx` (`izzyReal`, `izzyStory`, `jaedanFishing`, `jaedanFishingStory`) — no new assets.
-- Uses existing Tailwind animation utilities (`animate-fade-in`, `animate-scale-in`) — no new dependencies or keyframes needed.
+- Purely presentation edit in `src/pages/Index.tsx`.
+- Uses existing Tailwind utilities and the `animate-fade-in` / `animate-scale-in` animations already in the project — no new CSS.
+- The `Camera` and `Sparkles` icons are already imported from `lucide-react` in the file (or will be added to the existing import list — no new dependency).
 
 ## Verification
-- Load `/` in the preview: intro shows Izzy on top half, Jaedan-fishing on bottom half, real photo on the left, story hero on the right; tap or wait ~4s to enter the homepage; the rest of the site is unchanged.
-- Check mobile viewport (443px): both halves and both images per half still visible without scrolling.
-- Confirm no console errors and that `/videos/promo-ad.mp4` still exists in `public/videos/` for future use.
+- Load `/` on the preview: for the first ~4 seconds you see only the two example cards (Izzy top, Jaedan-fishing bottom) with labels and captions — no navbar, no headline text.
+- Tap the screen or "Skip" — intro dismisses immediately to the normal homepage.
+- After 4s with no interaction, the intro auto-dismisses to the normal homepage (same behavior as the old commercial).
+- Check at mobile viewport 443px: both cards visible without scrolling, captions readable.
