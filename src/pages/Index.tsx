@@ -443,7 +443,7 @@ const Index = () => {
 
   useEffect(() => {
     if (!showIntro) return;
-    const t = setTimeout(() => setShowIntro(false), 4000);
+    const t = setTimeout(() => setShowIntro(false), 8000);
     return () => clearTimeout(t);
   }, [showIntro]);
 
