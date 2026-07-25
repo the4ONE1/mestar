@@ -20,7 +20,9 @@ serve(async (req) => {
     });
   }
 
-  const orderId = new URL(req.url).searchParams.get("orderId")?.trim();
+  const url = new URL(req.url);
+  const orderId = url.searchParams.get("orderId")?.trim();
+  const token = url.searchParams.get("token")?.trim() || null;
   if (!orderId || !/^[0-9a-f-]{36}$/i.test(orderId)) {
     return new Response(JSON.stringify({ error: "Invalid orderId" }), {
       status: 400,
@@ -31,7 +33,7 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const { data: order, error } = await supabase
     .from("storybook_orders")
-    .select("id, status, story_title, pdf_url, child_name, customer_email, selected_addons, completed_at, refunded_at, access_expires_at")
+    .select("id, status, story_title, pdf_url, child_name, customer_email, selected_addons, completed_at, refunded_at, access_expires_at, recovery_token")
     .eq("id", orderId)
     .maybeSingle();
 
