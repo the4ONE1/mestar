@@ -153,7 +153,7 @@ export default function ProductsIndex() {
                     </Button>
                   ) : (
                     <Button asChild className="flex-1">
-                      <Link to="/product/personalized-storybook#personalize">
+                      <Link to="/products/personalized-storybook#personalize">
                         {p.ctaLabel} →
                       </Link>
                     </Button>
