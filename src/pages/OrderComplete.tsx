@@ -107,7 +107,9 @@ const OrderComplete = () => {
       setOrderId(orderIdFromUrl);
       if (savedOrderId === orderIdFromUrl && savedToken) setRecoveryToken(savedToken);
       if (savedEmail) setCustomerEmail(savedEmail);
-      if (savedHasAudiobook) setHasAudiobook(true);
+      // Do NOT trust localStorage for hasAudiobook — wait for the DB poll to confirm
+      // the paid add-on, otherwise stale state can link users to /library for an
+      // order they didn't purchase audio for.
       if (savedAudiobookTier) setAudiobookTier(savedAudiobookTier);
       return;
     }
@@ -115,7 +117,6 @@ const OrderComplete = () => {
       setOrderId(savedOrderId);
       if (savedToken) setRecoveryToken(savedToken);
       if (savedEmail) setCustomerEmail(savedEmail);
-      if (savedHasAudiobook) setHasAudiobook(true);
       if (savedAudiobookTier) setAudiobookTier(savedAudiobookTier);
     } else {
       setError("No order found. If you just paid, check your email — your storybook will arrive there shortly.");

@@ -119,6 +119,11 @@ const Library = () => {
         const res = await fetch(`${SUPABASE_FN_BASE}/get-audiobook?orderId=${orderId}&token=${encodeURIComponent(accessToken)}`);
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
+          // Order didn't include the audiobook add-on — send them back to their order page.
+          if (res.status === 403 && typeof body?.error === "string" && /audiobook was not purchased/i.test(body.error)) {
+            navigate(`/order-complete?order_id=${orderId}`, { replace: true });
+            return;
+          }
           setError(body.error || `Could not load audiobook (${res.status})`);
           return;
         }
