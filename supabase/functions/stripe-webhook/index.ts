@@ -18,8 +18,8 @@ async function logEvent(orderId: string | null, sessionId: string | null, type: 
       order_id: orderId,
       stripe_session_id: sessionId,
       event_type: type,
-      processing_result: result,
-      payload: payload as any,
+      result,
+      payload_summary: payload as any,
     });
   } catch (e) {
     console.error("payment_events insert failed", e);
