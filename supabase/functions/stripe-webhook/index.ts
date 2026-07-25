@@ -44,8 +44,11 @@ async function fireGeneration(orderId: string) {
     .maybeSingle();
   if (error || !order) throw new Error(`Order ${orderId} not found`);
 
-  // Idempotency — don't regenerate if already done or actively generating
-  const doneStatuses = ["complete", "generating_story", "generating_images"];
+  // Idempotency — never regenerate completed orders. Previously this also
+  // skipped generating_* orders forever, which trapped paid orders after a
+  // timeout. Retrying a paid, incomplete order is safer than leaving a customer
+  // without a PDF.
+  const doneStatuses = ["complete"];
   if (order.status && doneStatuses.includes(order.status)) {
     console.log(`Order ${orderId} already ${order.status} — skipping`);
     return;
