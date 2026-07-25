@@ -848,9 +848,34 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
         });
       }
       if (layer1Response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        const fallback = buildFallbackStory({
+          childName,
+          childAge,
+          theme,
+          strength,
+          hasSupportingCharacter: !!hasSupportingCharacter,
+          supportingCharacterName,
+          sceneCount,
+          pronouns,
         });
+        return new Response(
+          JSON.stringify({
+            success: true,
+            title: fallback.title,
+            story: fallback.story,
+            scenes: fallback.scenes,
+            coloringPrompts: fallback.coloringPrompts,
+            bonusColoringPrompts: addons.coloring ? fallback.bonusColoringPrompts : [],
+            illustrationPrompts: fallback.illustrationPrompts,
+            addons,
+            fallbackReason: "ai_credits_exhausted",
+            rawStoryOutput: fallback.story,
+            rawColoringOutput: fallback.coloringPrompts.join("\n\n"),
+            rawBonusColoringOutput: addons.coloring ? fallback.bonusColoringPrompts.join("\n\n") : null,
+            rawIllustrationOutput: fallback.illustrationPrompts.join("\n\n"),
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
       throw new Error(`Layer 1 failed: ${layer1Response.status}`);
     }
