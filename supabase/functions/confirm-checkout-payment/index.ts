@@ -56,8 +56,13 @@ Deno.serve(async (req) => {
 
     // Fire the webhook internally to reuse generation logic
     await supabase.from("payment_events").insert({
-      order_id: orderId, stripe_session_id: sessionId,
-      event_type: "return_page_fallback", processing_result: "triggered", payload: { sessionId },
+      order_id: orderId,
+      stripe_session_id: sessionId,
+      stripe_payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : null,
+      event_type: "return_page_fallback",
+      result: "queued",
+      message: "checkout return page confirmed paid session",
+      payload_summary: { sessionId },
     });
 
     // Kick off generation directly
@@ -84,7 +89,10 @@ async function triggerPipeline(orderId: string) {
   const { data: order } = await supabase.from("storybook_orders").select("*").eq("id", orderId).maybeSingle();
   if (!order) return;
   const selectedAddons = (order as any).selected_addons || {};
-  await supabase.from("storybook_orders").update({ status: "generating_story", paid_at: new Date().toISOString() }).eq("id", orderId);
+  await supabase
+    .from("storybook_orders")
+    .update({ status: "generating_story", error_message: null })
+    .eq("id", orderId);
 
   const storyRes = await fetch(`${SUPABASE_URL}/functions/v1/generate-story`, {
     method: "POST",
