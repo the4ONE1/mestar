@@ -1,20 +1,41 @@
-I'll build a simple internal page at `/ad-links` that lists 6 high-converting landing page URLs for Google Ads, each with a one-click copy button.
+## Goal
+Rebuild the full database schema on the new backend (project `ktkebsvoqbxsirgluxeo`) so `storybook_orders` and all supporting tables/functions exist, then redeploy edge functions and verify checkout works.
 
-### What I will build
+## Steps
 
-1. **New page** `src/pages/AdLinks.tsx` with a clean, centered layout.
-2. **6 ad-optimized links** (each in its own card with a label, URL, and "Copy" button):
-   - `https://mestar.pro/` — Homepage / Hero Demo
-   - `https://mestar.pro/products/personalized-storybook` — Personalized Storybook
-   - `https://mestar.pro/products/coloring-pages` — Bonus Coloring Book Add-On
-   - `https://mestar.pro/products/supporting-character` — Supporting Character Add-On
-   - `https://mestar.pro/reviews` — Reviews / Social Proof
-   - `https://mestar.pro/why-read-together` — Why Read Together
-3. **One-click copy behavior**: each button copies its URL to the clipboard and briefly shows "Copied!" so you know it worked.
-4. **Route**: add `/ad-links` to `src/App.tsx`.
-5. **SEO basics**: `<title>`, `<meta name="description">`, and `<link rel="canonical">` on the page so it is also crawler-friendly.
+1. **Inspect current state of the new backend**
+   - Query the connected DB to list existing tables, functions, and policies.
+   - Identify what's missing vs. what the app expects (`storybook_orders`, `customer_ratings`, `payment_events`, `gift_cards`, `email_send_log`, `email_send_state`, `email_subscribers`, `email_unsubscribe_tokens`, `suppressed_emails`, `storybook_audio`, plus RPCs like `create_pending_order`, `get_order_status`, `is_pending_order`, `confirm_pdf_received`, `submit_rating`, `enqueue_email`, `email_queue_wake`, `email_queue_dispatch`, `delete_email`, `move_to_dlq`, `read_email_batch`).
 
-### Notes
-- The page will be public but not linked in the main navigation, so it stays out of the customer path.
-- I will use the current canonical domain `https://mestar.pro` for all URLs.
-- If you want a different set of 6 links, just reply with the changes and I will adjust the plan before building.
+2. **Drop the stale `orders` table (if unused) and create the full schema in one migration**
+   - `CREATE TABLE` for every table listed above with the columns the code actually reads/writes (derived from `src/integrations/supabase/types.ts` and edge functions).
+   - For each `public` table: `GRANT` to `authenticated`/`service_role` (and `anon` only where a policy allows it), `ENABLE ROW LEVEL SECURITY`, then create the exact policies documented in security memory:
+     - `storybook_orders`: no anon read; access via SECURITY DEFINER RPCs.
+     - `customer_ratings`: no direct insert; only via `submit_rating` RPC with recovery token.
+     - `email_*`: service-role-managed.
+   - Recreate all SECURITY DEFINER functions currently in the old project (bodies already shown in context): `create_pending_order`, `get_order_status`, `is_pending_order`, `confirm_pdf_received`, `submit_rating`, `enqueue_email`, `delete_email`, `move_to_dlq`, `read_email_batch`, `email_queue_wake`, `email_queue_dispatch`.
+   - Add `updated_at` triggers where appropriate.
+   - Create storage buckets `storybooks` and `customer-photos` (private) with the same policies as before.
+
+3. **Vault + cron plumbing**
+   - Store `email_queue_service_role_key` in vault (required by `email_queue_wake`/`_dispatch`).
+   - Note: cron scheduling of `process-email-queue` is created lazily by `email_queue_wake` at first enqueue — no explicit migration needed, but confirm `pg_cron` and `pg_net` extensions are enabled.
+
+4. **Deploy all edge functions** to the new project (same 22-function list as before).
+
+5. **Verify end to end**
+   - Run `psql` sanity queries: table list, RLS on, sample RPC calls.
+   - Call `create-pending-order` → `create-checkout` via curl with a test payload; confirm a Stripe session client_secret comes back.
+   - Confirm Stripe webhook endpoint (sandbox `?env=sandbox`) is reachable; fire a test event and confirm a row lands in `payment_events`.
+   - Report back with a clear pass/fail per step.
+
+## Technical details / risks
+
+- Old `orders` table: I'll only drop it if it has no rows or the user confirms it's disposable. Otherwise I'll leave it alongside the new `storybook_orders`.
+- `SUPABASE_SERVICE_ROLE_KEY` for the new project must already be bound to edge functions (Lovable Cloud handles this automatically on connect — I'll verify by test-invoking one function).
+- Stripe webhook secrets (`PAYMENTS_SANDBOX_WEBHOOK_SECRET`, `PAYMENTS_LIVE_WEBHOOK_SECRET`) are connector-managed. If webhook signature verification fails after redeploy, the connector needs to be reconnected in the Lovable UI — I'll flag that clearly rather than trying to rotate them myself.
+- The recreated schema will match the current code exactly; no code changes should be required. If a mismatch surfaces during verification I'll list it and ask before editing code.
+
+## Deliverable
+
+One migration that brings the new backend to parity with what the app expects, all 22 edge functions deployed, and a short verification report (checkout session created + webhook received).
