@@ -34,7 +34,16 @@ export default function Checkout() {
   const email = params.get("email") || undefined;
   const priceIds = pricesParam.split(",").filter(Boolean);
 
-  const nextRoute = params.get("next") || null;
+  // SECURITY: only allow known internal paths for post-checkout redirect. Reject
+  // absolute URLs, protocol-relative (//evil.com), and anything not in the allow-list
+  // to prevent open-redirect abuse of the ?next= parameter.
+  const ALLOWED_NEXT = ["/upsell", "/library", "/order-complete"];
+  const rawNext = params.get("next");
+  const nextRoute =
+    rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") &&
+    ALLOWED_NEXT.some((p) => rawNext === p || rawNext.startsWith(p + "?") || rawNext.startsWith(p + "/"))
+      ? rawNext
+      : null;
 
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
