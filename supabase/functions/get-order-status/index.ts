@@ -61,13 +61,18 @@ serve(async (req) => {
   const isExpired = expiresAt !== null && now > expiresAt;
   const accessBlocked = isRefunded || isExpired;
 
+  // SECURITY: only reveal PII (email) and download URL (pdf_url) when the caller
+  // presents the per-order recovery_token. Progress polling (status/title/child_name)
+  // remains unauthenticated since orderId alone is embedded in the confirmation URL.
+  const tokenOk = !!token && !!order.recovery_token && String(order.recovery_token) === token;
+
   return new Response(JSON.stringify({
     id: order.id,
     status: order.status,
     story_title: order.story_title,
-    pdf_url: accessBlocked ? null : order.pdf_url,
+    pdf_url: tokenOk && !accessBlocked ? order.pdf_url : null,
     child_name: order.child_name,
-    customer_email: order.customer_email,
+    customer_email: tokenOk ? order.customer_email : null,
     has_audiobook: !!addons.audiobook,
     has_error: order.status === "failed",
     access_blocked: accessBlocked,
