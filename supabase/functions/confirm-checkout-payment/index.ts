@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
         .is("customer_email", null);
     }
     const { data: order } = await supabase.from("storybook_orders").select("status").eq("id", orderId).maybeSingle();
-    if (order && ["complete", "generating_story", "generating_images"].includes((order as any).status)) {
+    if (order && (order as any).status === "complete") {
       return new Response(JSON.stringify({ ok: true, alreadyProcessing: true }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -65,12 +65,9 @@ Deno.serve(async (req) => {
       payload_summary: { sessionId },
     });
 
-    // Kick off generation directly
-    await fetch(`${SUPABASE_URL}/functions/v1/create-storybook-trigger?orderId=${orderId}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${SERVICE_ROLE}` },
-    }).catch(() => {});
     // Fire-and-forget: don't block the browser return page on the full pipeline.
+    // If a previous attempt timed out in generating_* status, this retries the
+    // paid order instead of leaving the customer stuck without a PDF.
     // @ts-ignore EdgeRuntime is available in the Supabase edge runtime
     EdgeRuntime.waitUntil(triggerPipeline(orderId).catch((e) => console.error("triggerPipeline failed:", e)));
 
