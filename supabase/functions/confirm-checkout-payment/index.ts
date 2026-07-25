@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     // Fire the webhook internally to reuse generation logic
     await supabase.from("payment_events").insert({
       order_id: orderId, stripe_session_id: sessionId,
-      event_type: "return_page_fallback", processing_result: "triggered", payload: { sessionId },
+      event_type: "return_page_fallback", result: "triggered", payload_summary: { sessionId },
     });
 
     // Kick off generation directly
