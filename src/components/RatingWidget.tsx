@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   orderId: string | null;
+  recoveryToken?: string | null;
   customerEmail?: string;
   onSubmitted?: (stars: number, comment: string) => void;
 }
@@ -16,7 +17,7 @@ interface Props {
  * until the customer selects a rating, and shows a helper message if they
  * try to submit without one.
  */
-export default function RatingWidget({ orderId, customerEmail, onSubmitted }: Props) {
+export default function RatingWidget({ orderId, recoveryToken, onSubmitted }: Props) {
   const [hover, setHover] = useState(0);
   const [selected, setSelected] = useState(0);
   const [comment, setComment] = useState("");
@@ -30,14 +31,18 @@ export default function RatingWidget({ orderId, customerEmail, onSubmitted }: Pr
     e?.preventDefault();
     setTouched(true);
     if (!isValid || submitting || done) return;
+    if (!orderId || !recoveryToken) {
+      toast.error("Can't verify your order — please reload the page.");
+      return;
+    }
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.from("customer_ratings").insert({
-        order_id: orderId,
-        customer_email: customerEmail || null,
-        stars: selected,
-        comment: comment.trim() || null,
+      const { error } = await supabase.rpc("submit_rating", {
+        p_order_id: orderId,
+        p_recovery_token: recoveryToken,
+        p_stars: selected,
+        p_comment: comment.trim() || null,
       });
       if (error) throw error;
       setDone(true);
