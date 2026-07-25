@@ -70,8 +70,9 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { Authorization: `Bearer ${SERVICE_ROLE}` },
     }).catch(() => {});
-    // Also directly call the same pipeline the webhook uses:
-    await triggerPipeline(orderId);
+    // Fire-and-forget: don't block the browser return page on the full pipeline.
+    // @ts-ignore EdgeRuntime is available in the Supabase edge runtime
+    EdgeRuntime.waitUntil(triggerPipeline(orderId).catch((e) => console.error("triggerPipeline failed:", e)));
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
