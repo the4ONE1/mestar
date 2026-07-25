@@ -27,6 +27,17 @@ Deno.serve(async (req) => {
       });
     }
 
+    // SECURITY: bind the paid Stripe session to the specific order it was created for.
+    // Without this, a valid paid sessionId could be replayed against any orderId to trigger
+    // free generation. Trust only Stripe's own session metadata (set at checkout creation).
+    const sessionOrderId = (session.metadata as Record<string, string> | null)?.orderId;
+    if (!sessionOrderId || sessionOrderId !== orderId) {
+      console.warn("confirm-checkout-payment: order/session mismatch", { sessionId, orderId, sessionOrderId });
+      return new Response(JSON.stringify({ error: "Session does not match order" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
     const checkoutEmail = session.customer_details?.email || session.customer_email || null;
     if (checkoutEmail) {

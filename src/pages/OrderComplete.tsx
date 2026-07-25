@@ -137,7 +137,9 @@ const OrderComplete = () => {
     const poll = async () => {
       if (cancelled) return;
 
-      const res = await fetch(`${SUPABASE_FN_BASE}/get-order-status?orderId=${encodeURIComponent(orderId)}`);
+      const qs = new URLSearchParams({ orderId });
+      if (recoveryToken) qs.set("token", recoveryToken);
+      const res = await fetch(`${SUPABASE_FN_BASE}/get-order-status?${qs.toString()}`);
       const data = await res.json().catch(() => null);
 
       if (cancelled) return;
