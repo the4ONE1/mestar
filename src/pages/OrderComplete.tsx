@@ -373,6 +373,7 @@ const OrderComplete = () => {
           <div className="mb-6">
             <RatingWidget
               orderId={orderId}
+              recoveryToken={recoveryToken}
               customerEmail={customerEmail}
               onSubmitted={(stars, comment) => {
                 // If they haven't confirmed yet, do it now with the rating attached.

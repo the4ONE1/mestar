@@ -489,6 +489,15 @@ export type Database = {
           read_ct: number
         }[]
       }
+      submit_rating: {
+        Args: {
+          p_comment?: string
+          p_order_id: string
+          p_recovery_token: string
+          p_stars: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
