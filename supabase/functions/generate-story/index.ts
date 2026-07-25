@@ -44,6 +44,81 @@ function requireServiceRole(req: Request): Response | null {
   return null;
 }
 
+type Pronouns = { subject: string; object: string; possessive: string; child: string };
+
+function cleanText(value: unknown, fallback: string): string {
+  const text = String(value ?? "").trim();
+  return text.length > 0 ? text : fallback;
+}
+
+function buildFallbackStory(params: {
+  childName: string;
+  childAge: string;
+  theme: string;
+  strength: string;
+  hasSupportingCharacter: boolean;
+  supportingCharacterName: string;
+  sceneCount: number;
+  pronouns: Pronouns;
+}) {
+  const childName = cleanText(params.childName, "your child");
+  const theme = cleanText(params.theme, "magical adventure");
+  const strength = cleanText(params.strength, "kindness").toLowerCase();
+  const helperName = params.hasSupportingCharacter
+    ? cleanText(params.supportingCharacterName, "a trusted friend")
+    : "a small golden star";
+  const helperPhrase = params.hasSupportingCharacter
+    ? `${helperName} stayed close beside ${childName}, offering gentle help whenever the path felt confusing.`
+    : `A small golden star floated nearby, giving ${childName} a soft glow of encouragement whenever the path felt confusing.`;
+  const subject = params.pronouns.subject;
+  const object = params.pronouns.object;
+  const possessive = params.pronouns.possessive;
+
+  const scenes = [
+    `${childName} discovers a surprising ${theme} invitation and notices someone nearby who needs help.`,
+    `${helperName} helps ${childName} understand the challenge, and ${childName} uses ${strength} to make the first brave choice.`,
+    `${childName} faces the biggest moment of the ${theme} adventure and chooses a helpful, age-appropriate solution.`,
+    `${childName} returns home proud, peaceful, and more sure of ${possessive} own special light.`,
+  ].slice(0, params.sceneCount);
+
+  const storyParagraphs = [
+    `${childName} was having an ordinary day when something wonderful appeared: a tiny shimmer shaped like a doorway into ${theme}. It glowed with warm colors and seemed to know ${possessive} name. ${childName} stepped closer, curious but careful, and felt a quiet promise that this would be the kind of adventure where being thoughtful mattered most.`,
+    `On the other side, the world felt bright and alive. Every sound seemed to sparkle. Every path seemed to bend toward a small problem waiting to be solved. ${helperPhrase} Together they found a place where the lights had mixed themselves up, leaving everyone unsure which way to go.`,
+    `${childName} took a slow breath and looked carefully. Instead of rushing, ${subject} listened. Instead of giving up, ${subject} tried one kind idea, then another. The more ${childName} used ${strength}, the clearer the path became. Little by little, the mixed-up lights settled into a beautiful trail that everyone could follow.`,
+    `At the final turn, ${childName} saw that the adventure had never been asking for someone perfect. It had been waiting for someone willing to care, think, and help. ${childName} smiled, and the whole ${theme} world seemed to smile back.`,
+    `When ${childName} returned home, the room felt cozy and safe. The memory of the adventure rested in ${possessive} heart like a tiny star. As sleep came close, ${childName} knew something true: ${subject} already carried a bright and helpful magic inside ${object}, and it would be there again tomorrow.`,
+  ];
+
+  const story = storyParagraphs.join("\n\n");
+  const title = `${childName}'s ${theme} Adventure`;
+
+  const characterReference = `${childName}, a warm and expressive ${params.pronouns.child} hero, wearing a bright storybook outfit, gentle smile, curious eyes, child-safe proportions, consistent hairstyle and outfit across every page.`;
+  const supportingReference = params.hasSupportingCharacter
+    ? `${helperName}, a friendly helpful companion with a kind expression, always shown as supportive and safe.`
+    : "A small golden star companion with a friendly glow.";
+
+  const illustrationPrompts = scenes.map((scene, index) =>
+    `Whimsical children's storybook illustration, soft watercolor and digital painting hybrid, warm lighting, dreamy storybook palette, professional children's book art, gentle expressions, magical atmosphere. CHARACTER_REFERENCE: ${characterReference} SUPPORTING_REFERENCE: ${supportingReference} Scene ${index + 1}: ${scene} No text. No words. No letters.`
+  );
+  const coloringPrompts = scenes.map((scene, index) =>
+    `Black and white coloring page line art, thick bold outlines, printable, no shading. CHARACTER_REFERENCE: ${characterReference} Scene ${index + 1}: ${scene} Clean white background, no grayscale, no color, no text.`
+  );
+  const bonusColoringPrompts = [
+    "outer space rocket launch",
+    "deep ocean discovery",
+    "dinosaur jungle path",
+    "superhero city helper moment",
+    "medieval castle garden",
+    "race car track celebration",
+    "pirate ship treasure map",
+    "enchanted forest picnic",
+  ].map((scene) =>
+    `Black and white coloring page line art, thick bold outlines, printable, no shading. CHARACTER_REFERENCE: ${characterReference} Bonus scene: ${childName} in a ${scene}. Clean white background, no grayscale, no color, no text.`
+  );
+
+  return { title, story, scenes, coloringPrompts, bonusColoringPrompts, illustrationPrompts };
+}
+
 const LAYER_1_SYSTEM_PROMPT = `========================================
 MESTAR STORY ENGINE — LAYER 1 (LOCKED)
 ========================================
@@ -773,9 +848,34 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
         });
       }
       if (layer1Response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        const fallback = buildFallbackStory({
+          childName,
+          childAge,
+          theme,
+          strength,
+          hasSupportingCharacter: !!hasSupportingCharacter,
+          supportingCharacterName,
+          sceneCount,
+          pronouns,
         });
+        return new Response(
+          JSON.stringify({
+            success: true,
+            title: fallback.title,
+            story: fallback.story,
+            scenes: fallback.scenes,
+            coloringPrompts: fallback.coloringPrompts,
+            bonusColoringPrompts: addons.coloring ? fallback.bonusColoringPrompts : [],
+            illustrationPrompts: fallback.illustrationPrompts,
+            addons,
+            fallbackReason: "ai_credits_exhausted",
+            rawStoryOutput: fallback.story,
+            rawColoringOutput: fallback.coloringPrompts.join("\n\n"),
+            rawBonusColoringOutput: addons.coloring ? fallback.bonusColoringPrompts.join("\n\n") : null,
+            rawIllustrationOutput: fallback.illustrationPrompts.join("\n\n"),
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
       throw new Error(`Layer 1 failed: ${layer1Response.status}`);
     }
