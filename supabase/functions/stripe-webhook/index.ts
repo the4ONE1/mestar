@@ -156,8 +156,11 @@ async function handlePaid(sessionOrIntent: any, env: StripeEnv, kind: "session" 
     })
     .eq("id", orderId);
 
-  await fireGeneration(orderId);
-  return { orderId, sessionId, paymentIntentId, result: "pipeline_complete" };
+  // Run generation in the background so the webhook returns 200 to Stripe
+  // within its ~10s timeout. fireGeneration writes status='failed' on error.
+  // @ts-ignore EdgeRuntime is available in the Supabase edge runtime
+  EdgeRuntime.waitUntil(fireGeneration(orderId).catch((e) => console.error("fireGeneration failed:", e)));
+  return { orderId, sessionId, paymentIntentId, result: "pipeline_started" };
 }
 
 Deno.serve(async (req) => {
