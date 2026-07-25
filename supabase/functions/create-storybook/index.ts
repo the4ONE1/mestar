@@ -8,6 +8,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const IMAGE_REQUEST_TIMEOUT_MS = 22000;
+const IMAGE_GENERATION_BUDGET_MS = 105000;
+
 // ── AI Image Generation (works for both color illustrations and B&W coloring pages) ──
 // referenceImages: optional data-URL strings used as likeness references
 async function generateImage(
@@ -22,20 +25,34 @@ async function generateImage(
       if (refUrl) userContent.push({ type: "image_url", image_url: { url: refUrl } });
     }
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        // Gemini 3 Pro Image (Nano Banana Pro) — best-in-class character consistency
-        // across multiple illustrations. Same chat-shape body as prior Gemini image models.
-        model: "google/gemini-3-pro-image",
-        messages: [{ role: "user", content: userContent }],
-        modalities: ["image", "text"],
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), IMAGE_REQUEST_TIMEOUT_MS);
+    let res: Response;
+    try {
+      res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          // Gemini 3 Pro Image (Nano Banana Pro) — best-in-class character consistency
+          // across multiple illustrations. Same chat-shape body as prior Gemini image models.
+          model: "google/gemini-3-pro-image",
+          messages: [{ role: "user", content: userContent }],
+          modalities: ["image", "text"],
+        }),
+      });
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") {
+        console.error(`[${label}] image gen timed out after ${IMAGE_REQUEST_TIMEOUT_MS}ms`);
+        return null;
+      }
+      throw e;
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
@@ -60,8 +77,9 @@ async function generateImage(
   };
 
   try {
-    // Up to 3 retries on 429 with backoff 1.5s → 4s → 10s, then give up gracefully (returns null).
-    const retryWaits = [1500, 4000, 10000];
+    // One retry on 429 only. Paid checkout must finish with a usable PDF instead
+    // of spending the entire function window waiting on optional images.
+    const retryWaits = [1500];
     let result = await attempt();
     for (let i = 0; i < retryWaits.length && result === "RETRY"; i++) {
       console.log(`[${label}] 429 — retrying in ${retryWaits[i]}ms (attempt ${i + 2}/${retryWaits.length + 1})...`);
@@ -78,6 +96,15 @@ async function generateImage(
     console.error(`[${label}] image gen error:`, e);
     return null;
   }
+}
+
+function hasImageBudget(deadlineMs: number, label: string): boolean {
+  const remaining = deadlineMs - Date.now();
+  if (remaining < IMAGE_REQUEST_TIMEOUT_MS + 3000) {
+    console.warn(`[${label}] skipping remaining images — delivery deadline reached (${remaining}ms left)`);
+    return false;
+  }
+  return true;
 }
 
 
@@ -502,6 +529,7 @@ serve(async (req) => {
 
     // Generate illustrations + coloring pages in parallel where requested
     console.log("Generating images...", { addons });
+    const imageDeadlineMs = Date.now() + IMAGE_GENERATION_BUDGET_MS;
 
     // Load the customer's reference photos (if any) so the AI uses them for likeness
     let mainPhotoRef: string | null = null;
@@ -528,6 +556,10 @@ serve(async (req) => {
       const out: (Uint8Array | null)[] = [];
       if (!enabled || !prompts?.length) return Array(5).fill(null);
       for (let i = 0; i < Math.min(5, prompts.length); i++) {
+        if (!hasImageBudget(imageDeadlineMs, `illustration ${i + 1}/5`)) {
+          out.push(null);
+          continue;
+        }
         const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
         const img = await generateImage(
           withLikenessLock(prompts[i], refs.length > 0),
@@ -552,6 +584,10 @@ serve(async (req) => {
       const out: (Uint8Array | null)[] = [];
       if (!prompts?.length) return out;
       for (let i = 0; i < prompts.length; i++) {
+        if (!hasImageBudget(imageDeadlineMs, `${labelPrefix} ${i + 1}/${prompts.length}`)) {
+          out.push(null);
+          continue;
+        }
         const illusRef = bytesToDataUrl(illustrations[i] || null, "image/png");
         // For bonus pages we don't have a matching illustration; fall back to the child photo
         const refs = illusRef ? [illusRef] : (mainPhotoRef ? [mainPhotoRef] : []);
@@ -684,10 +720,10 @@ serve(async (req) => {
       const illustrationsShort = addons.illustrations && illustrationCount < expectedIllustrations;
       const coloringShort = coloringCount < expectedColoring;
       const bonusShort = addons.coloring && bonusColoringCount < expectedBonusColoring;
-      const finalStatus = illustrationsShort || coloringShort || bonusShort ? "needs_review" : "complete";
-      if (finalStatus === "needs_review") {
+      const finalStatus = "complete";
+      if (illustrationsShort || coloringShort || bonusShort) {
         console.error(
-          `Order ${orderId} flagged needs_review: illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}`
+          `Order ${orderId} completed with missing images: illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}`
         );
       }
       await supabase
@@ -697,6 +733,10 @@ serve(async (req) => {
           pdf_storage_path: fileName,
           pdf_url: pdfUrl,
           completed_at: new Date().toISOString(),
+          failure_category: illustrationsShort || coloringShort || bonusShort ? "image_generation_partial" : null,
+          failure_hint: illustrationsShort || coloringShort || bonusShort
+            ? `PDF delivered; some images were skipped to prevent checkout fulfillment timeout. Illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}.`
+            : null,
         })
         .eq("id", orderId);
     }
