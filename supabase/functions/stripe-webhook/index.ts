@@ -12,14 +12,23 @@ function svc() {
   return createClient(SUPABASE_URL, SERVICE_ROLE);
 }
 
-async function logEvent(orderId: string | null, sessionId: string | null, type: string, result: string, payload: unknown) {
+async function logEvent(
+  orderId: string | null,
+  sessionId: string | null,
+  type: string,
+  result: string,
+  payload: unknown,
+  paymentIntentId: string | null = null,
+) {
   try {
     await svc().from("payment_events").insert({
       order_id: orderId,
       stripe_session_id: sessionId,
+      stripe_payment_intent_id: paymentIntentId,
       event_type: type,
-      processing_result: result,
-      payload: payload as any,
+      result,
+      message: typeof payload === "string" ? payload : null,
+      payload_summary: payload && typeof payload === "object" ? payload as any : {},
     });
   } catch (e) {
     console.error("payment_events insert failed", e);
@@ -43,7 +52,10 @@ async function fireGeneration(orderId: string) {
   }
 
   const selectedAddons = order.selected_addons || {};
-  await supabase.from("storybook_orders").update({ status: "generating_story", paid_at: new Date().toISOString() }).eq("id", orderId);
+  await supabase
+    .from("storybook_orders")
+    .update({ status: "generating_story", error_message: null })
+    .eq("id", orderId);
 
   const storyRes = await fetch(`${SUPABASE_URL}/functions/v1/generate-story`, {
     method: "POST",
@@ -103,6 +115,9 @@ async function handlePaid(sessionOrIntent: any, env: StripeEnv, kind: "session" 
   let checkoutEmail: string | null = kind === "session"
     ? (sessionOrIntent.customer_details?.email || sessionOrIntent.customer_email || null)
     : null;
+  let paymentIntentId: string | null = kind === "intent"
+    ? sessionOrIntent.id
+    : (typeof sessionOrIntent?.payment_intent === "string" ? sessionOrIntent.payment_intent : null);
 
   if (!orderId && kind === "intent") {
     // Look up session by payment_intent
@@ -112,6 +127,7 @@ async function handlePaid(sessionOrIntent: any, env: StripeEnv, kind: "session" 
     if (s) {
       orderId = (s.metadata as any)?.orderId || null;
       sessionId = s.id;
+      paymentIntentId = sessionOrIntent.id;
       checkoutEmail = s.customer_details?.email || s.customer_email || null;
     }
   }
@@ -132,8 +148,16 @@ async function handlePaid(sessionOrIntent: any, env: StripeEnv, kind: "session" 
       .is("customer_email", null);
   }
 
+  await svc()
+    .from("storybook_orders")
+    .update({
+      ...(sessionId && { stripe_session_id: sessionId }),
+      ...(paymentIntentId && { stripe_payment_intent_id: paymentIntentId }),
+    })
+    .eq("id", orderId);
+
   await fireGeneration(orderId);
-  return { orderId, sessionId, result: "generation_started" };
+  return { orderId, sessionId, paymentIntentId, result: "pipeline_complete" };
 }
 
 Deno.serve(async (req) => {
@@ -150,7 +174,7 @@ Deno.serve(async (req) => {
     event = await verifyWebhook(req, env);
   } catch (e) {
     console.error("verify failed", e);
-    await logEvent(null, null, "signature_error", "failed", { error: (e as Error).message });
+    await logEvent(null, null, "webhook.signature_failed", "signature_invalid", { env, error: (e as Error).message });
     return new Response("bad signature", { status: 400 });
   }
 
@@ -161,20 +185,20 @@ Deno.serve(async (req) => {
         const s = event.data.object;
         if (s.payment_status === "paid" || event.type === "checkout.session.async_payment_succeeded") {
           const r = await handlePaid(s, env, "session");
-          await logEvent(r.orderId, r.sessionId, event.type, r.result, { id: s.id });
+          await logEvent(r.orderId, r.sessionId, event.type, r.result, { id: s.id, env }, r.paymentIntentId);
         } else {
-          await logEvent(s.metadata?.orderId || null, s.id, event.type, "not_paid_yet", { status: s.payment_status });
+          await logEvent(s.metadata?.orderId || null, s.id, event.type, "not_paid_yet", { status: s.payment_status, env });
         }
         break;
       }
       case "payment_intent.succeeded": {
         const pi = event.data.object;
         const r = await handlePaid(pi, env, "intent");
-        await logEvent(r.orderId, r.sessionId, event.type, r.result, { id: pi.id });
+        await logEvent(r.orderId, r.sessionId, event.type, r.result, { id: pi.id, env }, r.paymentIntentId);
         break;
       }
       default:
-        await logEvent(event.data.object?.metadata?.orderId || null, event.data.object?.id || null, event.type, "ignored", null);
+        await logEvent(event.data.object?.metadata?.orderId || null, event.data.object?.id || null, event.type, "ignored", { env });
     }
     return new Response(JSON.stringify({ received: true }), { status: 200, headers: { "Content-Type": "application/json" } });
   } catch (e) {
