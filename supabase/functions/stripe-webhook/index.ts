@@ -2,15 +2,8 @@
 // checkout.session.completed / payment_intent.succeeded fires the storybook
 // generation pipeline (generate-story → create-storybook, which also fires
 // generate-audiobook when that add-on is selected).
-import { createClient } from "npm:@supabase/supabase-js@2";
 import { type StripeEnv, createStripeClient, verifyWebhook } from "../_shared/stripe.ts";
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-function svc() {
-  return createClient(SUPABASE_URL, SERVICE_ROLE);
-}
+import { svc, triggerGenerationPipeline } from "../_shared/pipeline.ts";
 
 async function logEvent(
   orderId: string | null,
@@ -32,82 +25,6 @@ async function logEvent(
     });
   } catch (e) {
     console.error("payment_events insert failed", e);
-  }
-}
-
-async function fireGeneration(orderId: string) {
-  const supabase = svc();
-  const { data: order, error } = await supabase
-    .from("storybook_orders")
-    .select("*")
-    .eq("id", orderId)
-    .maybeSingle();
-  if (error || !order) throw new Error(`Order ${orderId} not found`);
-
-  // Idempotency — never regenerate completed orders. Previously this also
-  // skipped generating_* orders forever, which trapped paid orders after a
-  // timeout. Retrying a paid, incomplete order is safer than leaving a customer
-  // without a PDF.
-  const doneStatuses = ["complete"];
-  if (order.status && doneStatuses.includes(order.status)) {
-    console.log(`Order ${orderId} already ${order.status} — skipping`);
-    return;
-  }
-
-  const selectedAddons = order.selected_addons || {};
-  await supabase
-    .from("storybook_orders")
-    .update({ status: "generating_story", error_message: null })
-    .eq("id", orderId);
-
-  const storyRes = await fetch(`${SUPABASE_URL}/functions/v1/generate-story`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE}` },
-    body: JSON.stringify({
-      childName: order.child_name,
-      childAge: order.child_age,
-      childGender: (order as any).child_gender || "neutral",
-      theme: order.theme,
-      strength: order.strength,
-      hasSupportingCharacter: order.has_supporting_character,
-      supportingCharacterName: order.supporting_character_name,
-      selectedAddons,
-    }),
-  });
-  if (!storyRes.ok) {
-    const t = await storyRes.text();
-    await supabase.from("storybook_orders").update({ status: "failed", error_message: `generate-story: ${t}` }).eq("id", orderId);
-    throw new Error(`generate-story ${storyRes.status}`);
-  }
-  const story = await storyRes.json();
-  await supabase.from("storybook_orders").update({
-    status: "generating_images", story_title: story.title, story_text: story.story,
-  }).eq("id", orderId);
-
-  const pdfRes = await fetch(`${SUPABASE_URL}/functions/v1/create-storybook`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE}` },
-    body: JSON.stringify({
-      orderId,
-      title: story.title,
-      story: story.story,
-      coloringPrompts: story.coloringPrompts || [],
-      bonusColoringPrompts: story.bonusColoringPrompts || [],
-      illustrationPrompts: (story.illustrationPrompts?.length ? story.illustrationPrompts : story.scenes) || [],
-      selectedAddons,
-      customerEmail: order.customer_email,
-      childName: order.child_name,
-      childAge: order.child_age,
-      theme: order.theme,
-      strength: order.strength,
-      hasSupportingCharacter: order.has_supporting_character,
-      supportingCharacterName: order.supporting_character_name,
-    }),
-  });
-  if (!pdfRes.ok) {
-    const t = await pdfRes.text();
-    await supabase.from("storybook_orders").update({ status: "failed", error_message: `create-storybook: ${t}` }).eq("id", orderId);
-    throw new Error(`create-storybook ${pdfRes.status}`);
   }
 }
 
@@ -160,9 +77,9 @@ async function handlePaid(sessionOrIntent: any, env: StripeEnv, kind: "session" 
     .eq("id", orderId);
 
   // Run generation in the background so the webhook returns 200 to Stripe
-  // within its ~10s timeout. fireGeneration writes status='failed' on error.
+  // within its ~10s timeout. triggerGenerationPipeline writes status='failed' on error.
   // @ts-ignore EdgeRuntime is available in the Supabase edge runtime
-  EdgeRuntime.waitUntil(fireGeneration(orderId).catch((e) => console.error("fireGeneration failed:", e)));
+  EdgeRuntime.waitUntil(triggerGenerationPipeline(orderId).catch((e) => console.error("triggerGenerationPipeline failed:", e)));
   return { orderId, sessionId, paymentIntentId, result: "pipeline_started" };
 }
 

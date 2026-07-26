@@ -3,6 +3,7 @@
 // generation via the same webhook handler idempotency check.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { type StripeEnv, createStripeClient } from "../_shared/stripe.ts";
+import { triggerGenerationPipeline } from "../_shared/pipeline.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
     // If a previous attempt timed out in generating_* status, this retries the
     // paid order instead of leaving the customer stuck without a PDF.
     // @ts-ignore EdgeRuntime is available in the Supabase edge runtime
-    EdgeRuntime.waitUntil(triggerPipeline(orderId).catch((e) => console.error("triggerPipeline failed:", e)));
+    EdgeRuntime.waitUntil(triggerGenerationPipeline(orderId).catch((e) => console.error("triggerGenerationPipeline failed:", e)));
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -81,55 +82,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-
-async function triggerPipeline(orderId: string) {
-  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
-  const { data: order } = await supabase.from("storybook_orders").select("*").eq("id", orderId).maybeSingle();
-  if (!order) return;
-  const selectedAddons = (order as any).selected_addons || {};
-  await supabase
-    .from("storybook_orders")
-    .update({ status: "generating_story", error_message: null })
-    .eq("id", orderId);
-
-  const storyRes = await fetch(`${SUPABASE_URL}/functions/v1/generate-story`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE}` },
-    body: JSON.stringify({
-      childName: (order as any).child_name,
-      childAge: (order as any).child_age,
-      childGender: (order as any).child_gender || "neutral",
-      theme: (order as any).theme,
-      strength: (order as any).strength,
-      hasSupportingCharacter: (order as any).has_supporting_character,
-      supportingCharacterName: (order as any).supporting_character_name,
-      selectedAddons,
-    }),
-  });
-  if (!storyRes.ok) return;
-  const story = await storyRes.json();
-  await supabase.from("storybook_orders").update({
-    status: "generating_images", story_title: story.title, story_text: story.story,
-  }).eq("id", orderId);
-
-  await fetch(`${SUPABASE_URL}/functions/v1/create-storybook`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE}` },
-    body: JSON.stringify({
-      orderId,
-      title: story.title,
-      story: story.story,
-      coloringPrompts: story.coloringPrompts || [],
-      bonusColoringPrompts: story.bonusColoringPrompts || [],
-      illustrationPrompts: (story.illustrationPrompts?.length ? story.illustrationPrompts : story.scenes) || [],
-      selectedAddons,
-      customerEmail: (order as any).customer_email,
-      childName: (order as any).child_name,
-      childAge: (order as any).child_age,
-      theme: (order as any).theme,
-      strength: (order as any).strength,
-      hasSupportingCharacter: (order as any).has_supporting_character,
-      supportingCharacterName: (order as any).supporting_character_name,
-    }),
-  });
-}

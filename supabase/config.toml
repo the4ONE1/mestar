@@ -59,6 +59,9 @@ verify_jwt = false
 [functions.confirm-checkout-payment]
 verify_jwt = false
 
+[functions.retry-stuck-orders]
+verify_jwt = false
+
 
 
 
