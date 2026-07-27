@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { supabase } from "@/integrations/supabase/client";
+import { trackGoogleAdsConversion } from "@/components/Analytics";
 import { Loader2 } from "lucide-react";
 
 const clientToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined;
+const GOOGLE_ADS_CONVERSION_LABEL = import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL as string | undefined;
 
 function TestModeBanner() {
   if (!clientToken) {
@@ -47,6 +49,7 @@ export default function Checkout() {
 
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const conversionFired = useRef(false);
 
   // If returning from Stripe with session_id, confirm on server (webhook fallback)
   useEffect(() => {
@@ -71,6 +74,15 @@ export default function Checkout() {
     }, 500);
     return () => clearTimeout(timer);
   }, [confirmed, nextRoute, orderId, sessionId]);
+
+  // Fire Google Ads conversion once per confirmed checkout session. No-ops until
+  // VITE_GOOGLE_ADS_ID + VITE_GOOGLE_ADS_CONVERSION_LABEL are configured.
+  useEffect(() => {
+    if (confirmed && sessionId && !conversionFired.current && GOOGLE_ADS_CONVERSION_LABEL) {
+      conversionFired.current = true;
+      trackGoogleAdsConversion(GOOGLE_ADS_CONVERSION_LABEL, { transactionId: sessionId });
+    }
+  }, [confirmed, sessionId]);
 
   if (sessionId) {
     // If a `next` redirect was requested (e.g. /upsell after the initial $19.99), show a
