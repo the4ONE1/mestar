@@ -72,6 +72,11 @@ Deno.serve(async (req) => {
       : (prices.data[0].product as any).id;
     const product = await stripe.products.retrieve(firstProductId);
 
+    // NOTE: managed_payments intentionally disabled — the live Stripe account
+    // is controlled by an external platform (Webador) which does not permit
+    // managed_payments. Enabling it caused every live checkout session
+    // creation to fail with a 400 and blocked all real customer purchases.
+    // Digital-only product, no tax collection required at this stage.
     const session = await stripe.checkout.sessions.create({
       line_items,
       mode: "payment",
@@ -80,7 +85,6 @@ Deno.serve(async (req) => {
       ...(customerEmail && { customer_email: customerEmail }),
       payment_intent_data: { description: product.name },
       metadata: { orderId, priceIds: priceIds.join(",") },
-      managed_payments: { enabled: true },
     } as any);
 
     // Persist stripe_session_id on the order
