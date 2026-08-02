@@ -253,6 +253,29 @@ export default function AdminPayments() {
             onChange={(e) => setOrderFilter(e.target.value)}
             className="w-64"
           />
+          <Select value={envFilter} onValueChange={setEnvFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Environment" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All env</SelectItem>
+              <SelectItem value="live">Live</SelectItem>
+              <SelectItem value="sandbox">Sandbox</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="Event type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All event types</SelectItem>
+              {eventTypes.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button variant="outline" onClick={() => load()} disabled={loading}>
             {loading ? "Loading…" : "Refresh"}
           </Button>
