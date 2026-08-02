@@ -74,6 +74,9 @@ export default function AdminPayments() {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [orderFilter, setOrderFilter] = useState<string>("");
+  const [envFilter, setEnvFilter] = useState<string>("all");
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
+  const [eventTypes, setEventTypes] = useState<string[]>([]);
 
   const load = async (opts?: { silent?: boolean }) => {
     if (!token) return;
