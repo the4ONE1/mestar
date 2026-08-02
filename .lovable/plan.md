@@ -1,43 +1,35 @@
-## The actual problem (from edge function logs)
+Admin Payments Dashboard — env, event_type, and webhook delivery filters
 
-`stripe-webhook` returns `504` because it `await`s the full story + image + PDF pipeline before responding to Stripe. Stripe's webhook timeout is ~10 seconds; generation takes 60+ seconds. Confirmed in logs:
+## Goal
 
-```
-ERROR handler error Error: create-storybook 504
-```
+Extend the existing `/admin/payments` page so the owner can quickly filter payment events by order ID, environment (live/sandbox), and event type, and see a clear webhook delivery status summary.
 
-Consequences you're seeing right now:
-- Payment goes through (Stripe charges the card)
-- "Payment received!" page shows (that's client-side, unrelated to the webhook)
-- Order row stays in `pending_payment` / never advances
-- **View My Story** → Library errors because there's no story to load
-- **No confirmation email** because the email is sent at the end of the pipeline, which never finishes
-- Stripe dashboard shows failed webhook deliveries
+## Current state
 
-The `confirm-checkout-payment` fallback (the return-URL safety net) has the same blocking `await`, so it can't rescue the order either.
+- `src/pages/AdminPayments.tsx` already renders the event table and a 24-hour health summary.
+- `supabase/functions/admin-payment-events/index.ts` already exposes a secure GET endpoint with `orderId` and `limit` query params.
+- `payment_events` stores `event_type`, `result`, `message`, and `payload_summary`. Webhook events put `env` inside `payload_summary` (e.g., `{ env: "live" }`).
 
-## Fix
+## What will be built
 
-1. **`supabase/functions/stripe-webhook/index.ts`** — replace the blocking `await fireGeneration(orderId)` with `EdgeRuntime.waitUntil(fireGeneration(orderId))`. The webhook returns 200 to Stripe immediately; generation continues in the background. `fireGeneration` already writes `status='failed'` on error, so failures are still recorded.
+1. Backend filter support in `admin-payment-events`:
+   - Accept `env` (live/sandbox) and `event_type` query params.
+   - Apply `env` filter by reading `payload_summary->>'env'`.
+   - Apply `event_type` filter by exact match.
+   - Keep existing `orderId` and `limit` params.
+   - Return distinct `event_type` values so the UI can build a dropdown.
 
-2. **`supabase/functions/confirm-checkout-payment/index.ts`** — same pattern: `EdgeRuntime.waitUntil(triggerPipeline(orderId))` so the return-URL handler doesn't stall the customer's browser either.
+2. Frontend updates in `AdminPayments.tsx`:
+   - Add env filter dropdown: All / Live / Sandbox.
+   - Add event_type filter dropdown: All / dynamic list from backend.
+   - Keep existing orderId filter and retry action.
+   - Add a "Webhook delivery status" summary showing counts by result (success, failed, ignored) for the current filtered view.
+   - Highlight signature failures and pipeline failures.
 
-3. **Verify** with one real test-mode purchase (card `4242 4242 4242 4242`):
-   - `stripe-webhook` logs show 200, no more `create-storybook 504`
-   - Order row transitions `pending_payment` → `generating_story` → `generating_images` → `complete`
-   - Confirmation email arrives at the buyer address
-   - Library loads the finished PDF
+3. Deploy the updated `admin-payment-events` edge function.
 
-## What I will NOT touch
+## Verification
 
-- No changes to `create-checkout`, `generate-story`, `create-storybook`, `send-transactional-email`, or any UI
-- No new secrets, no schema changes, no Stripe dashboard changes
-- No guessing — every change is driven by the log evidence above
-
-## Why this is the whole fix
-
-The generation pipeline works when invoked out-of-band. Signature verification is working. Checkout session creation is working. The single point of failure is the synchronous `await` blocking the webhook response, and that's what breaks both the story delivery AND the email.
-
-## Cost expectation
-
-Two small edits + one verification purchase. Should be a tiny fraction of what previous attempts cost, because this time the diagnosis is confirmed from logs, not guessed.
+- Load `/admin/payments`, filter to `env=live`, and confirm only live-mode webhook events appear.
+- Filter by `event_type=checkout.session.completed` and confirm matching rows.
+- Confirm the health card and delivery status summary update with the filtered results.
