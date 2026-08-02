@@ -84,6 +84,8 @@ export default function AdminPayments() {
     try {
       const url = new URL(FN_URL);
       if (orderFilter.trim()) url.searchParams.set("orderId", orderFilter.trim());
+      if (envFilter && envFilter !== "all") url.searchParams.set("env", envFilter);
+      if (eventTypeFilter && eventTypeFilter !== "all") url.searchParams.set("eventType", eventTypeFilter);
       url.searchParams.set("limit", "200");
       const res = await fetch(url.toString(), {
         headers: {
@@ -101,6 +103,7 @@ export default function AdminPayments() {
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
       setEvents(json.events || []);
+      setEventTypes(json.eventTypes || []);
       setHealth(json.health || null);
       const map: Record<string, OrderSummary> = {};
       for (const o of json.orders || []) map[o.id] = o;
