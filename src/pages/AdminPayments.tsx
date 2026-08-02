@@ -180,10 +180,29 @@ export default function AdminPayments() {
     }
   };
 
+  const deliveryStatus = useMemo(() => {
+    const total = events.length;
+    const success = events.filter((e) =>
+      ["queued", "pipeline_complete", "refunded"].includes(e.result)
+    ).length;
+    const failed = events.filter((e) =>
+      ["signature_invalid", "pipeline_failed", "payment_failed", "error"].includes(e.result)
+    ).length;
+    const ignored = events.filter((e) =>
+      ["ignored", "skipped", "not_paid_yet", "no_order"].includes(e.result)
+    ).length;
+    return { total, success, failed, ignored };
+  }, [events]);
+
   useEffect(() => {
     if (token) load({ silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (token && authed) load({ silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [envFilter, eventTypeFilter]);
 
   if (!authed) {
     return (
