@@ -330,6 +330,34 @@ export default function AdminPayments() {
         </Card>
       )}
 
+      {events.length > 0 && (
+        <Card className="p-4">
+          <h2 className="font-semibold">Webhook delivery status</h2>
+          <div className="flex flex-wrap gap-4 mt-2 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-muted" aria-hidden />
+              <span className="text-muted-foreground">Total:</span>
+              <span className="font-medium">{deliveryStatus.total}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-green-500" aria-hidden />
+              <span className="text-muted-foreground">Success:</span>
+              <span className="font-medium text-green-700">{deliveryStatus.success}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-destructive" aria-hidden />
+              <span className="text-muted-foreground">Failed:</span>
+              <span className="font-medium text-destructive">{deliveryStatus.failed}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-secondary" aria-hidden />
+              <span className="text-muted-foreground">Ignored:</span>
+              <span className="font-medium">{deliveryStatus.ignored}</span>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {events.length === 0 ? (
         <Card className="p-8 text-center text-muted-foreground">
           No payment events yet. Click "Run Sandbox Test Checkout" above to fire one end-to-end.
