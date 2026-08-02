@@ -204,6 +204,13 @@ export default function AdminPayments() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [envFilter, eventTypeFilter]);
 
+  useEffect(() => {
+    if (!token || !authed) return;
+    const t = setTimeout(() => load({ silent: true }), 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderFilter]);
+
   if (!authed) {
     return (
       <div className="container max-w-md py-16">
