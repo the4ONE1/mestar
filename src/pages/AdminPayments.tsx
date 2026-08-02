@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-payment-events`;
@@ -67,6 +74,9 @@ export default function AdminPayments() {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [orderFilter, setOrderFilter] = useState<string>("");
+  const [envFilter, setEnvFilter] = useState<string>("all");
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
+  const [eventTypes, setEventTypes] = useState<string[]>([]);
 
   const load = async (opts?: { silent?: boolean }) => {
     if (!token) return;
@@ -74,6 +84,8 @@ export default function AdminPayments() {
     try {
       const url = new URL(FN_URL);
       if (orderFilter.trim()) url.searchParams.set("orderId", orderFilter.trim());
+      if (envFilter && envFilter !== "all") url.searchParams.set("env", envFilter);
+      if (eventTypeFilter && eventTypeFilter !== "all") url.searchParams.set("eventType", eventTypeFilter);
       url.searchParams.set("limit", "200");
       const res = await fetch(url.toString(), {
         headers: {
@@ -91,6 +103,7 @@ export default function AdminPayments() {
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
       setEvents(json.events || []);
+      setEventTypes(json.eventTypes || []);
       setHealth(json.health || null);
       const map: Record<string, OrderSummary> = {};
       for (const o of json.orders || []) map[o.id] = o;
@@ -167,10 +180,36 @@ export default function AdminPayments() {
     }
   };
 
+  const deliveryStatus = useMemo(() => {
+    const total = events.length;
+    const success = events.filter((e) =>
+      ["queued", "pipeline_complete", "refunded"].includes(e.result)
+    ).length;
+    const failed = events.filter((e) =>
+      ["signature_invalid", "pipeline_failed", "payment_failed", "error"].includes(e.result)
+    ).length;
+    const ignored = events.filter((e) =>
+      ["ignored", "skipped", "not_paid_yet", "no_order"].includes(e.result)
+    ).length;
+    return { total, success, failed, ignored };
+  }, [events]);
+
   useEffect(() => {
     if (token) load({ silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (token && authed) load({ silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [envFilter, eventTypeFilter]);
+
+  useEffect(() => {
+    if (!token || !authed) return;
+    const t = setTimeout(() => load({ silent: true }), 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderFilter]);
 
   if (!authed) {
     return (
@@ -214,6 +253,29 @@ export default function AdminPayments() {
             onChange={(e) => setOrderFilter(e.target.value)}
             className="w-64"
           />
+          <Select value={envFilter} onValueChange={setEnvFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Environment" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All env</SelectItem>
+              <SelectItem value="live">Live</SelectItem>
+              <SelectItem value="sandbox">Sandbox</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="Event type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All event types</SelectItem>
+              {eventTypes.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button variant="outline" onClick={() => load()} disabled={loading}>
             {loading ? "Loading…" : "Refresh"}
           </Button>
@@ -263,6 +325,34 @@ export default function AdminPayments() {
                   the endpoint isn't registered in Stripe → Developers → Webhooks.
                 </p>
               )}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {events.length > 0 && (
+        <Card className="p-4">
+          <h2 className="font-semibold">Webhook delivery status</h2>
+          <div className="flex flex-wrap gap-4 mt-2 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-muted" aria-hidden />
+              <span className="text-muted-foreground">Total:</span>
+              <span className="font-medium">{deliveryStatus.total}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-green-500" aria-hidden />
+              <span className="text-muted-foreground">Success:</span>
+              <span className="font-medium text-green-700">{deliveryStatus.success}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-destructive" aria-hidden />
+              <span className="text-muted-foreground">Failed:</span>
+              <span className="font-medium text-destructive">{deliveryStatus.failed}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full bg-secondary" aria-hidden />
+              <span className="text-muted-foreground">Ignored:</span>
+              <span className="font-medium">{deliveryStatus.ignored}</span>
             </div>
           </div>
         </Card>
