@@ -159,9 +159,11 @@ Deno.serve(async (req) => {
     });
   }
 
-  // GET: list events + health
+  // GET: list events + health + available event types
   const url = new URL(req.url);
   const orderId = url.searchParams.get("orderId")?.trim() || null;
+  const env = url.searchParams.get("env")?.trim() || null;
+  const eventType = url.searchParams.get("eventType")?.trim() || null;
   const limit = Math.min(parseInt(url.searchParams.get("limit") || "100", 10) || 100, 500);
 
   let query = supabase
@@ -172,6 +174,14 @@ Deno.serve(async (req) => {
 
   if (orderId && /^[0-9a-f-]{36}$/i.test(orderId)) {
     query = query.eq("order_id", orderId);
+  }
+
+  if (env === "live" || env === "sandbox") {
+    query = query.eq("payload_summary->>env", env);
+  }
+
+  if (eventType) {
+    query = query.eq("event_type", eventType);
   }
 
   const { data: events, error } = await query;
@@ -192,9 +202,18 @@ Deno.serve(async (req) => {
     orders = orderRows || [];
   }
 
+  // Distinct event types seen in the last 30 days for the filter dropdown
+  const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: typeRows } = await supabase
+    .from("payment_events")
+    .select("event_type")
+    .gte("created_at", since30d)
+    .order("event_type", { ascending: true });
+  const eventTypes = [...new Set((typeRows || []).map((r: any) => r.event_type))];
+
   const health = await computeHealth(supabase);
 
-  return new Response(JSON.stringify({ events: events || [], orders, health }), {
+  return new Response(JSON.stringify({ events: events || [], orders, eventTypes, health }), {
     status: 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
