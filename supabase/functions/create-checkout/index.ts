@@ -30,8 +30,9 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { priceIds, orderId, customerEmail, returnUrl, environment } = body as {
+    const { priceIds, orderId, customerEmail, returnUrl, environment, recoveryToken } = body as {
       priceIds: string[]; orderId: string; customerEmail?: string; returnUrl: string; environment: StripeEnv;
+      recoveryToken?: string;
     };
 
     if (!Array.isArray(priceIds) || priceIds.length === 0) throw new Error("priceIds required");
@@ -39,6 +40,12 @@ Deno.serve(async (req) => {
     if (!returnUrl) throw new Error("returnUrl required");
     if (environment !== "sandbox" && environment !== "live") throw new Error("invalid environment");
     for (const p of priceIds) if (!/^[a-zA-Z0-9_-]+$/.test(p)) throw new Error("invalid price id");
+    if (!recoveryToken || !/^[0-9a-f-]{36}$/i.test(recoveryToken)) {
+      return new Response(JSON.stringify({ error: "Missing or invalid order access token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const stripe = createStripeClient(environment);
 
@@ -48,10 +55,26 @@ Deno.serve(async (req) => {
     );
     const { data: order } = await supabase
       .from("storybook_orders")
-      .select("id, selected_addons")
+      .select("id, selected_addons, recovery_token, status")
       .eq("id", orderId)
       .maybeSingle();
     if (!order) throw new Error("Order was not created. Please restart checkout from the story preview.");
+
+    // Ownership check: only the client that created the order (and therefore
+    // holds the per-order recovery_token) may mutate add-ons or bind a session.
+    if (!(order as any).recovery_token || String((order as any).recovery_token) !== recoveryToken) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // Never re-bind a checkout session to an already-paid/processing order.
+    if (!["pending_payment", "pending"].includes(String((order as any).status))) {
+      return new Response(JSON.stringify({ error: "This order is no longer awaiting payment." }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const purchasedAddons = addonsForPrices(priceIds);
     if (Object.keys(purchasedAddons).length > 0) {
@@ -60,6 +83,7 @@ Deno.serve(async (req) => {
         .update({ selected_addons: { ...((order as any).selected_addons || {}), ...purchasedAddons } })
         .eq("id", orderId);
     }
+
 
     // Resolve prices via lookup_keys
     const prices = await stripe.prices.list({ lookup_keys: priceIds, limit: 20 });

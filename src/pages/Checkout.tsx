@@ -36,6 +36,22 @@ export default function Checkout() {
   const email = params.get("email") || undefined;
   const priceIds = pricesParam.split(",").filter(Boolean);
 
+  // Per-order access token proving this browser created the order (returned by
+  // create-pending-order). Required by create-checkout to mutate the order.
+  const recoveryToken = (() => {
+    const fromUrl = params.get("token");
+    if (fromUrl) return fromUrl;
+    try {
+      const raw = localStorage.getItem("mestar-pending-story");
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { orderId?: string; recoveryToken?: string };
+      return parsed?.orderId === orderId ? parsed.recoveryToken ?? null : null;
+    } catch {
+      return null;
+    }
+  })();
+
+
   // SECURITY: only allow known internal paths for post-checkout redirect. Reject
   // absolute URLs, protocol-relative (//evil.com), and anything not in the allow-list
   // to prevent open-redirect abuse of the ?next= parameter.
@@ -157,7 +173,9 @@ export default function Checkout() {
           orderId={orderId}
           customerEmail={email}
           returnUrl={returnUrl}
+          recoveryToken={recoveryToken}
         />
+
       </div>
     </>
   );
