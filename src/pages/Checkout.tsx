@@ -157,7 +157,9 @@ export default function Checkout() {
           orderId={orderId}
           customerEmail={email}
           returnUrl={returnUrl}
+          recoveryToken={recoveryToken}
         />
+
       </div>
     </>
   );
