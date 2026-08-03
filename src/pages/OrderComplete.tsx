@@ -44,15 +44,20 @@ const OrderComplete = () => {
 
   const handleConfirmReceived = async (extra?: { stars?: number; comment?: string }) => {
     if (!orderId || confirmed) return;
+    if (!recoveryToken) {
+      toast.error("Can't verify your order — please reload the page.");
+      return;
+    }
     setConfirming(true);
     try {
-      // 1. Mark order fulfilled in DB (via edge function using service role)
+      // 1. Mark order fulfilled in DB (edge function verifies the per-order token)
       const { data: confirmData, error: rpcErr } = await supabase.functions.invoke(
         "confirm-pdf-received",
-        { body: { order_id: orderId } },
+        { body: { order_id: orderId, token: recoveryToken } },
       );
       if (rpcErr) throw rpcErr;
       if (!confirmData?.ok) throw new Error("Order not found or not complete yet");
+
 
       // 2. Send fulfillment email to shop owner
       await supabase.functions.invoke("send-transactional-email", {

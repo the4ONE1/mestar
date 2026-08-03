@@ -38,13 +38,17 @@ export default function RatingWidget({ orderId, recoveryToken, onSubmitted }: Pr
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.rpc("submit_rating", {
-        p_order_id: orderId,
-        p_recovery_token: recoveryToken,
-        p_stars: selected,
-        p_comment: comment.trim() || null,
+      const { data, error } = await supabase.functions.invoke("submit-rating", {
+        body: {
+          order_id: orderId,
+          token: recoveryToken,
+          stars: selected,
+          comment: comment.trim() || null,
+        },
       });
       if (error) throw error;
+      if (!data?.ok) throw new Error("Rating not saved");
+
       setDone(true);
       toast.success("Thanks for the rating! ⭐", { position: "top-center" });
       onSubmitted?.(selected, comment.trim());

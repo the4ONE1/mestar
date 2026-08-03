@@ -14,21 +14,21 @@ serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const order_id = typeof body?.order_id === "string" ? body.order_id.trim() : "";
+    const orderId = typeof body?.order_id === "string" ? body.order_id.trim() : "";
     const token = typeof body?.token === "string" ? body.token.trim() : "";
+    const stars = Number(body?.stars);
+    const rawComment = typeof body?.comment === "string" ? body.comment.trim() : "";
+    const comment = rawComment ? rawComment.slice(0, 2000) : null;
 
-    if (!UUID_RE.test(order_id)) {
-      return new Response(JSON.stringify({ error: "Invalid order_id" }), {
+    if (!UUID_RE.test(orderId) || !UUID_RE.test(token)) {
+      return new Response(JSON.stringify({ error: "Invalid order or token" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    // Ownership proof: same per-order recovery_token used by get-order-status
-    // and get-audiobook. Without it, anyone with an order UUID could confirm
-    // a stranger's order.
-    if (!UUID_RE.test(token)) {
-      return new Response(JSON.stringify({ error: "Missing or invalid access token" }), {
-        status: 401,
+    if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
+      return new Response(JSON.stringify({ error: "Stars must be an integer 1-5" }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -38,37 +38,27 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { data: order, error: orderErr } = await supabase
-      .from("storybook_orders")
-      .select("id, recovery_token")
-      .eq("id", order_id)
-      .maybeSingle();
-
-    if (orderErr || !order || !order.recovery_token || String(order.recovery_token) !== token) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { data, error } = await supabase.rpc("confirm_pdf_received", {
-      _order_id: order_id,
+    const { error } = await supabase.rpc("submit_rating", {
+      p_order_id: orderId,
+      p_recovery_token: token,
+      p_stars: stars,
+      p_comment: comment,
     });
 
     if (error) {
-      console.error("confirm_pdf_received failed", error.message);
-      return new Response(JSON.stringify({ error: "Could not confirm order" }), {
-        status: 500,
+      console.error("submit_rating failed", error.message);
+      return new Response(JSON.stringify({ error: "Could not save rating" }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ ok: data === true }), {
+    return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error("confirm-pdf-received error", e);
+    console.error("submit-rating error", e);
     return new Response(JSON.stringify({ error: "Unexpected error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
