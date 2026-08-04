@@ -47,12 +47,21 @@ Deno.serve(async (req) => {
         .eq("id", orderId)
         .is("customer_email", null);
     }
+    const addonOnly = (session.metadata as Record<string, string> | null)?.addonOnly === "1";
     const { data: order } = await supabase.from("storybook_orders").select("status").eq("id", orderId).maybeSingle();
     if (order && (order as any).status === "complete") {
       return new Response(JSON.stringify({ ok: true, alreadyProcessing: true }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    // Add-on upsell payment: the base order is already paid and generating —
+    // record it as confirmed without re-triggering the pipeline.
+    if (addonOnly && order && !["pending_payment", "pending", "queued"].includes(String((order as any).status))) {
+      return new Response(JSON.stringify({ ok: true, addonRecorded: true }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
 
     // Fire the webhook internally to reuse generation logic
     await supabase.from("payment_events").insert({
