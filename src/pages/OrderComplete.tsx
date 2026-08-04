@@ -205,6 +205,18 @@ const OrderComplete = () => {
           return; // stop polling
         }
 
+        // Story is finished, but we can't hand over the download because this
+        // browser has no valid per-order token (e.g. the link was opened without
+        // ?token=..., or on a different device). Show a clear message instead of
+        // looping the progress bar forever.
+        if (row.status === "complete" && !row.pdf_url) {
+          setError(
+            "Your storybook is finished! For your privacy, the download link only opens from the secure link in your email. Please open the \"View Your Storybook\" button in your delivery email — or email mestar.orders@gmail.com and we'll resend it.",
+          );
+          return; // stop polling
+        }
+
+
         if (row.status === "failed") {
           setError("Something went wrong creating your storybook. We've been notified — please contact support.");
           return; // stop polling
@@ -224,7 +236,7 @@ const OrderComplete = () => {
     return () => {
       cancelled = true;
     };
-  }, [orderId]);
+  }, [orderId, recoveryToken]);
 
   const currentStageIndex = PROGRESS_STAGES.findIndex((s) => s.status === status);
   const activeStageIndex = currentStageIndex === -1 ? 0 : currentStageIndex;
