@@ -624,9 +624,27 @@ serve(async (req) => {
     const illustrationImages = await runIllustrations(addons.illustrations, illustrationPrompts);
     // Scene coloring pages: always generate, one per story scene
     const coloringImages = await runColoring(coloringPrompts, illustrationImages, "scene-coloring");
-    // Bonus coloring book (paid add-on): 8 extra pages, only when addons.coloring
+    // Bonus coloring book (paid add-on): 8 extra pages, only when addons.coloring.
+    // If coloring was purchased after the story was generated, the caller may not
+    // have bonus prompts — derive a themed fallback set so the paid pages exist.
+    const effectiveBonusPrompts: string[] = (bonusColoringPrompts?.length ? bonusColoringPrompts : (
+      addons.coloring
+        ? [
+            "outer space rocket launch",
+            "deep ocean discovery",
+            "dinosaur jungle path",
+            "superhero city helper moment",
+            "medieval castle garden",
+            "race car track celebration",
+            "pirate ship treasure map",
+            "enchanted forest picnic",
+          ].map((scene) =>
+            `Black and white coloring page line art, thick bold outlines, printable, no shading. Bonus scene: ${childName} in a ${scene}. Clean white background, no grayscale, no color, no text.`
+          )
+        : []
+    )) as string[];
     const bonusColoringImages: (Uint8Array | null)[] = addons.coloring
-      ? await runColoring(bonusColoringPrompts, [], "bonus-coloring")
+      ? await runColoring(effectiveBonusPrompts, [], "bonus-coloring")
       : [];
 
     const illustrationCount = illustrationImages.filter(Boolean).length;
