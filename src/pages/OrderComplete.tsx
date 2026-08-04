@@ -25,6 +25,7 @@ const OrderComplete = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const orderIdFromUrl = searchParams.get("order_id");
+  const tokenFromUrl = searchParams.get("token");
   const sessionIdFromUrl = searchParams.get("session_id");
 
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -110,7 +111,9 @@ const OrderComplete = () => {
 
     if (orderIdFromUrl) {
       setOrderId(orderIdFromUrl);
-      if (savedOrderId === orderIdFromUrl && savedToken) setRecoveryToken(savedToken);
+      // Prefer the token from the email link (works on any device), fall back to localStorage
+      if (tokenFromUrl) setRecoveryToken(tokenFromUrl);
+      else if (savedOrderId === orderIdFromUrl && savedToken) setRecoveryToken(savedToken);
       if (savedEmail) setCustomerEmail(savedEmail);
       // Do NOT trust localStorage for hasAudiobook — wait for the DB poll to confirm
       // the paid add-on, otherwise stale state can link users to /library for an
@@ -126,7 +129,7 @@ const OrderComplete = () => {
     } else {
       setError("No order found. If you just paid, check your email — your storybook will arrive there shortly.");
     }
-  }, [orderIdFromUrl]);
+  }, [orderIdFromUrl, tokenFromUrl]);
 
   // Payment integration removed — nothing to confirm on return.
 

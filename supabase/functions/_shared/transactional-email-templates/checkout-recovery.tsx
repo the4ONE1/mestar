@@ -45,7 +45,7 @@ const Email = ({ childName, resumeUrl }: Props) => (
         </Text>
 
         <Text style={footerNote}>
-          You're receiving this because you started an order at mestar.pro. If it wasn't you, you can safely ignore this email.
+          You're receiving this because you started an order at mystarstories.app. If it wasn't you, you can safely ignore this email.
         </Text>
       </Container>
     </Body>
@@ -61,7 +61,7 @@ export const template = {
   displayName: 'Checkout Recovery',
   previewData: {
     childName: 'Emma',
-    resumeUrl: 'https://mestar.pro/checkout?order_id=abc&recover=xyz',
+    resumeUrl: 'https://mystarstories.app/checkout?order_id=abc&recover=xyz',
   },
 } satisfies TemplateEntry
 

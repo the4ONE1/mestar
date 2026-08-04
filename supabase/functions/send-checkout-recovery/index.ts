@@ -3,7 +3,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const SITE_URL = "https://mestar.pro";
+const SITE_URL = "https://mystarstories.app";
 
 // Reverse map from selected_addons -> Stripe price lookup keys.
 // Keep in sync with src/lib/stripe.ts STRIPE_PRICE_IDS.

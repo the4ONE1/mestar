@@ -59,7 +59,7 @@ const Email = ({
         )}
 
         <Text style={footerNote}>
-          This is an automated fulfillment confirmation from mestar.pro.
+          This is an automated fulfillment confirmation from mystarstories.app.
         </Text>
       </Container>
     </Body>
