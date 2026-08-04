@@ -468,6 +468,7 @@ serve(async (req) => {
       strength,
       hasSupportingCharacter,
       supportingCharacterName,
+      reuseImages,
     } = await req.json();
 
     if (!title || !story) {
@@ -715,6 +716,16 @@ serve(async (req) => {
         } else {
           illustrationPaths.push(path);
         }
+      }
+      // Persist scene coloring pages too so a later rebuild (bonus coloring
+      // add-on bought on the upsell page) doesn't pay to regenerate them.
+      for (let i = 0; i < coloringImages.length; i++) {
+        const img = coloringImages[i];
+        if (!img) continue;
+        await supabase.storage
+          .from("storybooks")
+          .upload(`${orderId}/coloring-${i + 1}.png`, img, { contentType: "image/png", upsert: true })
+          .catch?.(() => {});
       }
     }
 
