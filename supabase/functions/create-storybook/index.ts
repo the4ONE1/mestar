@@ -708,27 +708,40 @@ serve(async (req) => {
     );
 
     // If audiobook purchased, seed the storybook_audio table with page text and
-    // fire the generate-audiobook function (non-blocking background task)
+    // fire the generate-audiobook function (non-blocking background task).
+    // Guard against duplicate seeding when this order is rebuilt (e.g. a bonus
+    // coloring add-on purchased after the first PDF was assembled).
+    let audioSeeded = false;
     if (orderId && addons.audiobook && pageTexts.length) {
-      const audioRows = pageTexts.map((text, i) => ({
-        order_id: orderId,
-        page_number: i + 1,
-        page_text: text,
-      }));
-      const { error: audioErr } = await supabase.from("storybook_audio").insert(audioRows);
-      if (audioErr) {
-        console.error("Audio seed failed:", audioErr);
+      const { count: existingAudio } = await supabase
+        .from("storybook_audio")
+        .select("id", { count: "exact", head: true })
+        .eq("order_id", orderId);
+      if ((existingAudio || 0) > 0) {
+        audioSeeded = true;
+        console.log(`Audio rows already exist for ${orderId} — skipping seed`);
       } else {
-        // Kick off ElevenLabs TTS generation in the background — do not await.
-        // The Library page polls until pages become ready.
-        fetch(`${SUPABASE_URL}/functions/v1/generate-audiobook`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          },
-          body: JSON.stringify({ orderId }),
-        }).catch((e) => console.error("generate-audiobook trigger failed:", e));
+        const audioRows = pageTexts.map((text, i) => ({
+          order_id: orderId,
+          page_number: i + 1,
+          page_text: text,
+        }));
+        const { error: audioErr } = await supabase.from("storybook_audio").insert(audioRows);
+        if (audioErr) {
+          console.error("Audio seed failed:", audioErr);
+        } else {
+          audioSeeded = true;
+          // Kick off ElevenLabs TTS generation in the background — do not await.
+          // The Library page polls until pages become ready.
+          fetch(`${SUPABASE_URL}/functions/v1/generate-audiobook`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+            },
+            body: JSON.stringify({ orderId }),
+          }).catch((e) => console.error("generate-audiobook trigger failed:", e));
+        }
       }
     }
 
