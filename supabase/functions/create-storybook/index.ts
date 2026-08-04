@@ -653,7 +653,7 @@ serve(async (req) => {
 
     const expectedIllustrations = addons.illustrations ? (illustrationPrompts?.length || 0) : 0;
     const expectedColoring = coloringPrompts?.length || 0;
-    const expectedBonusColoring = addons.coloring ? (bonusColoringPrompts?.length || 0) : 0;
+    const expectedBonusColoring = addons.coloring ? (effectiveBonusPrompts?.length || 0) : 0;
     console.log(
       `Generated ${illustrationCount}/${expectedIllustrations || 5} illustrations, ` +
         `${coloringCount}/${expectedColoring} scene coloring, ` +
