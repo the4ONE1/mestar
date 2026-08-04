@@ -120,11 +120,15 @@ Deno.serve(async (req) => {
       return_url: returnUrl,
       ...(customerEmail && { customer_email: customerEmail }),
       payment_intent_data: { description: product.name },
-      metadata: { orderId, priceIds: priceIds.join(",") },
+      metadata: { orderId, priceIds: priceIds.join(","), ...(isAddonOnly && { addonOnly: "1" }) },
     } as any);
 
-    // Persist stripe_session_id on the order
-    await supabase.from("storybook_orders").update({ stripe_session_id: session.id }).eq("id", orderId);
+    // Persist stripe_session_id only for the base checkout — an add-on upsell
+    // session must not overwrite the original paid session on the order.
+    if (!isAddonOnly) {
+      await supabase.from("storybook_orders").update({ stripe_session_id: session.id }).eq("id", orderId);
+    }
+
 
     return new Response(JSON.stringify({ clientSecret: session.client_secret, sessionId: session.id }), {
       status: 200,
