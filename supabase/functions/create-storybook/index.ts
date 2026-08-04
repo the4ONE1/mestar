@@ -191,26 +191,29 @@ function coloringComplexityForAge(age: number | string | undefined): string {
   return "COMPLEXITY: ADVANCED / INTRICATE (tween+). Fine detailed line art, intricate patterns, textures on clothing/hair/background, layered scene with foreground and background detail — a satisfying challenge to color.";
 }
 
-// For coloring pages: use the matching color illustration as the reference and ask the model
-// to convert it to clean B&W line art. This keeps the same character across both formats
-// without confusing the model with a color photo + B&W instruction conflict.
-function withColoringLock(prompt: string, hasIllustrationRef: boolean, age?: number | string): string {
+// For coloring pages: ALWAYS reference the customer's ORIGINAL uploaded photo(s) —
+// never a previously generated illustration. Chaining generated image -> generated image
+// lets the likeness drift; anchoring every render to the same source photo keeps the
+// character identical across the whole book.
+function withColoringLock(prompt: string, hasPhotoRef: boolean, age?: number | string): string {
   const complexity = coloringComplexityForAge(age);
-  if (!hasIllustrationRef) {
+  if (!hasPhotoRef) {
     return (
       "Black-and-white printable coloring page. Clean white background, NO shading, NO grayscale, NO color fill, NO text.\n" +
       complexity + "\n\n" + prompt
     );
   }
   return (
-    "IMPORTANT — REFERENCE IMAGE: The attached image is the full-color illustration of this exact scene. " +
-    "Re-draw the SAME character, pose, and scene as a black-and-white printable coloring page: " +
-    "clean white background, NO shading, NO grayscale, NO color fill, NO text. " +
-    "The character's face, hairstyle, outfit, and proportions must match the reference exactly so it's " +
-    "clearly the same person as in the storybook illustration.\n" +
+    "IMPORTANT — LIKENESS REFERENCE: The attached photo(s) show the real person this character must look like. " +
+    "Match the face shape, hair color and style, and overall likeness exactly, and keep this character " +
+    "visually IDENTICAL to every other page in the book. Do not invent a different face.\n" +
+    "OUTPUT FORMAT: a black-and-white printable coloring page drawn from that likeness — " +
+    "clean white background, bold clean outlines, NO shading, NO grayscale, NO color fill, NO text. " +
+    "Translate the photo's features into line art; do not reproduce the photo itself.\n" +
     complexity + "\n\nNow follow this prompt:\n\n" + prompt
   );
 }
+
 
 // Convert raw image bytes to a data URL we can pass back to the model as a reference
 function bytesToDataUrl(bytes: Uint8Array | null, mime = "image/png"): string | null {
@@ -671,12 +674,13 @@ serve(async (req) => {
     }
     while (illustrationImages.length < 5) illustrationImages.push(null);
 
-    // Generate only the missing scene coloring pages
+    // Generate only the missing scene coloring pages.
+    // Reference the ORIGINAL uploaded photo(s) for the same page — never the
+    // generated illustration — so every render is anchored to one source of truth.
     for (let i = 0; i < (coloringPrompts?.length || 0); i++) {
       if (coloringImages[i]) continue;
       if (!canGenerate(`scene-coloring ${i + 1}`)) continue;
-      const illusRef = bytesToDataUrl(illustrationImages[i] || null, "image/png");
-      const refs = illusRef ? [illusRef] : (mainPhotoRef ? [mainPhotoRef] : []);
+      const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
       imagesThisPass++;
       const img = await generateImage(
         withColoringLock(coloringPrompts[i], refs.length > 0, childAge),
@@ -688,6 +692,7 @@ serve(async (req) => {
       if (img) newColoringIdx.add(i);
       await new Promise((r) => setTimeout(r, 400));
     }
+
 
     // Bonus coloring book (paid add-on): 8 extra pages, only when addons.coloring.
     // If coloring was purchased after the story was generated, the caller may not
