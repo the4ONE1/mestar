@@ -930,6 +930,7 @@ serve(async (req) => {
         },
       };
 
+      const shortSomewhere = illustrationsShort || coloringShort || bonusShort;
       await supabase
         .from("storybook_orders")
         .update({
@@ -938,12 +939,17 @@ serve(async (req) => {
           pdf_url: pdfUrl,
           completed_at: new Date().toISOString(),
           selected_addons: mergedAddons,
-          failure_category: illustrationsShort || coloringShort || bonusShort ? "image_generation_partial" : null,
-          failure_hint: illustrationsShort || coloringShort || bonusShort
-            ? `PDF delivered; some images were skipped to prevent checkout fulfillment timeout. Illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}.`
+          failure_category: creditsExhausted
+            ? "ai_credits_exhausted"
+            : shortSomewhere ? "image_generation_partial" : null,
+          failure_hint: creditsExhausted
+            ? `AI image generation was refused for insufficient credits. Top up credits, then retry this order. Illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}.`
+            : shortSomewhere
+            ? `PDF delivered; remaining pictures are being filled in by follow-up passes. Illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}.`
             : null,
         })
         .eq("id", orderId);
+
     }
 
 
