@@ -68,9 +68,18 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    // Never re-bind a checkout session to an already-paid/processing order.
-    if (!["pending_payment", "pending"].includes(String((order as any).status))) {
+    // The post-payment upsell reuses the same orderId to buy add-ons only. That
+    // order is already paid/generating, so only enforce the "awaiting payment"
+    // guard when the base storybook price is part of this checkout.
+    const isAddonOnly = !priceIds.includes(BASE_STORY_PRICE_ID);
+    if (!isAddonOnly && !["pending_payment", "pending"].includes(String((order as any).status))) {
       return new Response(JSON.stringify({ error: "This order is no longer awaiting payment." }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (isAddonOnly && ["failed", "refunded"].includes(String((order as any).status))) {
+      return new Response(JSON.stringify({ error: "Add-ons are unavailable for this order." }), {
         status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -83,6 +92,7 @@ Deno.serve(async (req) => {
         .update({ selected_addons: { ...((order as any).selected_addons || {}), ...purchasedAddons } })
         .eq("id", orderId);
     }
+
 
 
     // Resolve prices via lookup_keys
