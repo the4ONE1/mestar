@@ -10,6 +10,8 @@ const CLASSIC_AUDIOBOOK_PRICE_ID = "audiobook_classic_onetime";
 const INTERACTIVE_AUDIOBOOK_PRICE_ID = "audiobook_interactive_read_along_onetime";
 const COLORING_PRICE_ID = "coloring_pages_addon_onetime";
 const SUPPORTING_CHARACTER_PRICE_ID = "supporting_character_addon_onetime";
+const BASE_STORY_PRICE_ID = "personalized_storybook_onetime";
+
 
 function addonsForPrices(priceIds: string[]) {
   const hasClassic = priceIds.includes(CLASSIC_AUDIOBOOK_PRICE_ID);
