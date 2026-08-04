@@ -11,10 +11,17 @@ const corsHeaders = {
 // Gemini 3 Pro Image typically takes 20–27s per image, so the old 22s cap aborted
 // nearly every request and shipped text-only PDFs. Give each image real headroom…
 const IMAGE_REQUEST_TIMEOUT_MS = 45000;
-// …but the Supabase edge runtime kills a request at 150s, so the whole image phase
-// must finish well before that or the PDF never gets assembled at all. 115s leaves
-// room to build + upload the PDF and send the delivery email.
-const IMAGE_GENERATION_BUDGET_MS = 115000;
+// …but the Supabase edge runtime kills a request at 150s AND enforces a separate
+// CPU-time ceiling. Racing a wall-clock budget kept blowing the CPU limit during
+// PDF assembly, so cap each pass to a small batch of images instead and let the
+// resume passes chain until the book is complete.
+const IMAGE_GENERATION_BUDGET_MS = 100000;
+const IMAGES_PER_PASS = 4;
+
+// Set when the gateway refuses a call for billing/quota reasons (HTTP 402). The
+// order is flagged so an incomplete book is never delivered silently.
+let creditsExhausted = false;
+
 
 // ── AI Image Generation (works for both color illustrations and B&W coloring pages) ──
 // referenceImages: optional data-URL strings used as likeness references
@@ -62,8 +69,13 @@ async function generateImage(
     if (!res.ok) {
       const body = await res.text().catch(() => "");
       console.error(`[${label}] image gen HTTP ${res.status}: ${body.slice(0, 300)}`);
+      if (res.status === 402) {
+        creditsExhausted = true;
+        console.error(`[${label}] AI credits exhausted (402) — remaining images cannot be generated`);
+      }
       return res.status === 429 ? "RETRY" : null;
     }
+
 
     const data = await res.json();
     const dataUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url as string | undefined;
