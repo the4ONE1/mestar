@@ -11,10 +11,17 @@ const corsHeaders = {
 // Gemini 3 Pro Image typically takes 20–27s per image, so the old 22s cap aborted
 // nearly every request and shipped text-only PDFs. Give each image real headroom…
 const IMAGE_REQUEST_TIMEOUT_MS = 45000;
-// …but the Supabase edge runtime kills a request at 150s, so the whole image phase
-// must finish well before that or the PDF never gets assembled at all. 115s leaves
-// room to build + upload the PDF and send the delivery email.
-const IMAGE_GENERATION_BUDGET_MS = 115000;
+// …but the Supabase edge runtime kills a request at 150s AND enforces a separate
+// CPU-time ceiling. Racing a wall-clock budget kept blowing the CPU limit during
+// PDF assembly, so cap each pass to a small batch of images instead and let the
+// resume passes chain until the book is complete.
+const IMAGE_GENERATION_BUDGET_MS = 100000;
+const IMAGES_PER_PASS = 4;
+
+// Set when the gateway refuses a call for billing/quota reasons (HTTP 402). The
+// order is flagged so an incomplete book is never delivered silently.
+let creditsExhausted = false;
+
 
 // ── AI Image Generation (works for both color illustrations and B&W coloring pages) ──
 // referenceImages: optional data-URL strings used as likeness references
@@ -62,8 +69,13 @@ async function generateImage(
     if (!res.ok) {
       const body = await res.text().catch(() => "");
       console.error(`[${label}] image gen HTTP ${res.status}: ${body.slice(0, 300)}`);
+      if (res.status === 402) {
+        creditsExhausted = true;
+        console.error(`[${label}] AI credits exhausted (402) — remaining images cannot be generated`);
+      }
       return res.status === 429 ? "RETRY" : null;
     }
+
 
     const data = await res.json();
     const dataUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url as string | undefined;
@@ -492,6 +504,23 @@ serve(async (req) => {
     // book (8 extra pages with the child across random themes).
     let orderId: string | undefined = incomingOrderId;
 
+    // A resume pass fills in images the previous pass ran out of room for. The
+    // customer already has a working PDF at their delivery link, so a resume pass
+    // must NEVER move the order out of "complete" — if it crashes on a platform
+    // limit the order would otherwise hang on "in progress" forever.
+    const isResume = (Number(resumePass) || 0) > 0;
+    creditsExhausted = false; // reset per request — workers are reused across orders
+    let imagesThisPass = 0;
+    const canGenerate = (label: string): boolean => {
+      if (creditsExhausted) return false;
+      if (imagesThisPass >= IMAGES_PER_PASS) {
+        console.log(`[${label}] deferring to next pass — ${IMAGES_PER_PASS} images already made this pass`);
+        return false;
+      }
+      return hasImageBudget(imageDeadlineMs, label);
+    };
+
+
     // Merge with whatever is already on the order. An upsell purchase can land
     // mid-generation and set audiobook/coloring on the row — overwriting with the
     // snapshot passed in by the caller would silently drop a paid add-on.
@@ -527,9 +556,11 @@ serve(async (req) => {
           coloring_prompts: coloringPrompts || null,
           illustration_prompts: illustrationPrompts || null,
           selected_addons: addons,
-          status: "generating_images",
+          // Resume passes leave status untouched so a delivered book stays "complete".
+          ...(isResume ? {} : { status: "generating_images" }),
         })
         .eq("id", orderId);
+
       if (updateError) console.error("Order update failed:", updateError);
     } else {
       const { data: order, error: orderError } = await supabase
@@ -624,8 +655,9 @@ serve(async (req) => {
     if (addons.illustrations && illustrationPrompts?.length) {
       for (let i = 0; i < Math.min(5, illustrationPrompts.length); i++) {
         if (illustrationImages[i]) continue;
-        if (!hasImageBudget(imageDeadlineMs, `illustration ${i + 1}`)) continue;
+        if (!canGenerate(`illustration ${i + 1}`)) continue;
         const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
+        imagesThisPass++;
         const img = await generateImage(
           withLikenessLock(illustrationPrompts[i], refs.length > 0),
           LOVABLE_API_KEY,
@@ -642,9 +674,10 @@ serve(async (req) => {
     // Generate only the missing scene coloring pages
     for (let i = 0; i < (coloringPrompts?.length || 0); i++) {
       if (coloringImages[i]) continue;
-      if (!hasImageBudget(imageDeadlineMs, `scene-coloring ${i + 1}`)) continue;
+      if (!canGenerate(`scene-coloring ${i + 1}`)) continue;
       const illusRef = bytesToDataUrl(illustrationImages[i] || null, "image/png");
       const refs = illusRef ? [illusRef] : (mainPhotoRef ? [mainPhotoRef] : []);
+      imagesThisPass++;
       const img = await generateImage(
         withColoringLock(coloringPrompts[i], refs.length > 0, childAge),
         LOVABLE_API_KEY,
@@ -687,8 +720,9 @@ serve(async (req) => {
       }
       for (let i = 0; i < effectiveBonusPrompts.length; i++) {
         if (bonusColoringImages[i]) continue;
-        if (!hasImageBudget(imageDeadlineMs, `bonus-coloring ${i + 1}`)) continue;
+        if (!canGenerate(`bonus-coloring ${i + 1}`)) continue;
         const refs = mainPhotoRef ? [mainPhotoRef] : [];
+        imagesThisPass++;
         const img = await generateImage(
           withColoringLock(effectiveBonusPrompts[i], refs.length > 0, childAge),
           LOVABLE_API_KEY,
@@ -761,15 +795,41 @@ serve(async (req) => {
     }
 
 
+    // A resume pass that produced nothing new has no reason to rebuild the PDF —
+    // re-embedding every image is what blew the platform CPU limit and left orders
+    // stuck. Record why and leave the delivered book exactly as it is.
+    const newImagesThisPass = newIllustrationIdx.size + newColoringIdx.size + newBonusIdx.size;
+    if (isResume && newImagesThisPass === 0) {
+      console.warn(`Resume pass ${resumePass} produced no new images — leaving existing PDF untouched`);
+      if (orderId) {
+        await supabase
+          .from("storybook_orders")
+          .update({
+            illustration_storage_paths: illustrationPaths,
+            failure_category: creditsExhausted ? "ai_credits_exhausted" : "image_generation_partial",
+            failure_hint: creditsExhausted
+              ? "AI image generation was refused for insufficient credits. Top up credits, then retry this order to fill in the missing pictures."
+              : "A follow-up image pass produced no new pictures. The delivered PDF is unchanged; retry the order to try again.",
+          })
+          .eq("id", orderId);
+      }
+      return new Response(
+        JSON.stringify({ success: true, orderId, noNewImages: true, creditsExhausted }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (orderId) {
       await supabase
         .from("storybook_orders")
         .update({
-          status: "assembling_pdf",
+          // Never move a delivered order back to "in progress" on a resume pass.
+          ...(isResume ? {} : { status: "assembling_pdf" }),
           illustration_storage_paths: illustrationPaths,
         })
         .eq("id", orderId);
     }
+
 
 
     // Build PDF — scene coloring pages always included; bonus book appended when purchased
@@ -871,6 +931,7 @@ serve(async (req) => {
         },
       };
 
+      const shortSomewhere = illustrationsShort || coloringShort || bonusShort;
       await supabase
         .from("storybook_orders")
         .update({
@@ -879,12 +940,17 @@ serve(async (req) => {
           pdf_url: pdfUrl,
           completed_at: new Date().toISOString(),
           selected_addons: mergedAddons,
-          failure_category: illustrationsShort || coloringShort || bonusShort ? "image_generation_partial" : null,
-          failure_hint: illustrationsShort || coloringShort || bonusShort
-            ? `PDF delivered; some images were skipped to prevent checkout fulfillment timeout. Illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}.`
+          failure_category: creditsExhausted
+            ? "ai_credits_exhausted"
+            : shortSomewhere ? "image_generation_partial" : null,
+          failure_hint: creditsExhausted
+            ? `AI image generation was refused for insufficient credits. Top up credits, then retry this order. Illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}.`
+            : shortSomewhere
+            ? `PDF delivered; remaining pictures are being filled in by follow-up passes. Illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}.`
             : null,
         })
         .eq("id", orderId);
+
     }
 
 
@@ -918,17 +984,19 @@ serve(async (req) => {
       }
     }
 
-    // The edge runtime caps a request at 150s, which isn't enough for every image.
-    // If pictures are still missing, fire a follow-up pass that generates only the
-    // gaps (all finished images are reused from storage) and rebuilds the PDF at
-    // the same path, so the customer's existing link picks up the complete book.
+    // Each pass only makes a small batch of images (IMAGES_PER_PASS) so it always
+    // finishes inside the platform's time AND CPU limits. If pictures are still
+    // missing, chain another pass that generates only the gaps (finished images are
+    // reused from storage) and rebuilds the PDF at the same path, so the customer's
+    // existing link picks up the complete book. Stop immediately if credits ran out.
     const stillShort =
       (addons.illustrations && illustrationCount < expectedIllustrations) ||
       coloringCount < expectedColoring ||
       (addons.coloring && bonusColoringCount < expectedBonusColoring);
     const pass = Number(resumePass) || 0;
-    if (orderId && stillShort && pass < 4) {
+    if (orderId && stillShort && !creditsExhausted && pass < 10) {
       console.log(`Scheduling resume pass ${pass + 1} for order ${orderId}`);
+
       const resume = fetch(`${SUPABASE_URL}/functions/v1/create-storybook`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
