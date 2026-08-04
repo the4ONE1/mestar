@@ -424,7 +424,8 @@ SUPPORTING CHARACTER = MENTOR (not hero):
 - Lines like: "What do you think we should try?" / "I believe you
   already know." / "I'll be right here beside you."
 - Reinforces the child's independence. (Combine with existing
-  Supporting Character Rules above — helpful, never overshadowing.)
+  Supporting Character Rules above — helpful, never overshadowing,
+  and never described by species or appearance.)
 
 PACING:
 - No filler paragraphs.
