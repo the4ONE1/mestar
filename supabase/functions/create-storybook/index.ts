@@ -621,9 +621,43 @@ serve(async (req) => {
       return out;
     };
 
-    const illustrationImages = await runIllustrations(addons.illustrations, illustrationPrompts);
-    // Scene coloring pages: always generate, one per story scene
-    const coloringImages = await runColoring(coloringPrompts, illustrationImages, "scene-coloring");
+    // When rebuilding an already-generated book (e.g. bonus coloring bought on the
+    // upsell page), reuse the illustrations and scene coloring pages already in
+    // storage instead of paying to regenerate them.
+    const loadStored = async (path: string): Promise<Uint8Array | null> => {
+      if (!path) return null;
+      const { data, error } = await supabase.storage.from("storybooks").download(path);
+      if (error || !data) return null;
+      return new Uint8Array(await data.arrayBuffer());
+    };
+
+    let illustrationImages: (Uint8Array | null)[] = [];
+    let coloringImages: (Uint8Array | null)[] = [];
+    let reusedImages = false;
+
+    if (reuseImages && orderId) {
+      const { data: paths } = await supabase
+        .from("storybook_orders")
+        .select("illustration_storage_paths")
+        .eq("id", orderId)
+        .maybeSingle();
+      const storedPaths = (((paths as any)?.illustration_storage_paths || []) as string[]);
+      if (storedPaths.some(Boolean)) {
+        illustrationImages = await Promise.all(storedPaths.map((p) => loadStored(p)));
+        while (illustrationImages.length < 5) illustrationImages.push(null);
+        coloringImages = await Promise.all(
+          (coloringPrompts || []).map((_: string, i: number) => loadStored(`${orderId}/coloring-${i + 1}.png`)),
+        );
+        reusedImages = illustrationImages.some(Boolean);
+        console.log(`Reusing stored images: ${illustrationImages.filter(Boolean).length} illustrations, ${coloringImages.filter(Boolean).length} scene coloring`);
+      }
+    }
+
+    if (!reusedImages) {
+      illustrationImages = await runIllustrations(addons.illustrations, illustrationPrompts);
+      // Scene coloring pages: always generate, one per story scene
+      coloringImages = await runColoring(coloringPrompts, illustrationImages, "scene-coloring");
+    }
     // Bonus coloring book (paid add-on): 8 extra pages, only when addons.coloring.
     // If coloring was purchased after the story was generated, the caller may not
     // have bonus prompts — derive a themed fallback set so the paid pages exist.
