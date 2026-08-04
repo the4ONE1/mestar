@@ -775,6 +775,25 @@ serve(async (req) => {
           `Order ${orderId} completed with missing images: illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}`
         );
       }
+      // Record which paid add-ons this build actually fulfilled so a later
+      // upsell purchase knows whether it still needs work done.
+      const { data: latest } = await supabase
+        .from("storybook_orders")
+        .select("selected_addons")
+        .eq("id", orderId)
+        .maybeSingle();
+      const latestAddons = ((latest as any)?.selected_addons || addons) as Record<string, any>;
+      const mergedAddons = {
+        ...latestAddons,
+        coloring: !!latestAddons.coloring || !!addons.coloring,
+        audiobook: !!latestAddons.audiobook || !!addons.audiobook,
+        addonFulfillment: {
+          ...(latestAddons.addonFulfillment || {}),
+          ...(bonusColoringCount > 0 && { coloring: true }),
+          ...(audioSeeded && { audiobook: true }),
+        },
+      };
+
       await supabase
         .from("storybook_orders")
         .update({
@@ -782,6 +801,7 @@ serve(async (req) => {
           pdf_storage_path: fileName,
           pdf_url: pdfUrl,
           completed_at: new Date().toISOString(),
+          selected_addons: mergedAddons,
           failure_category: illustrationsShort || coloringShort || bonusShort ? "image_generation_partial" : null,
           failure_hint: illustrationsShort || coloringShort || bonusShort
             ? `PDF delivered; some images were skipped to prevent checkout fulfillment timeout. Illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}.`
