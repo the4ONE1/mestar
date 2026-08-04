@@ -72,8 +72,14 @@ Deno.serve(async (req) => {
   const childName = body.childName || "LiveTest";
   const customerEmail = body.customerEmail || "dev-test@mestar.pro";
 
+  // Allow driving an already-created pending order (e.g. one that already has
+  // uploaded photos attached) instead of inserting a fresh throwaway row.
+  const existingOrderId = typeof body.orderId === "string" ? body.orderId : null;
+
   // Create a pending order as if the customer had just started checkout.
-  const { data: order, error: orderError } = await supabase
+  const { data: order, error: orderError } = existingOrderId
+    ? await supabase.from("storybook_orders").select("id").eq("id", existingOrderId).single()
+    : await supabase
     .from("storybook_orders")
     .insert({
       customer_email: String(customerEmail).toLowerCase(),
