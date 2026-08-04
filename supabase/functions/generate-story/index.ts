@@ -257,6 +257,21 @@ NAMING RULE (ABSOLUTE):
 - Do not invent names for any other characters either; use roles instead
   ("the baker", "the wise old owl", "Mom").
 
+APPEARANCE RULE (ABSOLUTE):
+- The supporting character's real appearance comes from a photo the customer
+  uploaded, and the illustrations are drawn from that photo. The text must
+  NEVER contradict it.
+- NEVER state or imply the supporting character's species, breed, animal type,
+  age, or physical appearance (no "a playful sea otter", "a golden retriever",
+  "a little dragon", "her tall older brother", "the fluffy grey cat").
+- Refer to them ONLY by their given name and/or a neutral relationship term
+  ("Buddy", "his best friend", "her companion").
+- Describe only what they DO (nudging, bounding ahead, pointing, cheering),
+  never what they ARE or what they look like. Avoid species-specific body
+  parts or sounds (no whiskers, fins, chittering, purring, hooves, wings)
+  unless the customer's own supporting character name makes it explicit.
+
+
 
 If not included:
 - Loved one stands independently as hero.
