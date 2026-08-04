@@ -8,12 +8,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Gemini 3 Pro Image typically takes 20–27s per image, so a 22s cap aborted
-// nearly every request and shipped text-only PDFs. Give each image real headroom.
-const IMAGE_REQUEST_TIMEOUT_MS = 60000;
-// Generation runs in the background (EdgeRuntime.waitUntil), so a longer overall
-// budget is safe and lets all illustrations + scene coloring pages finish.
-const IMAGE_GENERATION_BUDGET_MS = 300000;
+// Gemini 3 Pro Image typically takes 20–27s per image, so the old 22s cap aborted
+// nearly every request and shipped text-only PDFs. Give each image real headroom…
+const IMAGE_REQUEST_TIMEOUT_MS = 45000;
+// …but the Supabase edge runtime kills a request at 150s, so the whole image phase
+// must finish well before that or the PDF never gets assembled at all. 115s leaves
+// room to build + upload the PDF and send the delivery email.
+const IMAGE_GENERATION_BUDGET_MS = 115000;
 
 // ── AI Image Generation (works for both color illustrations and B&W coloring pages) ──
 // referenceImages: optional data-URL strings used as likeness references
@@ -473,6 +474,10 @@ serve(async (req) => {
       hasSupportingCharacter,
       supportingCharacterName,
       reuseImages,
+      // Internal: set when this run is a follow-up pass that fills in images the
+      // previous pass ran out of time for.
+      resumePass,
+      suppressEmail,
     } = await req.json();
 
     if (!title || !story) {
@@ -570,61 +575,10 @@ serve(async (req) => {
     }
     console.log("Photo refs:", { hasMain: !!mainPhotoRef, hasSupporting: !!supportingPhotoRef });
 
-    // Run sequentially to stay within edge-function CPU/memory limits
-    // (parallelizing 10 multimodal image generations exhausts the worker)
-    const runIllustrations = async (
-      enabled: boolean,
-      prompts: string[] | undefined
-    ): Promise<(Uint8Array | null)[]> => {
-      const out: (Uint8Array | null)[] = [];
-      if (!enabled || !prompts?.length) return Array(5).fill(null);
-      for (let i = 0; i < Math.min(5, prompts.length); i++) {
-        if (!hasImageBudget(imageDeadlineMs, `illustration ${i + 1}/5`)) {
-          out.push(null);
-          continue;
-        }
-        const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
-        const img = await generateImage(
-          withLikenessLock(prompts[i], refs.length > 0),
-          LOVABLE_API_KEY,
-          refs,
-          `illustration ${i + 1}/5`
-        );
-        out.push(img);
-        await new Promise((r) => setTimeout(r, 400));
-      }
-      while (out.length < 5) out.push(null);
-      return out;
-    };
+    // Images are generated sequentially below (parallel multimodal generations
+    // exhaust the edge worker), skipping anything already stored for this order.
 
-    // Scene coloring pages (ALWAYS free with every storybook).
-    // Use the matching illustration as the reference for character consistency.
-    const runColoring = async (
-      prompts: string[] | undefined,
-      illustrations: (Uint8Array | null)[],
-      labelPrefix: string
-    ): Promise<(Uint8Array | null)[]> => {
-      const out: (Uint8Array | null)[] = [];
-      if (!prompts?.length) return out;
-      for (let i = 0; i < prompts.length; i++) {
-        if (!hasImageBudget(imageDeadlineMs, `${labelPrefix} ${i + 1}/${prompts.length}`)) {
-          out.push(null);
-          continue;
-        }
-        const illusRef = bytesToDataUrl(illustrations[i] || null, "image/png");
-        // For bonus pages we don't have a matching illustration; fall back to the child photo
-        const refs = illusRef ? [illusRef] : (mainPhotoRef ? [mainPhotoRef] : []);
-        const img = await generateImage(
-          withColoringLock(prompts[i], refs.length > 0, childAge),
-          LOVABLE_API_KEY,
-          refs,
-          `${labelPrefix} ${i + 1}/${prompts.length}`
-        );
-        out.push(img);
-        await new Promise((r) => setTimeout(r, 400));
-      }
-      return out;
-    };
+
 
     // When rebuilding an already-generated book (e.g. bonus coloring bought on the
     // upsell page), reuse the illustrations and scene coloring pages already in
@@ -638,31 +592,70 @@ serve(async (req) => {
 
     let illustrationImages: (Uint8Array | null)[] = [];
     let coloringImages: (Uint8Array | null)[] = [];
-    let reusedImages = false;
+    const newIllustrationIdx = new Set<number>();
+    const newColoringIdx = new Set<number>();
 
-    if (reuseImages && orderId) {
+    // Load anything this order already has in storage. The edge runtime kills a
+    // request at 150s, which isn't enough for 7+ AI images, so a run generates
+    // what it can, then re-invokes itself to fill the gaps (see resume trigger
+    // at the end). Loading first means no image is ever paid for twice.
+    if (orderId) {
       const { data: paths } = await supabase
         .from("storybook_orders")
         .select("illustration_storage_paths")
         .eq("id", orderId)
         .maybeSingle();
       const storedPaths = (((paths as any)?.illustration_storage_paths || []) as string[]);
-      if (storedPaths.some(Boolean)) {
-        illustrationImages = await Promise.all(storedPaths.map((p) => loadStored(p)));
-        while (illustrationImages.length < 5) illustrationImages.push(null);
-        coloringImages = await Promise.all(
-          (coloringPrompts || []).map((_: string, i: number) => loadStored(`${orderId}/coloring-${i + 1}.png`)),
-        );
-        reusedImages = illustrationImages.some(Boolean);
-        console.log(`Reusing stored images: ${illustrationImages.filter(Boolean).length} illustrations, ${coloringImages.filter(Boolean).length} scene coloring`);
-      }
+      const expectedIll = Math.min(5, illustrationPrompts?.length || 5);
+      illustrationImages = await Promise.all(
+        Array.from({ length: expectedIll }, (_, i) =>
+          loadStored(storedPaths[i] || `${orderId}/illustration-${i + 1}.png`),
+        ),
+      );
+      coloringImages = await Promise.all(
+        (coloringPrompts || []).map((_: string, i: number) => loadStored(`${orderId}/coloring-${i + 1}.png`)),
+      );
+      console.log(
+        `Existing images found: ${illustrationImages.filter(Boolean).length} illustrations, ${coloringImages.filter(Boolean).length} scene coloring`,
+      );
     }
 
-    if (!reusedImages) {
-      illustrationImages = await runIllustrations(addons.illustrations, illustrationPrompts);
-      // Scene coloring pages: always generate, one per story scene
-      coloringImages = await runColoring(coloringPrompts, illustrationImages, "scene-coloring");
+    // Generate only the missing illustrations
+    if (addons.illustrations && illustrationPrompts?.length) {
+      for (let i = 0; i < Math.min(5, illustrationPrompts.length); i++) {
+        if (illustrationImages[i]) continue;
+        if (!hasImageBudget(imageDeadlineMs, `illustration ${i + 1}`)) continue;
+        const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
+        const img = await generateImage(
+          withLikenessLock(illustrationPrompts[i], refs.length > 0),
+          LOVABLE_API_KEY,
+          refs,
+          `illustration ${i + 1}`,
+        );
+        illustrationImages[i] = img;
+        if (img) newIllustrationIdx.add(i);
+        await new Promise((r) => setTimeout(r, 400));
+      }
     }
+    while (illustrationImages.length < 5) illustrationImages.push(null);
+
+    // Generate only the missing scene coloring pages
+    for (let i = 0; i < (coloringPrompts?.length || 0); i++) {
+      if (coloringImages[i]) continue;
+      if (!hasImageBudget(imageDeadlineMs, `scene-coloring ${i + 1}`)) continue;
+      const illusRef = bytesToDataUrl(illustrationImages[i] || null, "image/png");
+      const refs = illusRef ? [illusRef] : (mainPhotoRef ? [mainPhotoRef] : []);
+      const img = await generateImage(
+        withColoringLock(coloringPrompts[i], refs.length > 0, childAge),
+        LOVABLE_API_KEY,
+        refs,
+        `scene-coloring ${i + 1}`,
+      );
+      coloringImages[i] = img;
+      if (img) newColoringIdx.add(i);
+      await new Promise((r) => setTimeout(r, 400));
+    }
+
     // Bonus coloring book (paid add-on): 8 extra pages, only when addons.coloring.
     // If coloring was purchased after the story was generated, the caller may not
     // have bonus prompts — derive a themed fallback set so the paid pages exist.
@@ -682,9 +675,32 @@ serve(async (req) => {
           )
         : []
     )) as string[];
-    const bonusColoringImages: (Uint8Array | null)[] = addons.coloring
-      ? await runColoring(effectiveBonusPrompts, [], "bonus-coloring")
-      : [];
+    // Bonus pages are persisted too, so a resume pass only makes the missing ones.
+    const bonusColoringImages: (Uint8Array | null)[] = [];
+    const newBonusIdx = new Set<number>();
+    if (addons.coloring && effectiveBonusPrompts.length) {
+      if (orderId) {
+        const existingBonus = await Promise.all(
+          effectiveBonusPrompts.map((_: string, i: number) => loadStored(`${orderId}/bonus-coloring-${i + 1}.png`)),
+        );
+        existingBonus.forEach((img, i) => (bonusColoringImages[i] = img));
+      }
+      for (let i = 0; i < effectiveBonusPrompts.length; i++) {
+        if (bonusColoringImages[i]) continue;
+        if (!hasImageBudget(imageDeadlineMs, `bonus-coloring ${i + 1}`)) continue;
+        const refs = mainPhotoRef ? [mainPhotoRef] : [];
+        const img = await generateImage(
+          withColoringLock(effectiveBonusPrompts[i], refs.length > 0, childAge),
+          LOVABLE_API_KEY,
+          refs,
+          `bonus-coloring ${i + 1}`,
+        );
+        bonusColoringImages[i] = img;
+        if (img) newBonusIdx.add(i);
+        await new Promise((r) => setTimeout(r, 400));
+      }
+    }
+
 
     const illustrationCount = illustrationImages.filter(Boolean).length;
     const coloringCount = coloringImages.filter(Boolean).length;
@@ -723,10 +739,10 @@ serve(async (req) => {
       }
     }
 
-    // Persist scene coloring pages too so a later rebuild (bonus coloring
-    // add-on bought on the upsell page) doesn't pay to regenerate them.
-    if (orderId && !reusedImages) {
-      for (let i = 0; i < coloringImages.length; i++) {
+    // Persist newly made coloring pages (scene + bonus) so a resume pass or a
+    // later rebuild never pays to regenerate them.
+    if (orderId) {
+      for (const i of newColoringIdx) {
         const img = coloringImages[i];
         if (!img) continue;
         const { error: colErr } = await supabase.storage
@@ -734,7 +750,16 @@ serve(async (req) => {
           .upload(`${orderId}/coloring-${i + 1}.png`, img, { contentType: "image/png", upsert: true });
         if (colErr) console.error("Coloring page upload failed:", colErr);
       }
+      for (const i of newBonusIdx) {
+        const img = bonusColoringImages[i];
+        if (!img) continue;
+        const { error: bErr } = await supabase.storage
+          .from("storybooks")
+          .upload(`${orderId}/bonus-coloring-${i + 1}.png`, img, { contentType: "image/png", upsert: true });
+        if (bErr) console.error("Bonus coloring upload failed:", bErr);
+      }
     }
+
 
     if (orderId) {
       await supabase
@@ -865,30 +890,71 @@ serve(async (req) => {
 
     console.log("Storybook complete!", pdfUrl);
 
-    // Notification email (non-blocking)
-    try {
-      const notifyRes = await fetch(`${SUPABASE_URL}/functions/v1/send-order-notification`, {
+    // Notification email (non-blocking). Resume passes skip it — the customer
+    // already got their link, and the PDF at that link is replaced in place.
+    if (!suppressEmail) {
+      try {
+        const notifyRes = await fetch(`${SUPABASE_URL}/functions/v1/send-order-notification`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          },
+          body: JSON.stringify({
+            childName,
+            childAge,
+            theme,
+            strength,
+            customerEmail,
+            supportingCharacterName,
+            pdfUrl,
+            orderId,
+            selectedAddons: addons,
+          }),
+        });
+        if (!notifyRes.ok) console.error("Notification failed:", await notifyRes.text());
+      } catch (notifyErr) {
+        console.error("Failed to send notification:", notifyErr);
+      }
+    }
+
+    // The edge runtime caps a request at 150s, which isn't enough for every image.
+    // If pictures are still missing, fire a follow-up pass that generates only the
+    // gaps (all finished images are reused from storage) and rebuilds the PDF at
+    // the same path, so the customer's existing link picks up the complete book.
+    const stillShort =
+      (addons.illustrations && illustrationCount < expectedIllustrations) ||
+      coloringCount < expectedColoring ||
+      (addons.coloring && bonusColoringCount < expectedBonusColoring);
+    const pass = Number(resumePass) || 0;
+    if (orderId && stillShort && pass < 4) {
+      console.log(`Scheduling resume pass ${pass + 1} for order ${orderId}`);
+      const resume = fetch(`${SUPABASE_URL}/functions/v1/create-storybook`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
         body: JSON.stringify({
+          orderId,
+          title,
+          story,
+          coloringPrompts,
+          bonusColoringPrompts,
+          illustrationPrompts,
+          selectedAddons,
+          customerEmail,
           childName,
           childAge,
           theme,
           strength,
-          customerEmail,
+          hasSupportingCharacter,
           supportingCharacterName,
-          pdfUrl,
-          orderId,
-          selectedAddons: addons,
+          resumePass: pass + 1,
+          suppressEmail: true,
         }),
-      });
-      if (!notifyRes.ok) console.error("Notification failed:", await notifyRes.text());
-    } catch (notifyErr) {
-      console.error("Failed to send notification:", notifyErr);
+      }).catch((e) => console.error("resume pass trigger failed:", e));
+      // @ts-ignore EdgeRuntime is provided by the Supabase edge runtime
+      if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(resume);
     }
+
 
     return new Response(
       JSON.stringify({
