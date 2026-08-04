@@ -66,8 +66,22 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
+    // Live site domain (mestar.pro is no longer connected — links there 404)
+    const SITE_URL = "https://www.mystarstories.app";
+
+    // Include the per-order recovery token so the link works from any device/browser
+    let recoveryToken: string | null = null;
+    if (orderId) {
+      const { data: orderRow } = await supabase
+        .from("storybook_orders")
+        .select("recovery_token")
+        .eq("id", orderId)
+        .maybeSingle();
+      recoveryToken = (orderRow as any)?.recovery_token ?? null;
+    }
+
     const orderPageUrl = orderId
-      ? `https://mestar.pro/order-complete?order_id=${orderId}`
+      ? `${SITE_URL}/order-complete?order_id=${orderId}${recoveryToken ? `&token=${recoveryToken}` : ""}`
       : pdfUrl;
 
     const templateData = {
