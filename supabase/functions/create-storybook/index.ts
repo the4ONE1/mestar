@@ -654,8 +654,9 @@ serve(async (req) => {
     if (addons.illustrations && illustrationPrompts?.length) {
       for (let i = 0; i < Math.min(5, illustrationPrompts.length); i++) {
         if (illustrationImages[i]) continue;
-        if (!hasImageBudget(imageDeadlineMs, `illustration ${i + 1}`)) continue;
+        if (!canGenerate(`illustration ${i + 1}`)) continue;
         const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
+        imagesThisPass++;
         const img = await generateImage(
           withLikenessLock(illustrationPrompts[i], refs.length > 0),
           LOVABLE_API_KEY,
@@ -672,9 +673,10 @@ serve(async (req) => {
     // Generate only the missing scene coloring pages
     for (let i = 0; i < (coloringPrompts?.length || 0); i++) {
       if (coloringImages[i]) continue;
-      if (!hasImageBudget(imageDeadlineMs, `scene-coloring ${i + 1}`)) continue;
+      if (!canGenerate(`scene-coloring ${i + 1}`)) continue;
       const illusRef = bytesToDataUrl(illustrationImages[i] || null, "image/png");
       const refs = illusRef ? [illusRef] : (mainPhotoRef ? [mainPhotoRef] : []);
+      imagesThisPass++;
       const img = await generateImage(
         withColoringLock(coloringPrompts[i], refs.length > 0, childAge),
         LOVABLE_API_KEY,
@@ -717,8 +719,9 @@ serve(async (req) => {
       }
       for (let i = 0; i < effectiveBonusPrompts.length; i++) {
         if (bonusColoringImages[i]) continue;
-        if (!hasImageBudget(imageDeadlineMs, `bonus-coloring ${i + 1}`)) continue;
+        if (!canGenerate(`bonus-coloring ${i + 1}`)) continue;
         const refs = mainPhotoRef ? [mainPhotoRef] : [];
+        imagesThisPass++;
         const img = await generateImage(
           withColoringLock(effectiveBonusPrompts[i], refs.length > 0, childAge),
           LOVABLE_API_KEY,
