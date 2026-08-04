@@ -212,18 +212,24 @@ export default function Preview() {
 
     setUnlocking(true);
     try {
+      const addons = {
+        illustrations: true,
+        coloring: true,
+        character: characterReady,
+        audiobook: false,
+      };
       const { data: orderData, error } = await supabase.functions.invoke("create-pending-order", {
         body: {
           childName: draft.childName,
           childAge: "4-7",
           theme: draft.theme,
           strength: "",
-          supportingCharacterName: "",
-          hasSupportingCharacter: false,
-          selectedAddons: { illustrations: true, coloring: true, character: false, audiobook: false },
+          supportingCharacterName: characterReady ? characterName.trim() : "",
+          hasSupportingCharacter: characterReady,
+          selectedAddons: addons,
           customerEmail: "",
           childPhotoDataUrl: draft.photoData,
-          supportingCharacterPhotoDataUrl: null,
+          supportingCharacterPhotoDataUrl: characterReady ? characterPhoto : null,
         },
       });
 
@@ -241,14 +247,19 @@ export default function Preview() {
         theme: draft.theme,
         photoData: draft.photoData,
         photoUrl: draft.photoData,
-        selectedAddons: { illustrations: true, coloring: true, character: false, audiobook: false },
+        supportingCharacterName: characterReady ? characterName.trim() : "",
+        selectedAddons: addons,
         savedAt: Date.now(),
       };
       localStorage.setItem("mestar-pending-story", JSON.stringify(pendingStory));
 
+      const priceIds = [STRIPE_BASE_PRICE];
+      if (characterReady && STRIPE_CHARACTER_PRICE) priceIds.push(STRIPE_CHARACTER_PRICE);
+
       navigate(
-        `/checkout?order_id=${orderId}&prices=${encodeURIComponent(STRIPE_BASE_PRICE)}&next=${encodeURIComponent("/upsell")}`,
+        `/checkout?order_id=${orderId}&prices=${encodeURIComponent(priceIds.join(","))}&next=${encodeURIComponent("/upsell")}`,
       );
+
     } catch (error) {
       console.error("Preview checkout start failed:", error);
       toast.error("Could not start checkout. Please try again.", { position: "top-center" });
@@ -364,6 +375,68 @@ export default function Preview() {
               ))}
             </div>
 
+            {/* ── Supporting character add-on (2nd photo) ── */}
+            <div className="bg-card rounded-2xl border border-border p-5 space-y-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={wantsCharacter}
+                  onChange={(e) => setWantsCharacter(e.target.checked)}
+                  className="mt-1 h-4 w-4 accent-primary shrink-0"
+                />
+                <span>
+                  <span className="font-display font-bold text-foreground block">
+                    Add a best friend, sibling or pet — +${CHARACTER_PRICE}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    Upload a second photo and they'll appear in the story as {draft.childName}'s
+                    sidekick who helps save the day.
+                  </span>
+                </span>
+              </label>
+
+              {wantsCharacter && (
+                <div className="space-y-3 pl-7">
+                  <input
+                    type="text"
+                    value={characterName}
+                    onChange={(e) => setCharacterName(e.target.value.slice(0, 40))}
+                    placeholder="Their first name"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                  <input
+                    ref={characterFileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleCharacterPhoto(e.target.files?.[0])}
+                  />
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => characterFileRef.current?.click()}
+                      className="rounded-full"
+                    >
+                      {characterPhoto ? "Change photo" : "Upload their photo"}
+                    </Button>
+                    {characterPhoto && (
+                      <img
+                        src={characterPhoto}
+                        alt={`${characterName || "Supporting character"} photo preview`}
+                        className="h-12 w-12 rounded-full object-cover border-2 border-primary"
+                      />
+                    )}
+                  </div>
+                  {!characterReady && (
+                    <p className="text-xs text-muted-foreground">
+                      Add both a name and a photo to include them.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Unlock CTA */}
             <Button
               onClick={handleUnlock}
@@ -372,8 +445,11 @@ export default function Preview() {
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display text-lg rounded-full py-7 shadow-xl shadow-primary/30 hover:scale-105 transition-all duration-300"
             >
               {unlocking ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Lock className="h-5 w-5 mr-2" />}
-              {unlocking ? "Starting Secure Checkout…" : "Unlock Full Bedtime Adventure — $19.99"}
+              {unlocking
+                ? "Starting Secure Checkout…"
+                : `Unlock Full Bedtime Adventure — $${total.toFixed(2)}`}
             </Button>
+
 
             {/* Trust footer */}
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
