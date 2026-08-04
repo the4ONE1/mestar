@@ -39,6 +39,13 @@ Reduce how much work a single pass attempts so it finishes inside the platform's
 
 Delete the temporary test function I deployed for the live webhook check. It was deployed with authentication disabled for the test and must not stay in the project.
 
+## Ruled out: running out of AI credits
+
+Checked the gateway logs directly. Every AI call in the last 7 days returned success, including all the image calls during the failed test at 23:02-23:05. There were no out-of-credit or rate-limit errors. The failure was the platform CPU limit, not billing.
+
+However, the balance is worth acting on: 40.18 credits remain (daily, monthly and top-up allowances are all at zero; this is the bonus grant). Each generated picture costs about 0.56 credits, so a full book with bonus coloring pages costs roughly 8 credits — about five more books before generation begins failing with billing errors. Also included in this work: make the builder mark an order "needs attention" with a clear reason if an AI call ever is refused for credits, instead of silently delivering an incomplete PDF.
+
+
 ## Verify
 
 Repair the stuck test order, run one more synthetic live webhook test, and confirm the order reaches "complete" with all illustrations, all scene coloring pages, and all 8 bonus pages present in the PDF — with no stuck "in progress" screen.
