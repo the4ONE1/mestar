@@ -794,15 +794,41 @@ serve(async (req) => {
     }
 
 
+    // A resume pass that produced nothing new has no reason to rebuild the PDF —
+    // re-embedding every image is what blew the platform CPU limit and left orders
+    // stuck. Record why and leave the delivered book exactly as it is.
+    const newImagesThisPass = newIllustrationIdx.size + newColoringIdx.size + newBonusIdx.size;
+    if (isResume && newImagesThisPass === 0) {
+      console.warn(`Resume pass ${resumePass} produced no new images — leaving existing PDF untouched`);
+      if (orderId) {
+        await supabase
+          .from("storybook_orders")
+          .update({
+            illustration_storage_paths: illustrationPaths,
+            failure_category: creditsExhausted ? "ai_credits_exhausted" : "image_generation_partial",
+            failure_hint: creditsExhausted
+              ? "AI image generation was refused for insufficient credits. Top up credits, then retry this order to fill in the missing pictures."
+              : "A follow-up image pass produced no new pictures. The delivered PDF is unchanged; retry the order to try again.",
+          })
+          .eq("id", orderId);
+      }
+      return new Response(
+        JSON.stringify({ success: true, orderId, noNewImages: true, creditsExhausted }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (orderId) {
       await supabase
         .from("storybook_orders")
         .update({
-          status: "assembling_pdf",
+          // Never move a delivered order back to "in progress" on a resume pass.
+          ...(isResume ? {} : { status: "assembling_pdf" }),
           illustration_storage_paths: illustrationPaths,
         })
         .eq("id", orderId);
     }
+
 
 
     // Build PDF — scene coloring pages always included; bonus book appended when purchased
