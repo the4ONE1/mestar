@@ -73,6 +73,7 @@ export async function fulfillAddons(orderId: string) {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE}` },
       body: JSON.stringify({
         orderId,
+        reuseImages: true,
         title: (order as any).story_title,
         story: (order as any).story_text,
         coloringPrompts: (order as any).coloring_prompts || [],
