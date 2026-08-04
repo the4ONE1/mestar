@@ -25,6 +25,7 @@ const OrderComplete = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const orderIdFromUrl = searchParams.get("order_id");
+  const tokenFromUrl = searchParams.get("token");
   const sessionIdFromUrl = searchParams.get("session_id");
 
   const [orderId, setOrderId] = useState<string | null>(null);
