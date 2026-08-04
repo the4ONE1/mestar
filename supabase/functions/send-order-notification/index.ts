@@ -67,7 +67,7 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     // Live site domain (mestar.pro is no longer connected — links there 404)
-    const SITE_URL = "https://www.mystarstories.app";
+    const SITE_URL = "https://mystarstories.app";
 
     // Include the per-order recovery token so the link works from any device/browser
     let recoveryToken: string | null = null;

@@ -61,7 +61,7 @@ export const template = {
   displayName: 'Checkout Recovery',
   previewData: {
     childName: 'Emma',
-    resumeUrl: 'https://www.mystarstories.app/checkout?order_id=abc&recover=xyz',
+    resumeUrl: 'https://mystarstories.app/checkout?order_id=abc&recover=xyz',
   },
 } satisfies TemplateEntry
 

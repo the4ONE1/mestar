@@ -107,8 +107,8 @@ export const template = {
     childAge: '4-6',
     theme: 'Prince & Princess',
     strength: 'Kindness',
-    pdfUrl: 'https://www.mystarstories.app/order-complete?order_id=example',
-    orderPageUrl: 'https://www.mystarstories.app/order-complete?order_id=example',
+    pdfUrl: 'https://mystarstories.app/order-complete?order_id=example',
+    orderPageUrl: 'https://mystarstories.app/order-complete?order_id=example',
   },
 } satisfies TemplateEntry
 
