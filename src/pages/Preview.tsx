@@ -151,6 +151,9 @@ async function drawComposite(
 }
 
 const STRIPE_BASE_PRICE = import.meta.env.VITE_STRIPE_PRICE_BASE_STORY as string | undefined;
+const STRIPE_CHARACTER_PRICE = import.meta.env.VITE_STRIPE_PRICE_CHARACTER as string | undefined;
+const CHARACTER_PRICE = 9.99;
+const BASE_PRICE = 19.99;
 
 export default function Preview() {
   const navigate = useNavigate();
@@ -158,6 +161,28 @@ export default function Preview() {
   const [draft, setDraft] = useState<PreviewDraft | null>(null);
   const [rendering, setRendering] = useState(true);
   const [unlocking, setUnlocking] = useState(false);
+
+  // ── Supporting character add-on (2nd photo) ──
+  const [wantsCharacter, setWantsCharacter] = useState(false);
+  const [characterName, setCharacterName] = useState("");
+  const [characterPhoto, setCharacterPhoto] = useState<string | null>(null);
+  const characterFileRef = useRef<HTMLInputElement>(null);
+
+  const handleCharacterPhoto = (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("That photo is too large. Please choose one under 8MB.", { position: "top-center" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setCharacterPhoto(reader.result as string);
+    reader.onerror = () => toast.error("Could not read that photo. Please try another.", { position: "top-center" });
+    reader.readAsDataURL(file);
+  };
+
+  const characterReady = wantsCharacter && !!characterPhoto && characterName.trim().length > 0;
+  const total = BASE_PRICE + (characterReady ? CHARACTER_PRICE : 0);
+
 
   useEffect(() => {
     const d = loadDraft();

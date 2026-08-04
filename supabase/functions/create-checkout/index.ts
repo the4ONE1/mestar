@@ -9,7 +9,12 @@ const corsHeaders = {
 const CLASSIC_AUDIOBOOK_PRICE_ID = "audiobook_classic_onetime";
 const INTERACTIVE_AUDIOBOOK_PRICE_ID = "audiobook_interactive_read_along_onetime";
 const COLORING_PRICE_ID = "coloring_pages_addon_onetime";
-const SUPPORTING_CHARACTER_PRICE_ID = "supporting_character_addon_onetime";
+// Two lookup keys exist for the supporting-character add-on (the original
+// Shopify-era key and the current Stripe price). Accept either.
+const SUPPORTING_CHARACTER_PRICE_IDS = [
+  "supporting_character_addon_onetime",
+  "supporting_character_once",
+];
 const BASE_STORY_PRICE_ID = "personalized_storybook_onetime";
 
 
@@ -18,7 +23,7 @@ function addonsForPrices(priceIds: string[]) {
   const hasInteractive = priceIds.includes(INTERACTIVE_AUDIOBOOK_PRICE_ID);
   return {
     ...(priceIds.includes(COLORING_PRICE_ID) && { coloring: true, coloringPages: true }),
-    ...(priceIds.includes(SUPPORTING_CHARACTER_PRICE_ID) && { character: true }),
+    ...(priceIds.some((p) => SUPPORTING_CHARACTER_PRICE_IDS.includes(p)) && { character: true }),
     ...((hasClassic || hasInteractive) && {
       audiobook: true,
       audiobookTier: hasInteractive ? "interactive" : "classic",
