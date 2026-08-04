@@ -23,7 +23,7 @@ function addonsForPrices(priceIds: string[]) {
   const hasInteractive = priceIds.includes(INTERACTIVE_AUDIOBOOK_PRICE_ID);
   return {
     ...(priceIds.includes(COLORING_PRICE_ID) && { coloring: true, coloringPages: true }),
-    ...(priceIds.includes(SUPPORTING_CHARACTER_PRICE_ID) && { character: true }),
+    ...(priceIds.some((p) => SUPPORTING_CHARACTER_PRICE_IDS.includes(p)) && { character: true }),
     ...((hasClassic || hasInteractive) && {
       audiobook: true,
       audiobookTier: hasInteractive ? "interactive" : "classic",
