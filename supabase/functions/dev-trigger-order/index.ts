@@ -21,6 +21,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 function getServerKeys(): string[] {
   const keys: (string | undefined)[] = [
     Deno.env.get("LOVABLE_API_KEY"),
+    Deno.env.get("DEV_TRIGGER_TOKEN"),
     SUPABASE_SERVICE_ROLE_KEY,
   ];
   const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");

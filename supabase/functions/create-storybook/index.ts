@@ -8,8 +8,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const IMAGE_REQUEST_TIMEOUT_MS = 22000;
-const IMAGE_GENERATION_BUDGET_MS = 105000;
+// Gemini 3 Pro Image typically takes 20–27s per image, so a 22s cap aborted
+// nearly every request and shipped text-only PDFs. Give each image real headroom.
+const IMAGE_REQUEST_TIMEOUT_MS = 60000;
+// Generation runs in the background (EdgeRuntime.waitUntil), so a longer overall
+// budget is safe and lets all illustrations + scene coloring pages finish.
+const IMAGE_GENERATION_BUDGET_MS = 300000;
 
 // ── AI Image Generation (works for both color illustrations and B&W coloring pages) ──
 // referenceImages: optional data-URL strings used as likeness references
