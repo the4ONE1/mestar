@@ -468,6 +468,7 @@ serve(async (req) => {
       strength,
       hasSupportingCharacter,
       supportingCharacterName,
+      reuseImages,
     } = await req.json();
 
     if (!title || !story) {
@@ -480,16 +481,34 @@ serve(async (req) => {
     // NOTE: scene-derived coloring pages (one per story scene) are ALWAYS included
     // free with every storybook. `addons.coloring` gates the PAID bonus coloring
     // book (8 extra pages with the child across random themes).
-    const addons = {
+    let orderId: string | undefined = incomingOrderId;
+
+    // Merge with whatever is already on the order. An upsell purchase can land
+    // mid-generation and set audiobook/coloring on the row — overwriting with the
+    // snapshot passed in by the caller would silently drop a paid add-on.
+    let existingAddons: Record<string, unknown> = {};
+    if (orderId) {
+      const { data: existingOrder } = await supabase
+        .from("storybook_orders")
+        .select("selected_addons")
+        .eq("id", orderId)
+        .maybeSingle();
+      existingAddons = ((existingOrder as any)?.selected_addons || {}) as Record<string, unknown>;
+    }
+
+    const addons: Record<string, any> = {
       illustrations: true,
       coloring: false,
       character: false,
       audiobook: false,
+      ...existingAddons,
       ...(selectedAddons || {}),
+      // paid flags are sticky — never downgrade a purchased add-on
+      coloring: !!(existingAddons as any).coloring || !!(selectedAddons || {}).coloring,
+      audiobook: !!(existingAddons as any).audiobook || !!(selectedAddons || {}).audiobook,
     };
 
     // If we were given an existing pending order, update it. Otherwise create new (legacy in-browser flow).
-    let orderId: string | undefined = incomingOrderId;
     if (orderId) {
       const { error: updateError } = await supabase
         .from("storybook_orders")
@@ -603,12 +622,64 @@ serve(async (req) => {
       return out;
     };
 
-    const illustrationImages = await runIllustrations(addons.illustrations, illustrationPrompts);
-    // Scene coloring pages: always generate, one per story scene
-    const coloringImages = await runColoring(coloringPrompts, illustrationImages, "scene-coloring");
-    // Bonus coloring book (paid add-on): 8 extra pages, only when addons.coloring
+    // When rebuilding an already-generated book (e.g. bonus coloring bought on the
+    // upsell page), reuse the illustrations and scene coloring pages already in
+    // storage instead of paying to regenerate them.
+    const loadStored = async (path: string): Promise<Uint8Array | null> => {
+      if (!path) return null;
+      const { data, error } = await supabase.storage.from("storybooks").download(path);
+      if (error || !data) return null;
+      return new Uint8Array(await data.arrayBuffer());
+    };
+
+    let illustrationImages: (Uint8Array | null)[] = [];
+    let coloringImages: (Uint8Array | null)[] = [];
+    let reusedImages = false;
+
+    if (reuseImages && orderId) {
+      const { data: paths } = await supabase
+        .from("storybook_orders")
+        .select("illustration_storage_paths")
+        .eq("id", orderId)
+        .maybeSingle();
+      const storedPaths = (((paths as any)?.illustration_storage_paths || []) as string[]);
+      if (storedPaths.some(Boolean)) {
+        illustrationImages = await Promise.all(storedPaths.map((p) => loadStored(p)));
+        while (illustrationImages.length < 5) illustrationImages.push(null);
+        coloringImages = await Promise.all(
+          (coloringPrompts || []).map((_: string, i: number) => loadStored(`${orderId}/coloring-${i + 1}.png`)),
+        );
+        reusedImages = illustrationImages.some(Boolean);
+        console.log(`Reusing stored images: ${illustrationImages.filter(Boolean).length} illustrations, ${coloringImages.filter(Boolean).length} scene coloring`);
+      }
+    }
+
+    if (!reusedImages) {
+      illustrationImages = await runIllustrations(addons.illustrations, illustrationPrompts);
+      // Scene coloring pages: always generate, one per story scene
+      coloringImages = await runColoring(coloringPrompts, illustrationImages, "scene-coloring");
+    }
+    // Bonus coloring book (paid add-on): 8 extra pages, only when addons.coloring.
+    // If coloring was purchased after the story was generated, the caller may not
+    // have bonus prompts — derive a themed fallback set so the paid pages exist.
+    const effectiveBonusPrompts: string[] = (bonusColoringPrompts?.length ? bonusColoringPrompts : (
+      addons.coloring
+        ? [
+            "outer space rocket launch",
+            "deep ocean discovery",
+            "dinosaur jungle path",
+            "superhero city helper moment",
+            "medieval castle garden",
+            "race car track celebration",
+            "pirate ship treasure map",
+            "enchanted forest picnic",
+          ].map((scene) =>
+            `Black and white coloring page line art, thick bold outlines, printable, no shading. Bonus scene: ${childName} in a ${scene}. Clean white background, no grayscale, no color, no text.`
+          )
+        : []
+    )) as string[];
     const bonusColoringImages: (Uint8Array | null)[] = addons.coloring
-      ? await runColoring(bonusColoringPrompts, [], "bonus-coloring")
+      ? await runColoring(effectiveBonusPrompts, [], "bonus-coloring")
       : [];
 
     const illustrationCount = illustrationImages.filter(Boolean).length;
@@ -617,7 +688,7 @@ serve(async (req) => {
 
     const expectedIllustrations = addons.illustrations ? (illustrationPrompts?.length || 0) : 0;
     const expectedColoring = coloringPrompts?.length || 0;
-    const expectedBonusColoring = addons.coloring ? (bonusColoringPrompts?.length || 0) : 0;
+    const expectedBonusColoring = addons.coloring ? (effectiveBonusPrompts?.length || 0) : 0;
     console.log(
       `Generated ${illustrationCount}/${expectedIllustrations || 5} illustrations, ` +
         `${coloringCount}/${expectedColoring} scene coloring, ` +
@@ -648,6 +719,19 @@ serve(async (req) => {
       }
     }
 
+    // Persist scene coloring pages too so a later rebuild (bonus coloring
+    // add-on bought on the upsell page) doesn't pay to regenerate them.
+    if (orderId && !reusedImages) {
+      for (let i = 0; i < coloringImages.length; i++) {
+        const img = coloringImages[i];
+        if (!img) continue;
+        const { error: colErr } = await supabase.storage
+          .from("storybooks")
+          .upload(`${orderId}/coloring-${i + 1}.png`, img, { contentType: "image/png", upsert: true });
+        if (colErr) console.error("Coloring page upload failed:", colErr);
+      }
+    }
+
     if (orderId) {
       await supabase
         .from("storybook_orders")
@@ -672,27 +756,40 @@ serve(async (req) => {
     );
 
     // If audiobook purchased, seed the storybook_audio table with page text and
-    // fire the generate-audiobook function (non-blocking background task)
+    // fire the generate-audiobook function (non-blocking background task).
+    // Guard against duplicate seeding when this order is rebuilt (e.g. a bonus
+    // coloring add-on purchased after the first PDF was assembled).
+    let audioSeeded = false;
     if (orderId && addons.audiobook && pageTexts.length) {
-      const audioRows = pageTexts.map((text, i) => ({
-        order_id: orderId,
-        page_number: i + 1,
-        page_text: text,
-      }));
-      const { error: audioErr } = await supabase.from("storybook_audio").insert(audioRows);
-      if (audioErr) {
-        console.error("Audio seed failed:", audioErr);
+      const { count: existingAudio } = await supabase
+        .from("storybook_audio")
+        .select("id", { count: "exact", head: true })
+        .eq("order_id", orderId);
+      if ((existingAudio || 0) > 0) {
+        audioSeeded = true;
+        console.log(`Audio rows already exist for ${orderId} — skipping seed`);
       } else {
-        // Kick off ElevenLabs TTS generation in the background — do not await.
-        // The Library page polls until pages become ready.
-        fetch(`${SUPABASE_URL}/functions/v1/generate-audiobook`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          },
-          body: JSON.stringify({ orderId }),
-        }).catch((e) => console.error("generate-audiobook trigger failed:", e));
+        const audioRows = pageTexts.map((text, i) => ({
+          order_id: orderId,
+          page_number: i + 1,
+          page_text: text,
+        }));
+        const { error: audioErr } = await supabase.from("storybook_audio").insert(audioRows);
+        if (audioErr) {
+          console.error("Audio seed failed:", audioErr);
+        } else {
+          audioSeeded = true;
+          // Kick off ElevenLabs TTS generation in the background — do not await.
+          // The Library page polls until pages become ready.
+          fetch(`${SUPABASE_URL}/functions/v1/generate-audiobook`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+            },
+            body: JSON.stringify({ orderId }),
+          }).catch((e) => console.error("generate-audiobook trigger failed:", e));
+        }
       }
     }
 
@@ -726,6 +823,25 @@ serve(async (req) => {
           `Order ${orderId} completed with missing images: illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}`
         );
       }
+      // Record which paid add-ons this build actually fulfilled so a later
+      // upsell purchase knows whether it still needs work done.
+      const { data: latest } = await supabase
+        .from("storybook_orders")
+        .select("selected_addons")
+        .eq("id", orderId)
+        .maybeSingle();
+      const latestAddons = ((latest as any)?.selected_addons || addons) as Record<string, any>;
+      const mergedAddons = {
+        ...latestAddons,
+        coloring: !!latestAddons.coloring || !!addons.coloring,
+        audiobook: !!latestAddons.audiobook || !!addons.audiobook,
+        addonFulfillment: {
+          ...(latestAddons.addonFulfillment || {}),
+          ...(bonusColoringCount > 0 && { coloring: true }),
+          ...(audioSeeded && { audiobook: true }),
+        },
+      };
+
       await supabase
         .from("storybook_orders")
         .update({
@@ -733,6 +849,7 @@ serve(async (req) => {
           pdf_storage_path: fileName,
           pdf_url: pdfUrl,
           completed_at: new Date().toISOString(),
+          selected_addons: mergedAddons,
           failure_category: illustrationsShort || coloringShort || bonusShort ? "image_generation_partial" : null,
           failure_hint: illustrationsShort || coloringShort || bonusShort
             ? `PDF delivered; some images were skipped to prevent checkout fulfillment timeout. Illustrations ${illustrationCount}/${expectedIllustrations}, scene coloring ${coloringCount}/${expectedColoring}, bonus coloring ${bonusColoringCount}/${expectedBonusColoring}.`
