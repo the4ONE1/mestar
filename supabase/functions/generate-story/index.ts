@@ -239,6 +239,24 @@ If a supporting character is included (including a pet or animal companion):
   never takes over, and never overshadows the main character.
 - The supporting character is never a villain, obstacle, rival,
   or source of conflict.
+- MANDATORY: in EVERY scene the supporting character appears in, they are
+  helping in some manner — encouraging, guiding, protecting, cheering,
+  spotting something, or lending a hand/paw. They are never neutral
+  background, never in the way, never the cause of a setback, and never
+  need rescuing from a mistake they made.
+
+NAMING RULE (ABSOLUTE):
+- Use ONLY the supporting character name exactly as provided. Never invent,
+  shorten, extend, or substitute a name for them.
+- If no supporting character name is provided (N/A), never invent one and
+  never write a scene that requires one: refer to them only by relationship
+  or descriptive term ("her best friend", "the little dog", "his brother").
+- Never place the supporting character in a situation where a name is
+  needed — no introductions, no name tags, no roll calls, no "What's your
+  name?" exchanges, no signed notes or labelled belongings.
+- Do not invent names for any other characters either; use roles instead
+  ("the baker", "the wise old owl", "Mom").
+
 
 If not included:
 - Loved one stands independently as hero.
