@@ -717,15 +717,18 @@ serve(async (req) => {
           illustrationPaths.push(path);
         }
       }
-      // Persist scene coloring pages too so a later rebuild (bonus coloring
-      // add-on bought on the upsell page) doesn't pay to regenerate them.
+    }
+
+    // Persist scene coloring pages too so a later rebuild (bonus coloring
+    // add-on bought on the upsell page) doesn't pay to regenerate them.
+    if (orderId && !reusedImages) {
       for (let i = 0; i < coloringImages.length; i++) {
         const img = coloringImages[i];
         if (!img) continue;
-        await supabase.storage
+        const { error: colErr } = await supabase.storage
           .from("storybooks")
-          .upload(`${orderId}/coloring-${i + 1}.png`, img, { contentType: "image/png", upsert: true })
-          .catch?.(() => {});
+          .upload(`${orderId}/coloring-${i + 1}.png`, img, { contentType: "image/png", upsert: true });
+        if (colErr) console.error("Coloring page upload failed:", colErr);
       }
     }
 
