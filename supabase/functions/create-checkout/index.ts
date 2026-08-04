@@ -10,6 +10,8 @@ const CLASSIC_AUDIOBOOK_PRICE_ID = "audiobook_classic_onetime";
 const INTERACTIVE_AUDIOBOOK_PRICE_ID = "audiobook_interactive_read_along_onetime";
 const COLORING_PRICE_ID = "coloring_pages_addon_onetime";
 const SUPPORTING_CHARACTER_PRICE_ID = "supporting_character_addon_onetime";
+const BASE_STORY_PRICE_ID = "personalized_storybook_onetime";
+
 
 function addonsForPrices(priceIds: string[]) {
   const hasClassic = priceIds.includes(CLASSIC_AUDIOBOOK_PRICE_ID);
@@ -68,9 +70,18 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    // Never re-bind a checkout session to an already-paid/processing order.
-    if (!["pending_payment", "pending"].includes(String((order as any).status))) {
+    // The post-payment upsell reuses the same orderId to buy add-ons only. That
+    // order is already paid/generating, so only enforce the "awaiting payment"
+    // guard when the base storybook price is part of this checkout.
+    const isAddonOnly = !priceIds.includes(BASE_STORY_PRICE_ID);
+    if (!isAddonOnly && !["pending_payment", "pending"].includes(String((order as any).status))) {
       return new Response(JSON.stringify({ error: "This order is no longer awaiting payment." }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (isAddonOnly && ["failed", "refunded"].includes(String((order as any).status))) {
+      return new Response(JSON.stringify({ error: "Add-ons are unavailable for this order." }), {
         status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -83,6 +94,7 @@ Deno.serve(async (req) => {
         .update({ selected_addons: { ...((order as any).selected_addons || {}), ...purchasedAddons } })
         .eq("id", orderId);
     }
+
 
 
     // Resolve prices via lookup_keys
@@ -108,11 +120,15 @@ Deno.serve(async (req) => {
       return_url: returnUrl,
       ...(customerEmail && { customer_email: customerEmail }),
       payment_intent_data: { description: product.name },
-      metadata: { orderId, priceIds: priceIds.join(",") },
+      metadata: { orderId, priceIds: priceIds.join(","), ...(isAddonOnly && { addonOnly: "1" }) },
     } as any);
 
-    // Persist stripe_session_id on the order
-    await supabase.from("storybook_orders").update({ stripe_session_id: session.id }).eq("id", orderId);
+    // Persist stripe_session_id only for the base checkout — an add-on upsell
+    // session must not overwrite the original paid session on the order.
+    if (!isAddonOnly) {
+      await supabase.from("storybook_orders").update({ stripe_session_id: session.id }).eq("id", orderId);
+    }
+
 
     return new Response(JSON.stringify({ clientSecret: session.client_secret, sessionId: session.id }), {
       status: 200,
