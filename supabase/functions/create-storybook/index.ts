@@ -555,9 +555,11 @@ serve(async (req) => {
           coloring_prompts: coloringPrompts || null,
           illustration_prompts: illustrationPrompts || null,
           selected_addons: addons,
-          status: "generating_images",
+          // Resume passes leave status untouched so a delivered book stays "complete".
+          ...(isResume ? {} : { status: "generating_images" }),
         })
         .eq("id", orderId);
+
       if (updateError) console.error("Order update failed:", updateError);
     } else {
       const { data: order, error: orderError } = await supabase
