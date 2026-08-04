@@ -674,12 +674,13 @@ serve(async (req) => {
     }
     while (illustrationImages.length < 5) illustrationImages.push(null);
 
-    // Generate only the missing scene coloring pages
+    // Generate only the missing scene coloring pages.
+    // Reference the ORIGINAL uploaded photo(s) for the same page — never the
+    // generated illustration — so every render is anchored to one source of truth.
     for (let i = 0; i < (coloringPrompts?.length || 0); i++) {
       if (coloringImages[i]) continue;
       if (!canGenerate(`scene-coloring ${i + 1}`)) continue;
-      const illusRef = bytesToDataUrl(illustrationImages[i] || null, "image/png");
-      const refs = illusRef ? [illusRef] : (mainPhotoRef ? [mainPhotoRef] : []);
+      const refs = refsForPage(i, mainPhotoRef, supportingPhotoRef);
       imagesThisPass++;
       const img = await generateImage(
         withColoringLock(coloringPrompts[i], refs.length > 0, childAge),
@@ -691,6 +692,7 @@ serve(async (req) => {
       if (img) newColoringIdx.add(i);
       await new Promise((r) => setTimeout(r, 400));
     }
+
 
     // Bonus coloring book (paid add-on): 8 extra pages, only when addons.coloring.
     // If coloring was purchased after the story was generated, the caller may not
