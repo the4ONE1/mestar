@@ -983,17 +983,19 @@ serve(async (req) => {
       }
     }
 
-    // The edge runtime caps a request at 150s, which isn't enough for every image.
-    // If pictures are still missing, fire a follow-up pass that generates only the
-    // gaps (all finished images are reused from storage) and rebuilds the PDF at
-    // the same path, so the customer's existing link picks up the complete book.
+    // Each pass only makes a small batch of images (IMAGES_PER_PASS) so it always
+    // finishes inside the platform's time AND CPU limits. If pictures are still
+    // missing, chain another pass that generates only the gaps (finished images are
+    // reused from storage) and rebuilds the PDF at the same path, so the customer's
+    // existing link picks up the complete book. Stop immediately if credits ran out.
     const stillShort =
       (addons.illustrations && illustrationCount < expectedIllustrations) ||
       coloringCount < expectedColoring ||
       (addons.coloring && bonusColoringCount < expectedBonusColoring);
     const pass = Number(resumePass) || 0;
-    if (orderId && stillShort && pass < 4) {
+    if (orderId && stillShort && !creditsExhausted && pass < 10) {
       console.log(`Scheduling resume pass ${pass + 1} for order ${orderId}`);
+
       const resume = fetch(`${SUPABASE_URL}/functions/v1/create-storybook`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
