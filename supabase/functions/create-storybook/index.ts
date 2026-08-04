@@ -480,16 +480,34 @@ serve(async (req) => {
     // NOTE: scene-derived coloring pages (one per story scene) are ALWAYS included
     // free with every storybook. `addons.coloring` gates the PAID bonus coloring
     // book (8 extra pages with the child across random themes).
-    const addons = {
+    let orderId: string | undefined = incomingOrderId;
+
+    // Merge with whatever is already on the order. An upsell purchase can land
+    // mid-generation and set audiobook/coloring on the row — overwriting with the
+    // snapshot passed in by the caller would silently drop a paid add-on.
+    let existingAddons: Record<string, unknown> = {};
+    if (orderId) {
+      const { data: existingOrder } = await supabase
+        .from("storybook_orders")
+        .select("selected_addons")
+        .eq("id", orderId)
+        .maybeSingle();
+      existingAddons = ((existingOrder as any)?.selected_addons || {}) as Record<string, unknown>;
+    }
+
+    const addons: Record<string, any> = {
       illustrations: true,
       coloring: false,
       character: false,
       audiobook: false,
+      ...existingAddons,
       ...(selectedAddons || {}),
+      // paid flags are sticky — never downgrade a purchased add-on
+      coloring: !!(existingAddons as any).coloring || !!(selectedAddons || {}).coloring,
+      audiobook: !!(existingAddons as any).audiobook || !!(selectedAddons || {}).audiobook,
     };
 
     // If we were given an existing pending order, update it. Otherwise create new (legacy in-browser flow).
-    let orderId: string | undefined = incomingOrderId;
     if (orderId) {
       const { error: updateError } = await supabase
         .from("storybook_orders")
