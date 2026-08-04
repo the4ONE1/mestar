@@ -212,18 +212,24 @@ export default function Preview() {
 
     setUnlocking(true);
     try {
+      const addons = {
+        illustrations: true,
+        coloring: true,
+        character: characterReady,
+        audiobook: false,
+      };
       const { data: orderData, error } = await supabase.functions.invoke("create-pending-order", {
         body: {
           childName: draft.childName,
           childAge: "4-7",
           theme: draft.theme,
           strength: "",
-          supportingCharacterName: "",
-          hasSupportingCharacter: false,
-          selectedAddons: { illustrations: true, coloring: true, character: false, audiobook: false },
+          supportingCharacterName: characterReady ? characterName.trim() : "",
+          hasSupportingCharacter: characterReady,
+          selectedAddons: addons,
           customerEmail: "",
           childPhotoDataUrl: draft.photoData,
-          supportingCharacterPhotoDataUrl: null,
+          supportingCharacterPhotoDataUrl: characterReady ? characterPhoto : null,
         },
       });
 
@@ -241,14 +247,19 @@ export default function Preview() {
         theme: draft.theme,
         photoData: draft.photoData,
         photoUrl: draft.photoData,
-        selectedAddons: { illustrations: true, coloring: true, character: false, audiobook: false },
+        supportingCharacterName: characterReady ? characterName.trim() : "",
+        selectedAddons: addons,
         savedAt: Date.now(),
       };
       localStorage.setItem("mestar-pending-story", JSON.stringify(pendingStory));
 
+      const priceIds = [STRIPE_BASE_PRICE];
+      if (characterReady && STRIPE_CHARACTER_PRICE) priceIds.push(STRIPE_CHARACTER_PRICE);
+
       navigate(
-        `/checkout?order_id=${orderId}&prices=${encodeURIComponent(STRIPE_BASE_PRICE)}&next=${encodeURIComponent("/upsell")}`,
+        `/checkout?order_id=${orderId}&prices=${encodeURIComponent(priceIds.join(","))}&next=${encodeURIComponent("/upsell")}`,
       );
+
     } catch (error) {
       console.error("Preview checkout start failed:", error);
       toast.error("Could not start checkout. Please try again.", { position: "top-center" });
