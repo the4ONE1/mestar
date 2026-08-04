@@ -49,18 +49,36 @@ Deno.serve(async (req) => {
     }
     const addonOnly = (session.metadata as Record<string, string> | null)?.addonOnly === "1";
     const { data: order } = await supabase.from("storybook_orders").select("status").eq("id", orderId).maybeSingle();
+
+    // Add-on upsell payment: the base order is already paid and generating/complete.
+    // Don't re-trigger the story pipeline, but DO fulfil the paid add-ons
+    // (audiobook narration / bonus coloring pages) in the background.
+    const fireAddonFulfillment = () => {
+      // @ts-ignore EdgeRuntime is available in the Supabase edge runtime
+      EdgeRuntime.waitUntil(
+        fetch(`${SUPABASE_URL}/functions/v1/fulfill-addons`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE}` },
+          body: JSON.stringify({ orderId }),
+        }).catch((e) => console.error("fulfill-addons trigger failed:", e)),
+      );
+    };
+
+    if (addonOnly && order && !["pending_payment", "pending", "queued"].includes(String((order as any).status))) {
+      fireAddonFulfillment();
+      return new Response(JSON.stringify({ ok: true, addonFulfillmentStarted: true }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (order && (order as any).status === "complete") {
+      if (addonOnly) fireAddonFulfillment();
       return new Response(JSON.stringify({ ok: true, alreadyProcessing: true }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    // Add-on upsell payment: the base order is already paid and generating —
-    // record it as confirmed without re-triggering the pipeline.
-    if (addonOnly && order && !["pending_payment", "pending", "queued"].includes(String((order as any).status))) {
-      return new Response(JSON.stringify({ ok: true, addonRecorded: true }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+
+
 
 
     // Fire the webhook internally to reuse generation logic
