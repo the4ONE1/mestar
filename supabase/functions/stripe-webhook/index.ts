@@ -151,19 +151,40 @@ async function handlePaid(sessionOrIntent: any, env: StripeEnv, kind: "session" 
       .is("customer_email", null);
   }
 
-  await svc()
-    .from("storybook_orders")
-    .update({
-      ...(sessionId && { stripe_session_id: sessionId }),
-      ...(paymentIntentId && { stripe_payment_intent_id: paymentIntentId }),
-    })
-    .eq("id", orderId);
+  // Add-on upsell sessions reuse the same orderId after the base payment. They
+  // must not overwrite the base session/payment-intent, and must not re-trigger
+  // generation for an order that is already generating or complete.
+  const addonOnly = String(sessionOrIntent?.metadata?.addonOnly || "") === "1";
+
+  if (!addonOnly) {
+    await svc()
+      .from("storybook_orders")
+      .update({
+        ...(sessionId && { stripe_session_id: sessionId }),
+        ...(paymentIntentId && { stripe_payment_intent_id: paymentIntentId }),
+      })
+      .eq("id", orderId);
+  }
+
+  if (addonOnly) {
+    const { data: current } = await svc()
+      .from("storybook_orders")
+      .select("status")
+      .eq("id", orderId)
+      .maybeSingle();
+    const status = String((current as any)?.status || "");
+    if (!["pending_payment", "pending", "queued"].includes(status)) {
+      console.log(`Add-on payment for order ${orderId} (status ${status}) — not re-firing generation`);
+      return { orderId, sessionId, paymentIntentId, result: "addon_recorded" };
+    }
+  }
 
   // Run generation in the background so the webhook returns 200 to Stripe
   // within its ~10s timeout. fireGeneration writes status='failed' on error.
   // @ts-ignore EdgeRuntime is available in the Supabase edge runtime
   EdgeRuntime.waitUntil(fireGeneration(orderId).catch((e) => console.error("fireGeneration failed:", e)));
   return { orderId, sessionId, paymentIntentId, result: "pipeline_started" };
+
 }
 
 Deno.serve(async (req) => {
