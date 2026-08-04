@@ -509,6 +509,7 @@ serve(async (req) => {
     // must NEVER move the order out of "complete" — if it crashes on a platform
     // limit the order would otherwise hang on "in progress" forever.
     const isResume = (Number(resumePass) || 0) > 0;
+    creditsExhausted = false; // reset per request — workers are reused across orders
     let imagesThisPass = 0;
     const canGenerate = (label: string): boolean => {
       if (creditsExhausted) return false;
