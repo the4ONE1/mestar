@@ -504,6 +504,22 @@ serve(async (req) => {
     // book (8 extra pages with the child across random themes).
     let orderId: string | undefined = incomingOrderId;
 
+    // A resume pass fills in images the previous pass ran out of room for. The
+    // customer already has a working PDF at their delivery link, so a resume pass
+    // must NEVER move the order out of "complete" — if it crashes on a platform
+    // limit the order would otherwise hang on "in progress" forever.
+    const isResume = (Number(resumePass) || 0) > 0;
+    let imagesThisPass = 0;
+    const canGenerate = (label: string): boolean => {
+      if (creditsExhausted) return false;
+      if (imagesThisPass >= IMAGES_PER_PASS) {
+        console.log(`[${label}] deferring to next pass — ${IMAGES_PER_PASS} images already made this pass`);
+        return false;
+      }
+      return hasImageBudget(imageDeadlineMs, label);
+    };
+
+
     // Merge with whatever is already on the order. An upsell purchase can land
     // mid-generation and set audiobook/coloring on the row — overwriting with the
     // snapshot passed in by the caller would silently drop a paid add-on.
