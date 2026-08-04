@@ -174,8 +174,18 @@ async function handlePaid(sessionOrIntent: any, env: StripeEnv, kind: "session" 
       .maybeSingle();
     const status = String((current as any)?.status || "");
     if (!["pending_payment", "pending", "queued"].includes(status)) {
-      console.log(`Add-on payment for order ${orderId} (status ${status}) — not re-firing generation`);
-      return { orderId, sessionId, paymentIntentId, result: "addon_recorded" };
+      // Base story is already generating/complete — don't re-fire the pipeline,
+      // but DO fulfil the newly purchased add-ons (audiobook TTS / bonus
+      // coloring pages), which the base run never produced.
+      // @ts-ignore EdgeRuntime is available in the Supabase edge runtime
+      EdgeRuntime.waitUntil(
+        fetch(`${SUPABASE_URL}/functions/v1/fulfill-addons`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE}` },
+          body: JSON.stringify({ orderId }),
+        }).catch((e) => console.error("fulfill-addons trigger failed:", e)),
+      );
+      return { orderId, sessionId, paymentIntentId, result: "addon_fulfillment_started" };
     }
   }
 
