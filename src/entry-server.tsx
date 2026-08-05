@@ -19,6 +19,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ProductsIndex from "./pages/ProductsIndex";
 import ProductLanding from "./pages/ProductLanding";
 import Membership from "./pages/Membership";
+import HowItWorks from "./pages/HowItWorks";
 import "./index.css";
 
 export function render(url: string) {
