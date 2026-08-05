@@ -27,7 +27,7 @@ export const SUPPORTING_CHARACTER_ADDON: SupportingCharacterAddon = {
   title: "Supporting Character Add-On",
   price: SUPPORTING_CHARACTER_PRICE,
   description:
-    "Add a sibling, friend, pet, or even yourself as a supporting character by uploading a second photo.",
+    "Add a second character to the story by uploading a second photo and giving them a name.",
 };
 
 export const AUDIOBOOK_ADDON = {
