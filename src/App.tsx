@@ -26,6 +26,7 @@ import ProductLanding from "./pages/ProductLanding";
 import AdminPayments from "./pages/AdminPayments";
 import Membership from "./pages/Membership";
 import AdLinks from "./pages/AdLinks";
+import HowItWorks from "./pages/HowItWorks";
 
 
 
