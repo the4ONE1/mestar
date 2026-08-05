@@ -1,23 +1,29 @@
-# Bring the sample-level quality into every real story
+# Make sure customer emails actually go out
 
-## What I verified in the code (not guessing)
+Goal: every future customer gets their story email. Past orders are ignored (they were your own tests).
 
-- **Illustrations**: the live pipeline already calls the newest image model (`google/gemini-3-pro-image`) in `create-storybook`. So the image *model* upgrade did ship.
-- **Story text**: every text call in `generate-story` (story, coloring prompts, illustration prompts, repair passes) still runs on `google/gemini-2.5-flash` — a **previous-generation** model. The quality upgrade was never applied to the writing/prompt-writing side. This is the biggest gap.
-- **Time budget**: images are capped at 100s per pass with 4 images per pass and a 45s per-image timeout. When the budget runs out, remaining images are **skipped** — so a real order can ship with fewer/weaker pages than a sample.
-- **Test orders just run** used free-text themes ("ocean adventure", "underwater ocean adventure") instead of the site's canonical theme names, and produced 3.6k–4.2k character stories — shorter than the longer-story target set earlier. Nothing was in fallback mode (no credit exhaustion), so the shortfall comes from the model + prompt path, not an error.
+## Where things stand (already verified)
 
-## What I'll change
+- The email queue was jammed and is now unjammed — it drained to empty and is sending again.
+- Your own alert email delivered successfully through your verified sender.
+- The text-message leg bounced (the carrier rejected the email-to-text address). This affects only alerts to you, not customers.
 
-1. **Upgrade the story engine model.** Move all `generate-story` text calls from `google/gemini-2.5-flash` to a current-generation model, keeping the same request shape and the same locked Layer 1/2/3 rulesets. The story, coloring prompts and illustration prompts all get the newer model's reasoning quality.
-2. **Verify per-model request fields** against the model's API reference before shipping (token-limit field, temperature support) so nothing 400s.
-3. **Raise the illustration prompt fidelity**: pass the canonical theme wording plus the age-based detail guidance into Layer 3 so scene prompts describe the sample-grade art direction instead of a generic scene line.
-4. **Stop silent quality loss**: when the image budget is exhausted, the remaining pages are picked up by the next resume pass instead of being dropped, so no delivered book has missing or lower-effort pages.
-5. **Confirm story length** actually hits the longer-story target with the new model; if the model returns short, tighten the length instruction rather than post-processing.
-6. **Run one real end-to-end test order** after the change and compare its illustrations and story against the sample section before calling it done.
+## What this plan does
+
+One small, cheap change plus one check.
+
+1. **A safety net so a jam can never go unnoticed again.** Add a check to the monitor that already runs every 10 minutes: if any email has been sitting unsent for more than 10 minutes, email you. Today nothing watches the email queue itself, so a jam is silent.
+
+2. **One live confirmation.** Send a single real story-delivery email to your inbox and confirm it arrives, so we know the customer path works end to end.
+
+That is it. No changes to the story engine, checkout, or past orders.
+
+## Deliberately not doing
+
+- Not repairing or re-sending any past order.
+- Not fixing the bounced text messages. If you want phone alerts later, the reliable route is a real SMS service, which costs a little money. Email alerts work now, so this is optional.
 
 ## Technical notes
 
-- Files touched: `supabase/functions/generate-story/index.ts` (model ids + Layer 3 inputs + length enforcement), `supabase/functions/create-storybook/index.ts` (budget handoff so skipped images resume).
-- No schema, checkout, or pricing changes.
-- Existing completed orders are untouched; this affects all future generations.
+- Extend `order-health-check` (mode=failures) with a query against `email_send_log` for rows still `pending` older than 10 minutes, plus any `dlq` rows, and route them through the existing owner-alert path.
+- Deploy that one function, then trigger one `send-transactional-email` call to your address to confirm delivery.
