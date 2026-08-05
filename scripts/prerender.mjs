@@ -17,6 +17,7 @@ const ROUTES = [
   "/",
   "/about",
   "/faq",
+  "/how-it-works",
   "/reviews",
   "/why-read-together",
   "/privacy-policy",

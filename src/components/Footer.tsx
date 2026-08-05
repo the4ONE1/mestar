@@ -52,6 +52,7 @@ export const Footer = () => {
           </div>
 
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground mt-2 text-center">
+            <a href="/how-it-works" className="hover:text-foreground transition-colors">How It Works</a>
             <a href="/about" className="hover:text-foreground transition-colors">About</a>
             <a href="/faq" className="hover:text-foreground transition-colors">FAQ</a>
             <a href="/reviews" className="hover:text-foreground transition-colors">Reviews</a>

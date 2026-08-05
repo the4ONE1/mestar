@@ -14,7 +14,10 @@ export const Navbar = () => {
           <Link to="/products" className="text-sm font-bold text-primary hover:text-primary/80 transition-colors">
             Shop
           </Link>
-          <Link to="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link to="/how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            How It Works
+          </Link>
+          <Link to="/about" className="hidden sm:inline text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             About
           </Link>
           <Link to="/faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
