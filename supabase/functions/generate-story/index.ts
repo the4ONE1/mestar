@@ -266,10 +266,24 @@ APPEARANCE RULE (ABSOLUTE):
   "a little dragon", "her tall older brother", "the fluffy grey cat").
 - Refer to them ONLY by their given name and/or a neutral relationship term
   ("Buddy", "his best friend", "her companion").
-- Describe only what they DO (nudging, bounding ahead, pointing, cheering),
-  never what they ARE or what they look like. Avoid species-specific body
-  parts or sounds (no whiskers, fins, chittering, purring, hooves, wings)
-  unless the customer's own supporting character name makes it explicit.
+- Describe only what they DO, never what they ARE or what they look like.
+- BANNED WORDS for the supporting character, with no exceptions: fin, fins,
+  paw, paws, wing, wings, hoof, hooves, tail, snout, muzzle, beak, whiskers,
+  fur, feathers, scales, mane, trunk, flipper, claws, nose, ears, hair,
+  and every species or breed noun (dog, puppy, cat, otter, fish, dolphin,
+  bird, dragon, bear, horse, etc.). Also banned: species-specific sounds
+  (barked, meowed, chittered, purred, squeaked, chirped, neighed) and
+  species-specific movement (flew, galloped, slithered, waddled, wagged).
+- Use ONLY body-neutral, universal actions: nudged, leaned close, moved
+  closer, gestured toward, stayed by his side, kept pace, waited, guided him,
+  looked at him steadily, made a soft encouraging sound.
+- Example of a CORRECT sentence: "Buddy nudged him gently, then turned toward
+  the narrow passage." Example of a FORBIDDEN sentence: "Buddy pointed a fin
+  toward the passage" or "Buddy nudged the pebble with his nose."
+- Before you output, re-read every sentence containing the supporting
+  character and rewrite any that names a body part, species, sound, or
+  species-specific way of moving.
+
 
 
 
