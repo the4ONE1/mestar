@@ -51,6 +51,54 @@ function cleanText(value: unknown, fallback: string): string {
   return text.length > 0 ? text : fallback;
 }
 
+// ---------------------------------------------------------------------------
+// Supporting-character appearance guard.
+// The supporting character's true look comes from the customer's uploaded photo,
+// so the STORY TEXT must never state a species, breed or body part. Prompt rules
+// alone leak occasionally ("pointed a fin"), so we detect and repair after the
+// fact — first with a targeted AI rewrite, then with a deterministic scrub.
+// ---------------------------------------------------------------------------
+const BANNED_SUPPORTING_TERMS = [
+  "fin", "fins", "flipper", "flippers", "paw", "paws", "wing", "wings",
+  "hoof", "hooves", "tail", "tails", "snout", "muzzle", "beak", "whisker",
+  "whiskers", "fur", "furry", "feather", "feathers", "scales", "mane",
+  "trunk", "claw", "claws", "fin-like",
+  "dog", "puppy", "pup", "cat", "kitten", "otter", "fish", "dolphin",
+  "bird", "dragon", "bear", "horse", "pony", "rabbit", "bunny", "hamster",
+  "turtle", "lizard", "monkey", "fox", "wolf",
+  "barked", "meowed", "chittered", "purred", "squeaked", "chirped",
+  "neighed", "howled", "wagged", "galloped", "slithered", "waddled",
+];
+
+function findBannedSupportingSentences(story: string, name: string): string[] {
+  const ref = name ? name : "";
+  const sentences = story.split(/(?<=[.!?])\s+/);
+  const banned = new RegExp(`\\b(${BANNED_SUPPORTING_TERMS.join("|")})\\b`, "i");
+  return sentences.filter((s) => {
+    const mentionsSupport = ref
+      ? s.toLowerCase().includes(ref.toLowerCase())
+      : /\b(friend|companion|buddy|sibling|brother|sister|pet)\b/i.test(s);
+    return mentionsSupport && banned.test(s);
+  });
+}
+
+function scrubSupportingSentence(sentence: string): string {
+  let out = sentence;
+  const parts = BANNED_SUPPORTING_TERMS.join("|");
+  // "pointed a fin toward" -> "gestured toward"
+  out = out.replace(new RegExp(`\\b(pointed|gestured)\\s+(a|an|one|its|his|her|their)\\s+(${parts})\\b`, "gi"), "gestured");
+  // "with his nose", "using her paw" -> removed
+  out = out.replace(new RegExp(`\\s*\\b(with|using)\\s+(its|his|her|their)\\s+(${parts})\\b`, "gi"), "");
+  // "his fin brushing" -> "brushing"
+  out = out.replace(new RegExp(`\\b(its|his|her|their)\\s+(${parts})\\s+(brushing|touching|resting|nudging)\\b`, "gi"), "$3 against");
+  // bare possessive body parts -> neutral
+  out = out.replace(new RegExp(`\\b(its|his|her|their)\\s+(${parts})\\b`, "gi"), "$1 side");
+  // species nouns after an article -> neutral phrasing
+  out = out.replace(new RegExp(`\\b(a|an|the)\\s+(little\\s+|small\\s+|playful\\s+|fluffy\\s+)?(${parts})\\b`, "gi"), "a friend");
+  return out.replace(/\s{2,}/g, " ").replace(/\s+([,.!?])/g, "$1");
+}
+
+
 function buildFallbackStory(params: {
   childName: string;
   childAge: string;
@@ -266,10 +314,24 @@ APPEARANCE RULE (ABSOLUTE):
   "a little dragon", "her tall older brother", "the fluffy grey cat").
 - Refer to them ONLY by their given name and/or a neutral relationship term
   ("Buddy", "his best friend", "her companion").
-- Describe only what they DO (nudging, bounding ahead, pointing, cheering),
-  never what they ARE or what they look like. Avoid species-specific body
-  parts or sounds (no whiskers, fins, chittering, purring, hooves, wings)
-  unless the customer's own supporting character name makes it explicit.
+- Describe only what they DO, never what they ARE or what they look like.
+- BANNED WORDS for the supporting character, with no exceptions: fin, fins,
+  paw, paws, wing, wings, hoof, hooves, tail, snout, muzzle, beak, whiskers,
+  fur, feathers, scales, mane, trunk, flipper, claws, nose, ears, hair,
+  and every species or breed noun (dog, puppy, cat, otter, fish, dolphin,
+  bird, dragon, bear, horse, etc.). Also banned: species-specific sounds
+  (barked, meowed, chittered, purred, squeaked, chirped, neighed) and
+  species-specific movement (flew, galloped, slithered, waddled, wagged).
+- Use ONLY body-neutral, universal actions: nudged, leaned close, moved
+  closer, gestured toward, stayed by his side, kept pace, waited, guided him,
+  looked at him steadily, made a soft encouraging sound.
+- Example of a CORRECT sentence: "Buddy nudged him gently, then turned toward
+  the narrow passage." Example of a FORBIDDEN sentence: "Buddy pointed a fin
+  toward the passage" or "Buddy nudged the pebble with his nose."
+- Before you output, re-read every sentence containing the supporting
+  character and rewrite any that names a body part, species, sound, or
+  species-specific way of moving.
+
 
 
 
@@ -1057,11 +1119,51 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
       }
     }
 
+    // Guard the supporting character's appearance in the final story text.
+    let finalStory = storyMatch?.[1]?.trim() || storyOutput;
+    if (hasSupportingCharacter) {
+      let offenders = findBannedSupportingSentences(finalStory, supportingCharacterName || "");
+      if (offenders.length > 0) {
+        console.log(`[appearance-guard] ${offenders.length} offending sentence(s), attempting AI repair`);
+        const repair = await callChatWithRetry(
+          {
+            model: "google/gemini-2.5-flash",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You fix children's story text. The companion character's looks come from a customer photo, so the text must never name a species, breed, or body part for them (no fin, paw, tail, nose, fur, dog, cat, otter, etc.) and never use species-specific sounds or movement. Rewrite ONLY the sentences given, keeping the same meaning, tone, and length, using body-neutral actions (nudged, leaned close, moved closer, gestured toward, stayed beside). Return ONLY the rewritten sentences, one per line, in the same order, with no numbering or commentary.",
+              },
+              { role: "user", content: offenders.join("\n") },
+            ],
+          },
+          "appearance-guard-repair"
+        );
+        const fixedLines = String(repair?.choices?.[0]?.message?.content ?? "")
+          .split("\n")
+          .map((l: string) => l.replace(/^\s*[-*\d.)]+\s*/, "").trim())
+          .filter((l: string) => l.length > 0);
+        if (fixedLines.length === offenders.length) {
+          offenders.forEach((bad, i) => {
+            finalStory = finalStory.replace(bad, fixedLines[i]);
+          });
+        }
+        // Deterministic safety net for anything the rewrite missed.
+        offenders = findBannedSupportingSentences(finalStory, supportingCharacterName || "");
+        for (const bad of offenders) {
+          finalStory = finalStory.replace(bad, scrubSupportingSentence(bad));
+        }
+        const remaining = findBannedSupportingSentences(finalStory, supportingCharacterName || "");
+        console.log(`[appearance-guard] remaining offenders after guard: ${remaining.length}`);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         title: titleMatch?.[1]?.trim() || `${childName}'s ${theme}`,
-        story: storyMatch?.[1]?.trim() || storyOutput,
+        story: finalStory,
+
         scenes: sceneMatches,
         coloringPrompts,
         bonusColoringPrompts,

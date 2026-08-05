@@ -23,5 +23,5 @@ Next step is one verification run to prove the text obeys it.
 
 - Insert a `pending_payment` row in `storybook_orders` with `has_supporting_character = true`, `supporting_character_name = 'Buddy'`, and `selected_addons.character = true`; upload both photos to the `customer-photos` bucket and reference them via `child_photo_path` / `supporting_character_photo_path`.
 - Drive generation through `synthetic-live-webhook-test` with the existing order id, which fires `generate-story` then `create-storybook` via `EdgeRuntime.waitUntil`.
-- Grep the resulting `story_text` for species and appearance terms; inspect the assembled PDF pages as images.
+- Grep the resulting `story_text` for 6 and appearance terms; inspect the assembled PDF pages as images.
 - Revert the `orderId` passthrough in `supabase/functions/synthetic-live-webhook-test/index.ts` after the run so the test surface stays minimal.
