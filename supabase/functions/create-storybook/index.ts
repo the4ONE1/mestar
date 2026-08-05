@@ -149,13 +149,13 @@ async function photoPathToDataUrl(
   }
 }
 
-// Decide which reference photos to attach for a given page (1-indexed)
-// Pages 1, 3, 5 = main only; Page 2 = both; Page 4 = supporting only (when present)
+// Decide which reference photos to attach for a given page (1-indexed).
+// The supporting character is a brief helper, so they appear on ONE page only
+// (page 2). Every other page references the main child's original photo alone.
 function refsForPage(pageIndex: number, mainRef: string | null, supportingRef: string | null): string[] {
   const page = pageIndex + 1;
   if (!supportingRef) return mainRef ? [mainRef] : [];
   if (page === 2) return [mainRef, supportingRef].filter(Boolean) as string[];
-  if (page === 4) return [supportingRef];
   return mainRef ? [mainRef] : [];
 }
 
