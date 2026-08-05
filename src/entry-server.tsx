@@ -45,6 +45,7 @@ export function render(url: string) {
                   <Route path="/products/:slug" element={<ProductLanding />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/faq" element={<FAQ />} />
+                  <Route path="/how-it-works" element={<HowItWorks />} />
                   <Route path="/reviews" element={<Reviews />} />
                   <Route path="/why-read-together" element={<WhyReadTogether />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
