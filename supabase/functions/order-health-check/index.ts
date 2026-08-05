@@ -183,9 +183,35 @@ serve(async (req) => {
       id: string; event_type: string; result: string; message: string | null; created_at: string;
     }>;
 
+    // Email delivery problems: anything still unsent after 10 minutes, or dead-lettered.
+    // A single email writes several rows sharing one message_id, so keep only the
+    // latest row per message_id before judging it.
+    const { data: emailRows } = await supabase
+      .from("email_send_log")
+      .select("message_id, template_name, recipient_email, status, error_message, created_at")
+      .gte("created_at", lookbackStart)
+      .order("created_at", { ascending: false })
+      .limit(1000);
+    const latestByMessage = new Map<string, {
+      message_id: string; template_name: string; recipient_email: string;
+      status: string; error_message: string | null; created_at: string;
+    }>();
+    for (const r of (emailRows || []) as Array<Record<string, string | null>>) {
+      const key = (r.message_id as string) || `${r.template_name}:${r.created_at}`;
+      if (!latestByMessage.has(key)) {
+        latestByMessage.set(key, r as never);
+      }
+    }
+    const emailStaleCutoff = Date.now() - 10 * 60 * 1000;
+    const emailProblems = [...latestByMessage.values()].filter((r) =>
+      r.status === "dlq" ||
+      r.status === "failed" ||
+      (r.status === "pending" && new Date(r.created_at).getTime() < emailStaleCutoff)
+    );
+
     const failed = (failedOrders || []) as OrderRow[];
     const stuck = (stuckOrders || []) as OrderRow[];
-    const total = failed.length + stuck.length + paymentProblems.length;
+    const total = failed.length + stuck.length + paymentProblems.length + emailProblems.length;
 
     if (total === 0) {
       return new Response(
