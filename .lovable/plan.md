@@ -1,41 +1,30 @@
-Turn Ads Back On — Tracking Setup Only
+How It Works Page
 
-Goal: Get Google Ads and Meta ads running again without repeating completed end-to-end tests or generating any paid content.
+Goal: Add a dedicated "How It Works" page that explains the 4-step process in plain language, is crawlable by Google, and is a clean landing page for Google Ads.
 
-Current status (corrected after re-checking with proper deduplication):
-- Payments are live (Stripe pk_live in production env).
-- Email queue is healthy: 31 unique emails sent in the last 24 hours, 0 pending/stuck. The earlier "pending" count was from counting intermediate rows; after deduplicating by message_id, nothing is stuck.
-- The one failed order in the last 24 hours is a test order (Milo, sent to mestar.orders@gmail.com) that hit the create-storybook idle timeout. Not a real customer.
-- Payment webhooks are firing: 9 successful pipeline starts and 2 addon fulfillments recorded in the last 24 hours.
-- Missing: Google Ads, Meta Pixel, and GA4 tracking IDs are not configured in the env files. The frontend code in src/components/Analytics.tsx is ready to load them as soon as the IDs are set.
+The URL to use in Google Ads (after this is published):
 
-Plan:
+https://mystarstories.app/how-it-works
 
-1. Set up conversion tracking for Google Ads and Meta
-   a. Add VITE_GA_ID (Google Analytics 4) and VITE_GOOGLE_ADS_ID for Google Ads. Add VITE_GOOGLE_ADS_CONVERSION_LABEL if they have a conversion label.
-   b. Add VITE_META_PIXEL_ID for Meta/Facebook Pixel tracking.
-   c. These are the only changes needed; src/components/Analytics.tsx already injects the snippets when these env vars are present, and the Google Ads conversion event in src/pages/Checkout.tsx already fires after payment confirmation.
+What the page will contain:
+- Headline explaining that you get a personalized digital storybook in minutes.
+- Four numbered steps: 1) Upload your child's photo, 2) Pick their name, age and theme, 3) We create the story and illustrations, 4) Download the PDF instantly (coloring pages included).
+- Short note about the optional add-ons (supporting character, bonus coloring book) with current prices pulled from the existing product config.
+- Clear statement that it's a digital PDF download — no shipping, no waiting.
+- A "Create Their Story" call-to-action button going to the personalization funnel.
+- FAQ-style short answers about delivery time and what's included, marked up so Google can show them as rich results.
 
-2. Publish the tracking update
-   a. Publish the latest code to mystarstories.app once the env vars are set.
-   b. Spot-check the published site to confirm the tracking snippets are present in the page source.
+SEO setup:
+- Title, meta description, and canonical URL via the existing SEO component.
+- HowTo + FAQPage structured data so Google understands the steps.
+- Page added to the prerender list so crawlers see full HTML instantly (not a blank page).
+- Page added to the sitemap and linked from the site navigation and footer so Google finds it.
 
-3. Give the green light for ad campaigns
-   a. Confirm the readiness checklist passed.
-   b. Reconfirm the recommended ad URLs from /ad-links (homepage, product page, reviews, why-read-together) for Google and Meta campaigns.
+Technical notes:
+- New file: src/pages/HowItWorks.tsx
+- Route /how-it-works registered in src/App.tsx and src/entry-server.tsx
+- Added to the ROUTES array in scripts/prerender.mjs, to public/sitemap.xml, and to public/llms.txt
+- Nav link in src/components/Navbar.tsx and footer link in src/components/Footer.tsx
+- No backend, database, payment, or generation changes. No tests run, no content generated, no credits spent beyond building the page.
 
-What I need from you:
-- Your Google Ads ID (starts with AW-)
-- Your Google Ads conversion label (the part after the / in the conversion action tag)
-- Your GA4 measurement ID (starts with G-)
-- Your Meta Pixel ID (numeric)
-
-If you don't have these handy, I can walk you through where to find each one in the respective dashboards.
-
-Out of scope / things I will NOT do without your explicit go-ahead:
-- Run a real Stripe test order that costs you money.
-- Spend AI/generation credits on a test story.
-- Repeat the already completed end-to-end or email testing.
-- Change product prices, landing pages, or the ad creative itself.
-
-Credit budget note: no tests or content generation will be run. The only implementation will be adding the tracking IDs you provide and publishing that update.
+Note: the Ads URL above only works after the site is published. Say the word and I'll publish it once the page is built.
