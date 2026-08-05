@@ -51,6 +51,54 @@ function cleanText(value: unknown, fallback: string): string {
   return text.length > 0 ? text : fallback;
 }
 
+// ---------------------------------------------------------------------------
+// Supporting-character appearance guard.
+// The supporting character's true look comes from the customer's uploaded photo,
+// so the STORY TEXT must never state a species, breed or body part. Prompt rules
+// alone leak occasionally ("pointed a fin"), so we detect and repair after the
+// fact — first with a targeted AI rewrite, then with a deterministic scrub.
+// ---------------------------------------------------------------------------
+const BANNED_SUPPORTING_TERMS = [
+  "fin", "fins", "flipper", "flippers", "paw", "paws", "wing", "wings",
+  "hoof", "hooves", "tail", "tails", "snout", "muzzle", "beak", "whisker",
+  "whiskers", "fur", "furry", "feather", "feathers", "scales", "mane",
+  "trunk", "claw", "claws", "fin-like",
+  "dog", "puppy", "pup", "cat", "kitten", "otter", "fish", "dolphin",
+  "bird", "dragon", "bear", "horse", "pony", "rabbit", "bunny", "hamster",
+  "turtle", "lizard", "monkey", "fox", "wolf",
+  "barked", "meowed", "chittered", "purred", "squeaked", "chirped",
+  "neighed", "howled", "wagged", "galloped", "slithered", "waddled",
+];
+
+function findBannedSupportingSentences(story: string, name: string): string[] {
+  const ref = name ? name : "";
+  const sentences = story.split(/(?<=[.!?])\s+/);
+  const banned = new RegExp(`\\b(${BANNED_SUPPORTING_TERMS.join("|")})\\b`, "i");
+  return sentences.filter((s) => {
+    const mentionsSupport = ref
+      ? s.toLowerCase().includes(ref.toLowerCase())
+      : /\b(friend|companion|buddy|sibling|brother|sister|pet)\b/i.test(s);
+    return mentionsSupport && banned.test(s);
+  });
+}
+
+function scrubSupportingSentence(sentence: string): string {
+  let out = sentence;
+  const parts = BANNED_SUPPORTING_TERMS.join("|");
+  // "pointed a fin toward" -> "gestured toward"
+  out = out.replace(new RegExp(`\\b(pointed|gestured)\\s+(a|an|one|its|his|her|their)\\s+(${parts})\\b`, "gi"), "gestured");
+  // "with his nose", "using her paw" -> removed
+  out = out.replace(new RegExp(`\\s*\\b(with|using)\\s+(its|his|her|their)\\s+(${parts})\\b`, "gi"), "");
+  // "his fin brushing" -> "brushing"
+  out = out.replace(new RegExp(`\\b(its|his|her|their)\\s+(${parts})\\s+(brushing|touching|resting|nudging)\\b`, "gi"), "$3 against");
+  // bare possessive body parts -> neutral
+  out = out.replace(new RegExp(`\\b(its|his|her|their)\\s+(${parts})\\b`, "gi"), "$1 side");
+  // species nouns after an article -> neutral phrasing
+  out = out.replace(new RegExp(`\\b(a|an|the)\\s+(little\\s+|small\\s+|playful\\s+|fluffy\\s+)?(${parts})\\b`, "gi"), "a friend");
+  return out.replace(/\s{2,}/g, " ").replace(/\s+([,.!?])/g, "$1");
+}
+
+
 function buildFallbackStory(params: {
   childName: string;
   childAge: string;
