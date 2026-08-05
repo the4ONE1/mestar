@@ -351,7 +351,7 @@ export default function Preview() {
                 </span>
               </h1>
               <p className="text-muted-foreground leading-relaxed">
-                This is Page&nbsp;1 of your personalised storybook. Unlock all&nbsp;20+ pages, custom illustrations, and printable coloring pages — starring&nbsp;
+                This is Page&nbsp;1 of your personalised storybook. Unlock the full story, custom illustrations, and printable coloring pages — starring&nbsp;
                 <strong className="text-foreground">{draft.childName}</strong> as the hero.
               </p>
             </div>
@@ -362,7 +362,7 @@ export default function Preview() {
                 Included in your $19.99 storybook
               </p>
               {[
-                "20+ page personalised story featuring " + draft.childName,
+                "Full personalised story, length matched to their age group, featuring " + draft.childName,
                 "Full-colour AI-illustrated scenes",
                 "Printable coloring pages (one per scene)",
                 "Instant downloadable PDF",
