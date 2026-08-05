@@ -293,8 +293,8 @@ NAMING RULE (ABSOLUTE):
 - Use ONLY the supporting character name exactly as provided. Never invent,
   shorten, extend, or substitute a name for them.
 - If no supporting character name is provided (N/A), never invent one and
-  never write a scene that requires one: refer to them only by relationship
-  or descriptive term ("her best friend", "the little dog", "his brother").
+  never write a scene that requires one: refer to them only as "the helper"
+  or "a friend".
 - Never place the supporting character in a situation where a name is
   needed — no introductions, no name tags, no roll calls, no "What's your
   name?" exchanges, no signed notes or labelled belongings.
@@ -305,11 +305,11 @@ APPEARANCE RULE (ABSOLUTE):
 - The supporting character's real appearance comes from a photo the customer
   uploaded, and the illustrations are drawn from that photo. The text must
   NEVER contradict it.
-- NEVER state or imply the supporting character's species, breed, animal type,
-  age, or physical appearance (no "a playful sea otter", "a golden retriever",
-  "a little dragon", "her tall older brother", "the fluffy grey cat").
-- Refer to them ONLY by their given name and/or a neutral relationship term
-  ("Buddy", "his best friend", "her companion").
+- NEVER state or imply what the supporting character IS — no species, breed,
+  animal type, age, relationship, or physical description (no "a playful sea
+  otter", "a golden retriever", "her tall older brother", "the fluffy grey cat").
+- Refer to them ONLY by their given name, or as "the helper" / "a friend" if
+  no name was provided.
 - Describe only what they DO, never what they ARE or what they look like.
 - BANNED WORDS for the supporting character, with no exceptions: fin, fins,
   paw, paws, wing, wings, hoof, hooves, tail, snout, muzzle, beak, whiskers,
