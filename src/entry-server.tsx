@@ -20,6 +20,7 @@ import ProductsIndex from "./pages/ProductsIndex";
 import ProductLanding from "./pages/ProductLanding";
 import Membership from "./pages/Membership";
 import HowItWorks from "./pages/HowItWorks";
+import StoryThemes from "./pages/StoryThemes";
 import "./index.css";
 
 export function render(url: string) {
@@ -46,6 +47,7 @@ export function render(url: string) {
                   <Route path="/about" element={<About />} />
                   <Route path="/faq" element={<FAQ />} />
                   <Route path="/how-it-works" element={<HowItWorks />} />
+                  <Route path="/story-themes" element={<StoryThemes />} />
                   <Route path="/reviews" element={<Reviews />} />
                   <Route path="/why-read-together" element={<WhyReadTogether />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />

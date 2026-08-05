@@ -18,6 +18,7 @@ const ROUTES = [
   "/about",
   "/faq",
   "/how-it-works",
+  "/story-themes",
   "/reviews",
   "/why-read-together",
   "/privacy-policy",

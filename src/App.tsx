@@ -27,6 +27,7 @@ import AdminPayments from "./pages/AdminPayments";
 import Membership from "./pages/Membership";
 import AdLinks from "./pages/AdLinks";
 import HowItWorks from "./pages/HowItWorks";
+import StoryThemes from "./pages/StoryThemes";
 
 
 
@@ -53,6 +54,7 @@ const AppContent = () => {
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/story-themes" element={<StoryThemes />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/why-read-together" element={<WhyReadTogether />} />
           <Route path="/checkout" element={<Checkout />} />
