@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { sendOwnerAlert } from "../_shared/alert.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -941,6 +942,14 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
         });
       }
       if (layer1Response.status === 402) {
+        void sendOwnerAlert({
+          key: "ai_credits_exhausted",
+          severity: "critical",
+          subject: "MESTAR: AI credits exhausted — story writing fell back to a template",
+          smsText: "MESTAR ALERT: AI credits ran out. Stories are falling back to a basic template. Top up credits now.",
+          details: "Story generation (Layer 1) was refused with HTTP 402 (insufficient credits).\nA fallback template story was used so the customer still received a book, but quality is well below normal.\nTop up credits, then regenerate the affected orders.",
+          throttleMinutes: 30,
+        });
         const fallback = buildFallbackStory({
           childName,
           childAge,

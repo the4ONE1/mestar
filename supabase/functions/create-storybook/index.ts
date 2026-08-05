@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
+import { sendOwnerAlert } from "../_shared/alert.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -72,6 +73,14 @@ async function generateImage(
       if (res.status === 402) {
         creditsExhausted = true;
         console.error(`[${label}] AI credits exhausted (402) — remaining images cannot be generated`);
+        void sendOwnerAlert({
+          key: "ai_credits_exhausted",
+          severity: "critical",
+          subject: "MESTAR: AI credits exhausted — illustrations are failing",
+          smsText: "MESTAR ALERT: AI credits ran out. Illustrations/coloring pages are NOT generating. Top up credits now.",
+          details: `Image generation was refused with HTTP 402 (insufficient credits) at ${label}.\nCustomer storybooks cannot be completed until credits are topped up.\nAfter topping up, retry the affected orders from the admin payments page.`,
+          throttleMinutes: 30,
+        });
       }
       return res.status === 429 ? "RETRY" : null;
     }
