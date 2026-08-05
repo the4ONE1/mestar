@@ -1,41 +1,29 @@
-# Supporting Character Flow and Story Rules
+# Second Character: Name Field + Helper-Only Role
 
 ## Goal
-Make the Supporting Character add-on human-only, collect the second character’s name immediately after their photo, and limit their role to one brief but meaningful helping moment while the child remains the hero.
+Keep the second-character section exactly where it is. Add a name box under the photo upload, drop pet mentions from the wording, and make the story rules treat the second character as a brief helper only.
 
 ## Changes
 
-1. **Change the personalization order**
-   - Show **Upload their photo** first.
-   - After a valid photo is uploaded, reveal a required **First name** field directly beneath it.
-   - Keep the add-on unavailable for checkout until both the photo and name are present.
-   - Update the guidance so customers understand the second photo must be a sibling, friend, parent, or other person.
+1. **Name box under the photo**
+   - Keep the second-character section in its current place on the personalize page.
+   - Order becomes: upload photo, then a name box directly beneath it.
+   - Both photo and name required before the add-on counts toward the order.
 
-2. **Remove pets from the Supporting Character offer**
-   - Remove “pet,” animal examples, and pet-specific FAQs from the Preview page, product details, cart offer, supporting-character product page, and local product description.
-   - Replace them with clear human-only wording such as “sibling, friend, parent, or loved one.”
-   - Add front-end photo guidance stating that animal photos are not accepted for this add-on.
+2. **Wording cleanup**
+   - Remove the word "pet" and animal examples from the second-character offer wording.
+   - Do not add any rules about who can or can't be uploaded, and do not mention relationships.
 
-3. **Restrict the supporting character’s story role**
-   - Remove animal/pet behavior from the story-generation rules.
-   - Require the supplied first name to be used exactly as entered, with no invented or altered names.
-   - Require the supporting character to appear in only one brief scene or moment.
-   - In that moment, they provide a clue, encouragement, guidance, or a small helpful action that helps the main character find the solution.
-   - The main character still understands the clue, makes the final decision, performs the resolving action, and receives the credit.
-
-4. **Lock the supporting character’s image to the uploaded photo**
-   - Use the original second uploaded photo as the reference every time the supporting character is rendered.
-   - Never use an earlier generated illustration as the reference for a later image.
-   - Limit the supporting character to the same single helping scene in illustration and coloring-page prompts; all other scenes feature only the main character.
-   - Remove the existing supporting-character-only page so the helper is not over-featured.
-
-5. **Verify the complete flow**
-   - Confirm the mobile flow is: select add-on → upload human photo → enter name → continue to checkout.
-   - Confirm pet wording is gone from every customer-facing Supporting Character offer.
-   - Run a focused generation test and verify the second person appears only briefly, matches the uploaded photo, helps the hero find the solution, and does not solve the problem for them.
+3. **Story rules — helper only**
+   - The second character appears only briefly, not throughout the story.
+   - In that brief appearance they help the main character reach the solution (a clue, encouragement, guidance, or a small helpful action).
+   - The main character still makes the final decision, performs the resolving action, and gets the credit.
+   - Use the name exactly as entered; never invent or change it.
+   - Never state what the second character is or what they look like — their appearance comes from the uploaded photo only.
 
 ## Technical details
-- Update the Preview form state/render order and Supporting Character copy across the relevant frontend pages and cart.
-- Tighten the Layer 1 supporting-character prompt and fallback-story behavior.
-- Update page-reference selection in storybook image generation so only the designated helping scene receives both original photo references.
-- Preserve the existing $9.99 Supporting Character price and payment behavior.
+- Reorder the photo and name inputs in the personalize page's second-character block and gate the add-on on both being filled.
+- Remove pet wording from the second-character copy in the personalize page, product detail, cart offer, add-on landing page, and product config description.
+- Tighten the supporting-character section of the story-generation prompt to a single brief helper appearance and remove animal/pet phrasing.
+- Keep the second character limited to one scene in the illustration and coloring-page references, always anchored to the original uploaded photo.
+- No pricing or checkout changes.
