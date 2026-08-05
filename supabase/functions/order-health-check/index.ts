@@ -253,6 +253,21 @@ serve(async (req) => {
         ``,
       );
     }
+    if (emailProblems.length > 0) {
+      lines.push(
+        `--- EMAIL DELIVERY PROBLEMS ---`,
+        ``,
+        ...emailProblems.map(
+          (e) =>
+            `• ${e.created_at} — ${e.template_name} → ${e.recipient_email} [${e.status}]${
+              e.error_message ? ` (${e.error_message})` : ""
+            }`,
+        ),
+        ``,
+        `Customer emails are NOT going out. This blocks story delivery.`,
+        ``,
+      );
+    }
     lines.push(
       `Action: check edge function logs for these order IDs.`,
       `Time: ${new Date().toISOString()}`,
@@ -262,9 +277,10 @@ serve(async (req) => {
     if (failed.length) smsParts.push(`${failed.length} failed order(s)`);
     if (stuck.length) smsParts.push(`${stuck.length} stuck order(s)`);
     if (paymentProblems.length) smsParts.push(`${paymentProblems.length} payment/webhook issue(s)`);
+    if (emailProblems.length) smsParts.push(`${emailProblems.length} undelivered email(s)`);
 
     await sendOwnerAlert({
-      key: `order_health:${failed.length}:${stuck.length}:${paymentProblems.length}`,
+      key: `order_health:${failed.length}:${stuck.length}:${paymentProblems.length}:${emailProblems.length}`,
       severity: "critical",
       subject: `MESTAR alert — ${smsParts.join(", ")}`,
       smsText: `MESTAR ALERT: ${smsParts.join(", ")}. Customer deliveries may be affected. Check email/admin now.`,
