@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      alert_log: {
+        Row: {
+          alert_key: string
+          channels: Json
+          created_at: string
+          details: string | null
+          id: string
+          severity: string
+          subject: string
+        }
+        Insert: {
+          alert_key: string
+          channels?: Json
+          created_at?: string
+          details?: string | null
+          id?: string
+          severity?: string
+          subject: string
+        }
+        Update: {
+          alert_key?: string
+          channels?: Json
+          created_at?: string
+          details?: string | null
+          id?: string
+          severity?: string
+          subject?: string
+        }
+        Relationships: []
+      }
       customer_ratings: {
         Row: {
           comment: string | null

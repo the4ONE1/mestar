@@ -8,6 +8,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import nodemailer from "npm:nodemailer@6.9.12";
+import { sendOwnerAlert } from "../_shared/alert.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,9 +67,13 @@ serve(async (req) => {
   // Require Supabase service-role key as bearer (server-to-server only; called by pg_cron).
   // The anon/publishable key is intentionally NOT accepted — it's embedded in the client
   // bundle and would let anyone trigger admin alert emails or read aggregate metrics.
+  const CRON_TOKEN = Deno.env.get("CRON_ALERT_TOKEN");
   const auth = req.headers.get("Authorization") || "";
   const presented = auth.startsWith("Bearer ") ? auth.slice("Bearer ".length) : "";
-  if (!presented || !SERVICE_ROLE || presented !== SERVICE_ROLE) {
+  const authorized =
+    !!presented &&
+    ((!!SERVICE_ROLE && presented === SERVICE_ROLE) || (!!CRON_TOKEN && presented === CRON_TOKEN));
+  if (!authorized) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -142,6 +147,18 @@ serve(async (req) => {
         GMAIL_APP_PASSWORD,
       );
 
+      // Daily digest is email-only (no text) unless something actually failed.
+      if (failed.length > 0) {
+        await sendOwnerAlert({
+          key: "daily_failures",
+          severity: "warn",
+          subject: `MESTAR daily: ${failed.length} failed order(s) in 24h`,
+          smsText: `MESTAR: ${failed.length} failed order(s) in the last 24h out of ${orders.length}. Check your email for details.`,
+          details: lines.join("\n"),
+          throttleMinutes: 720,
+        });
+      }
+
       return new Response(JSON.stringify({ ok: true, mode, totals: byStatus }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -168,9 +185,21 @@ serve(async (req) => {
       .order("created_at", { ascending: false });
     if (stuckErr) throw stuckErr;
 
+    // Payment webhook problems (signature failures, unprocessed payments, errors)
+    const { data: badPayments } = await supabase
+      .from("payment_events")
+      .select("id, event_type, result, message, created_at")
+      .neq("result", "ok")
+      .gte("created_at", lookbackStart)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    const paymentProblems = (badPayments || []) as Array<{
+      id: string; event_type: string; result: string; message: string | null; created_at: string;
+    }>;
+
     const failed = (failedOrders || []) as OrderRow[];
     const stuck = (stuckOrders || []) as OrderRow[];
-    const total = failed.length + stuck.length;
+    const total = failed.length + stuck.length + paymentProblems.length;
 
     if (total === 0) {
       return new Response(
@@ -202,19 +231,44 @@ serve(async (req) => {
         ``,
       );
     }
+    if (paymentProblems.length > 0) {
+      lines.push(
+        `--- PAYMENT / WEBHOOK PROBLEMS ---`,
+        ``,
+        ...paymentProblems.map(
+          (p) => `• ${p.created_at} — ${p.event_type} → ${p.result}${p.message ? ` (${p.message})` : ""}`,
+        ),
+        ``,
+      );
+    }
     lines.push(
       `Action: check edge function logs for these order IDs.`,
       `Time: ${new Date().toISOString()}`,
     );
 
-    await sendEmail(
-      `🚨 MESTAR alert — ${failed.length} failed, ${stuck.length} stuck`,
-      lines.join("\n"),
-      GMAIL_APP_PASSWORD,
-    );
+    const smsParts: string[] = [];
+    if (failed.length) smsParts.push(`${failed.length} failed order(s)`);
+    if (stuck.length) smsParts.push(`${stuck.length} stuck order(s)`);
+    if (paymentProblems.length) smsParts.push(`${paymentProblems.length} payment/webhook issue(s)`);
+
+    await sendOwnerAlert({
+      key: `order_health:${failed.length}:${stuck.length}:${paymentProblems.length}`,
+      severity: "critical",
+      subject: `MESTAR alert — ${smsParts.join(", ")}`,
+      smsText: `MESTAR ALERT: ${smsParts.join(", ")}. Customer deliveries may be affected. Check email/admin now.`,
+      details: lines.join("\n"),
+      throttleMinutes: 45,
+    });
 
     return new Response(
-      JSON.stringify({ ok: true, mode: "failures", alerts: total, failed: failed.length, stuck: stuck.length }),
+      JSON.stringify({
+        ok: true,
+        mode: "failures",
+        alerts: total,
+        failed: failed.length,
+        stuck: stuck.length,
+        paymentProblems: paymentProblems.length,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
