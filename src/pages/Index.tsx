@@ -596,7 +596,7 @@ const Index = () => {
                   </span>
                 </h1>
                 <p className="text-base text-foreground/80 leading-relaxed mb-2">
-                  Upload a photo, pick a theme, and see a free preview in seconds. Then unlock the full 20-page personalised storybook for just&nbsp;<strong>$19.99</strong>.
+                  Upload a photo, pick a theme, and see a free preview in seconds. Then unlock the full personalised storybook for just&nbsp;<strong>$19.99</strong>.
                 </p>
               </div>
 

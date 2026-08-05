@@ -115,7 +115,7 @@ const RealMagicShowcase = () => {
         <div className="flex items-center justify-center gap-2 mt-8 text-sm text-muted-foreground">
           <ArrowRight className="h-4 w-4 text-primary" />
           <span>
-            Upload → Preview in seconds → Full 20+ page storybook delivered to your inbox.
+            Upload → Preview in seconds → Full personalised storybook delivered to your inbox.
           </span>
         </div>
       </div>
