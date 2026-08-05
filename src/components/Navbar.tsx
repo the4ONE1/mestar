@@ -17,6 +17,9 @@ export const Navbar = () => {
           <Link to="/how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             How It Works
           </Link>
+          <Link to="/story-themes" className="hidden sm:inline text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            Themes
+          </Link>
           <Link to="/about" className="hidden sm:inline text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             About
           </Link>
