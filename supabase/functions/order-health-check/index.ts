@@ -296,6 +296,7 @@ serve(async (req) => {
         failed: failed.length,
         stuck: stuck.length,
         paymentProblems: paymentProblems.length,
+        emailProblems: emailProblems.length,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
