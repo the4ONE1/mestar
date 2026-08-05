@@ -206,21 +206,21 @@ Age Group 1–3:
 - Very basic vocabulary
 
 Age Group 4–7:
-- Target ~700–900 words
+- Suggested starting point ~700–900 words (exceed freely if quality calls for it)
 - Clear beginning → challenge → resolution
 - One decision moment
 - Light dialogue allowed
 - Slightly richer vocabulary and sentence structure
 
 Age Group 8–10:
-- Target ~1100–1400 words
+- Suggested starting point ~1100–1400 words (exceed freely if quality calls for it)
 - Clear problem with cause-and-effect progression
 - Emotional growth moment
 - More descriptive language and varied sentence structure
 - Can include mild tension
 
 Age Group 11+:
-- Target ~1600–2000 words
+- Suggested starting point ~1600–2000 words (exceed freely if quality calls for it)
 - Multi-step challenge
 - Clear internal decision and reflective growth
 - Sophisticated vocabulary and narrative depth
@@ -901,14 +901,13 @@ Supporting Character Included: ${hasSupportingCharacter ? "Yes" : "No"}
 Supporting Character Name: ${hasSupportingCharacter && supportingCharacterName ? supportingCharacterName : "N/A"}
 Desired Strength to Nurture: ${strength || "organic positive growth"}
 
-STORY LENGTH GUIDANCE — PREMIUM QUALITY FIRST:
-Aim for the STORY section to land around ${minWords}–${maxWords} words.
-This is a target, not a hard rule. The premium, real-sounding story matters
-most. If the story needs more space to deliver a full emotional arc, allow
-it to run longer. Do NOT pad filler, force extra sentences, or repeat phrases
-to hit a minimum. Do NOT cut a satisfying ending short to stay under a maximum.
-Silently check word count only as a sanity check, then prioritize emotional
-truth, natural pacing, and a memorable resolution.
+STORY LENGTH — SUGGESTION ONLY, QUALITY WINS:
+A suggested starting point for the STORY section is around ${minWords}–${maxWords} words.
+This is ONLY a suggestion — never a minimum, maximum, or rule. If a richer
+scene, deeper emotion, or a fuller resolution needs more room, ALWAYS exceed
+the suggestion; going longer is preferred over trimming. Never cut or rush a
+story to stay near the number, and never pad with filler to reach it. Ignore
+the count entirely whenever it conflicts with story quality.
 
 SCENE COUNT OVERRIDE (CRITICAL):
 Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"} (SCENE_1_SUMMARY${
@@ -925,7 +924,7 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3.1-pro-preview",
         messages: [
           { role: "system", content: LAYER_1_SYSTEM_PROMPT },
           { role: "user", content: layer1Input },
@@ -1018,7 +1017,7 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
     // additional bonus coloring book featuring the child across random themes/backgrounds.
     const layer2Promise = callChatWithRetry(
       {
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3.6-flash",
         messages: [
           { role: "system", content: LAYER_2_SYSTEM_PROMPT },
           {
@@ -1033,7 +1032,7 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
     const layer3Promise = addons.illustrations
       ? callChatWithRetry(
           {
-            model: "google/gemini-2.5-flash",
+            model: "google/gemini-3.6-flash",
             messages: [
               { role: "system", content: LAYER_3_SYSTEM_PROMPT },
               {
@@ -1052,7 +1051,7 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
     const bonusColoringPromise = addons.coloring
       ? callChatWithRetry(
           {
-            model: "google/gemini-2.5-flash",
+            model: "google/gemini-3.6-flash",
             messages: [
               { role: "system", content: LAYER_2_SYSTEM_PROMPT },
               {
@@ -1125,7 +1124,7 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
         console.log(`[appearance-guard] ${offenders.length} offending sentence(s), attempting AI repair`);
         const repair = await callChatWithRetry(
           {
-            model: "google/gemini-2.5-flash",
+            model: "google/gemini-3.6-flash",
             messages: [
               {
                 role: "system",
