@@ -8,7 +8,7 @@
 // failures does not turn into a burst of text messages.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import nodemailer from "npm:nodemailer@6.9.12";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,7 +25,6 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
 
   const CRON_TOKEN = Deno.env.get("CRON_ALERT_TOKEN");
   const auth = req.headers.get("Authorization") || "";
@@ -39,7 +38,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-  if (!SUPABASE_URL || !GMAIL_APP_PASSWORD) {
+  if (!SUPABASE_URL || !SERVICE_ROLE) {
     return new Response(JSON.stringify({ error: "Missing env vars" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -93,17 +92,7 @@ serve(async (req) => {
       }
     }
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: { user: ALERT_EMAIL, pass: GMAIL_APP_PASSWORD },
-    });
-
     const emailBody = [
-      subject,
-      "=".repeat(Math.min(subject.length, 60)),
-      "",
       details || "(no extra detail)",
       "",
       `Severity: ${severity}`,
@@ -111,33 +100,47 @@ serve(async (req) => {
     ].join("\n");
 
     const results: Record<string, string> = {};
+    const stamp = Date.now();
 
-    try {
-      await transporter.sendMail({
-        from: `MESTAR Alerts <${ALERT_EMAIL}>`,
-        to: ALERT_EMAIL,
-        subject: `${severity === "critical" ? "🚨 " : ""}${subject}`,
-        text: emailBody,
-      });
-      results.email = "sent";
-    } catch (e) {
-      results.email = `failed: ${e instanceof Error ? e.message : String(e)}`;
-      console.error("alert email failed", e);
+    // Both channels go out through the project's own verified sender
+    // (notify.mestar.pro). The SMS leg is just an email to the carrier's
+    // email-to-SMS gateway, so it needs no phone/SMS provider account.
+    async function deliver(
+      channel: "email" | "sms",
+      to: string,
+      data: Record<string, unknown>,
+    ) {
+      try {
+        const { error } = await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "owner-alert",
+            recipientEmail: to,
+            idempotencyKey: `alert-${channel}-${key}-${stamp}`,
+            templateData: data,
+          },
+        });
+        results[channel] = error ? `failed: ${error.message}` : "sent";
+        if (error) console.error(`alert ${channel} failed`, error);
+      } catch (e) {
+        results[channel] = `failed: ${e instanceof Error ? e.message : String(e)}`;
+        console.error(`alert ${channel} failed`, e);
+      }
     }
 
+    await deliver("email", ALERT_EMAIL, {
+      subject,
+      details: emailBody,
+      severity,
+      sentAt: new Date().toISOString(),
+    });
+
     if (wantSms) {
-      try {
-        await transporter.sendMail({
-          from: `MESTAR <${ALERT_EMAIL}>`,
-          to: ALERT_SMS,
-          subject: "",
-          text: smsText,
-        });
-        results.sms = "sent";
-      } catch (e) {
-        results.sms = `failed: ${e instanceof Error ? e.message : String(e)}`;
-        console.error("alert sms failed", e);
-      }
+      await deliver("sms", ALERT_SMS, {
+        subject: smsText,
+        details: smsText,
+        severity,
+        compact: true,
+      });
     }
 
     await supabase.from("alert_log").insert({
