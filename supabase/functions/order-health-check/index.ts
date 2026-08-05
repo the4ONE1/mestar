@@ -67,9 +67,13 @@ serve(async (req) => {
   // Require Supabase service-role key as bearer (server-to-server only; called by pg_cron).
   // The anon/publishable key is intentionally NOT accepted — it's embedded in the client
   // bundle and would let anyone trigger admin alert emails or read aggregate metrics.
+  const CRON_TOKEN = Deno.env.get("CRON_ALERT_TOKEN");
   const auth = req.headers.get("Authorization") || "";
   const presented = auth.startsWith("Bearer ") ? auth.slice("Bearer ".length) : "";
-  if (!presented || !SERVICE_ROLE || presented !== SERVICE_ROLE) {
+  const authorized =
+    !!presented &&
+    ((!!SERVICE_ROLE && presented === SERVICE_ROLE) || (!!CRON_TOKEN && presented === CRON_TOKEN));
+  if (!authorized) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

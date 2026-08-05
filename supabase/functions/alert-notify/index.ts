@@ -27,9 +27,13 @@ serve(async (req) => {
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
 
+  const CRON_TOKEN = Deno.env.get("CRON_ALERT_TOKEN");
   const auth = req.headers.get("Authorization") || "";
   const presented = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!presented || !SERVICE_ROLE || presented !== SERVICE_ROLE) {
+  const authorized =
+    !!presented &&
+    ((!!SERVICE_ROLE && presented === SERVICE_ROLE) || (!!CRON_TOKEN && presented === CRON_TOKEN));
+  if (!authorized) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
