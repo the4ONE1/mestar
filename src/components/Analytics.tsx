@@ -16,7 +16,10 @@ import { useEffect } from "react";
 const GA_ID = import.meta.env.VITE_GA_ID as string | undefined;
 const GTM_ID = import.meta.env.VITE_GTM_ID as string | undefined;
 const META_PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID as string | undefined;
-const GOOGLE_ADS_ID = import.meta.env.VITE_GOOGLE_ADS_ID as string | undefined;
+// Google Ads conversion ID for MESTAR (fieldgar368@gmail.com account).
+// Env var wins if set, otherwise this default is used.
+const GOOGLE_ADS_ID =
+  (import.meta.env.VITE_GOOGLE_ADS_ID as string | undefined) || "AW-18330852845";
 
 function loadScript(src: string, id: string, async = true) {
   if (document.getElementById(id)) return;
