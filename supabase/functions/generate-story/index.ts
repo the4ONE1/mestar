@@ -186,16 +186,18 @@ This story must:
 AGE GROUP STRUCTURE RULES
 ----------------------------------------
 
-STORY LENGTH GUIDELINE — QUALITY FIRST:
-The target word ranges below are helpful directional guides, NOT hard
-floors or ceilings. The premium, real-sounding story is the absolute
-priority. If the narrative needs more room to breathe, deepen a moment,
-extend the resolution, or add a meaningful beat, ALLOW the story to be
-longer. Do not cut a satisfying story short simply to hit a number. Word
-counts apply to the STORY section only (not TITLE or SCENE summaries).
+STORY LENGTH GUIDELINE — QUALITY ALWAYS WINS:
+The word counts below are SUGGESTED STARTING POINTS ONLY. They are not
+floors, not ceilings, and not rules. Story quality is the only real
+requirement. When a richer scene, deeper emotion, fuller resolution, or a
+more satisfying arc calls for more words, ALWAYS exceed the suggestion —
+exceeding is preferred over trimming. Never cut, rush, or compress a story
+to stay near a number, and never pad with filler to reach one. Counts apply
+to the STORY section only (not TITLE or SCENE summaries).
 
 Age Group 1–3:
-- Target ~350–500 words
+- Suggested starting point ~350–500 words (exceed freely if quality calls for it)
+
 - Gentle rhythm
 - Simple sensory imagery
 - Minimal conflict
