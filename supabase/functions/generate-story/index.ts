@@ -268,30 +268,26 @@ If no trait provided:
 SUPPORTING CHARACTER RULES
 ----------------------------------------
 
-If a supporting character is included (including a pet or animal companion):
-- They MUST actively help the main character in a meaningful way.
-- Their help must take the form of either:
-    (a) positive advice, encouragement, or a key insight, OR
-    (b) a concrete helpful action (sharing a tool, showing the way,
-        offering a clue, lending a hand or paw).
-  Pets and animals that cannot speak help through action, gesture,
-  or by drawing attention to a clue — never through dialogue.
-- Their contribution must be CRITICAL to the main character reaching
-  the solution — without it, the main character could not have solved
-  the challenge as they did.
-- HOWEVER, the main character is still the hero:
-    * The main character makes the final key decision.
-    * The main character performs the resolving action.
-    * The main character receives the credit for the resolution.
-- The supporting character never solves the problem for them,
-  never takes over, and never overshadows the main character.
-- The supporting character is never a villain, obstacle, rival,
-  or source of conflict.
-- MANDATORY: in EVERY scene the supporting character appears in, they are
-  helping in some manner — encouraging, guiding, protecting, cheering,
-  spotting something, or lending a hand/paw. They are never neutral
-  background, never in the way, never the cause of a setback, and never
-  need rescuing from a mistake they made.
+If a supporting character is included:
+- ROLE: HELPER ONLY. They exist for one purpose — to help the main
+  character reach the solution.
+- BRIEF APPEARANCE (MANDATORY): they appear only briefly — in ONE scene,
+  for a short moment. They are not present for the rest of the story and
+  are not mentioned in other scenes.
+- In that one moment, their help takes the form of either:
+    (a) encouragement, a key insight, or advice, OR
+    (b) a concrete helpful action (showing the way, offering a clue,
+        lending a hand, drawing attention to something important).
+- Their contribution must matter — it points the main character toward
+  the solution — but the main character always:
+    * understands the help,
+    * makes the final key decision,
+    * performs the resolving action,
+    * receives all the credit.
+- They never solve the problem, never take over, never overshadow the
+  main character, and never appear again after their moment.
+- They are never a villain, obstacle, rival, source of conflict, or the
+  cause of a setback, and they never need rescuing.
 
 NAMING RULE (ABSOLUTE):
 - Use ONLY the supporting character name exactly as provided. Never invent,
