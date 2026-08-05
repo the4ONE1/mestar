@@ -8,7 +8,10 @@ import { trackGoogleAdsConversion } from "@/components/Analytics";
 import { Loader2 } from "lucide-react";
 
 const clientToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined;
-const GOOGLE_ADS_CONVERSION_LABEL = import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL as string | undefined;
+// Purchases conversion action label for AW-18330852845 (env var overrides).
+const GOOGLE_ADS_CONVERSION_LABEL =
+  (import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL as string | undefined) ||
+  "NXdoCP3jr9IcEO276qRE";
 
 function TestModeBanner() {
   if (!clientToken) {
