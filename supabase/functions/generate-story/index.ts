@@ -1119,11 +1119,51 @@ Output EXACTLY ${sceneCount} SCENE_X_SUMMARY block${sceneCount === 1 ? "" : "s"}
       }
     }
 
+    // Guard the supporting character's appearance in the final story text.
+    let finalStory = storyMatch?.[1]?.trim() || storyOutput;
+    if (hasSupportingCharacter) {
+      let offenders = findBannedSupportingSentences(finalStory, supportingCharacterName || "");
+      if (offenders.length > 0) {
+        console.log(`[appearance-guard] ${offenders.length} offending sentence(s), attempting AI repair`);
+        const repair = await callChatWithRetry(
+          {
+            model: "google/gemini-2.5-flash",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You fix children's story text. The companion character's looks come from a customer photo, so the text must never name a species, breed, or body part for them (no fin, paw, tail, nose, fur, dog, cat, otter, etc.) and never use species-specific sounds or movement. Rewrite ONLY the sentences given, keeping the same meaning, tone, and length, using body-neutral actions (nudged, leaned close, moved closer, gestured toward, stayed beside). Return ONLY the rewritten sentences, one per line, in the same order, with no numbering or commentary.",
+              },
+              { role: "user", content: offenders.join("\n") },
+            ],
+          },
+          "appearance-guard-repair"
+        );
+        const fixedLines = String(repair?.choices?.[0]?.message?.content ?? "")
+          .split("\n")
+          .map((l: string) => l.replace(/^\s*[-*\d.)]+\s*/, "").trim())
+          .filter((l: string) => l.length > 0);
+        if (fixedLines.length === offenders.length) {
+          offenders.forEach((bad, i) => {
+            finalStory = finalStory.replace(bad, fixedLines[i]);
+          });
+        }
+        // Deterministic safety net for anything the rewrite missed.
+        offenders = findBannedSupportingSentences(finalStory, supportingCharacterName || "");
+        for (const bad of offenders) {
+          finalStory = finalStory.replace(bad, scrubSupportingSentence(bad));
+        }
+        const remaining = findBannedSupportingSentences(finalStory, supportingCharacterName || "");
+        console.log(`[appearance-guard] remaining offenders after guard: ${remaining.length}`);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         title: titleMatch?.[1]?.trim() || `${childName}'s ${theme}`,
-        story: storyMatch?.[1]?.trim() || storyOutput,
+        story: finalStory,
+
         scenes: sceneMatches,
         coloringPrompts,
         bonusColoringPrompts,
