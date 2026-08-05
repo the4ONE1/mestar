@@ -386,24 +386,17 @@ export default function Preview() {
                 />
                 <span>
                   <span className="font-display font-bold text-foreground block">
-                    Add a best friend, sibling or pet — +${CHARACTER_PRICE}
+                    Add a second character — +${CHARACTER_PRICE}
                   </span>
                   <span className="text-sm text-muted-foreground">
                     Upload a second photo and they'll appear in the story as {draft.childName}'s
-                    sidekick who helps save the day.
+                    helper who assists in saving the day.
                   </span>
                 </span>
               </label>
 
               {wantsCharacter && (
                 <div className="space-y-3 pl-7">
-                  <input
-                    type="text"
-                    value={characterName}
-                    onChange={(e) => setCharacterName(e.target.value.slice(0, 40))}
-                    placeholder="Their first name"
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
                   <input
                     ref={characterFileRef}
                     type="file"
@@ -423,18 +416,26 @@ export default function Preview() {
                     {characterPhoto && (
                       <img
                         src={characterPhoto}
-                        alt={`${characterName || "Supporting character"} photo preview`}
+                        alt={`${characterName || "Second character"} photo preview`}
                         className="h-12 w-12 rounded-full object-cover border-2 border-primary"
                       />
                     )}
                   </div>
+                  <input
+                    type="text"
+                    value={characterName}
+                    onChange={(e) => setCharacterName(e.target.value.slice(0, 40))}
+                    placeholder="Their first name"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
                   {!characterReady && (
                     <p className="text-xs text-muted-foreground">
-                      Add both a name and a photo to include them.
+                      Add a photo and their name to include them.
                     </p>
                   )}
                 </div>
               )}
+
             </div>
 
             {/* Unlock CTA */}

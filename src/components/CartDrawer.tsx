@@ -241,7 +241,7 @@ export const CartDrawer = () => {
                             <div className="flex-1 pr-4">
                               <p className="text-sm font-semibold">Add a Supporting Character — +$9.99</p>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                Include a sibling, friend, pet, or even yourself in the adventure. Upload a second photo and we'll write them into the story.
+                                Include a second character in the adventure. Upload a second photo and we'll write them into the story as a helper.
                               </p>
                               <div className="flex flex-wrap gap-2 mt-3">
                                 <Button
