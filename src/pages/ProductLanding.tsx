@@ -48,7 +48,7 @@ export const LANDINGS: Record<string, Landing> = {
     faqs: [
       { q: "How fast will I get it?", a: "Most storybooks are ready to download in 5–10 minutes after checkout." },
       { q: "Is it a physical book?", a: "It's a high-resolution printable PDF you can print at home or at any print shop." },
-      { q: "Can I add a sibling or friend?", a: "Yes — add the Supporting Character add-on during personalization and upload a second photo." },
+      { q: "Can I add a second character?", a: "Yes — add the Supporting Character add-on during personalization, upload a second photo, and give them a name." },
     ],
     ctaLabel: "Personalize My Storybook",
     ctaHref: "/product/personalized-storybook#personalize",
@@ -83,23 +83,23 @@ export const LANDINGS: Record<string, Landing> = {
   },
   "supporting-character": {
     slug: "supporting-character",
-    title: "Supporting Character Add-On — Add a Sibling, Friend, or Pet | MESTAR",
-    h1: "Add a Sibling, Best Friend, or Pet to the Story",
+    title: "Supporting Character Add-On — Add a Second Character | MESTAR",
+    h1: "Add a Second Character to the Story",
     price: 9.99,
     metaDescription:
-      "Add a second character to your child's personalized storybook. Upload a photo of a sibling, friend, or pet — they'll help the hero through the adventure.",
+      "Add a second character to your child's personalized storybook. Upload a second photo and give them a name — they'll help the hero through the adventure.",
     shortPitch:
-      "Upload a second photo and give your child a sidekick. The supporting character always shows up when the hero needs help.",
+      "Upload a second photo and give your child a helper. The supporting character shows up briefly, right when the hero needs help.",
     icon: Users,
     bullets: [
-      "Upload a second photo (sibling, friend, parent, pet)",
-      "Supporting character always helps — never a villain",
+      "Upload a second photo and add their first name",
+      "Supporting character only helps — never a villain",
       "Keeps your child as the main hero",
       "Adds warmth and real-world connection to the story",
     ],
     faqs: [
       { q: "Can I add more than one supporting character?", a: "One supporting character per storybook keeps the story tight and focused on your child as the hero." },
-      { q: "Does the pet count?", a: "Absolutely — pets make wonderful sidekicks." },
+      { q: "How big is their role?", a: "They appear briefly and help your child reach the solution — your child still makes the key decision and gets the credit." },
     ],
     addon: true,
     ctaLabel: "Add During Personalization",
