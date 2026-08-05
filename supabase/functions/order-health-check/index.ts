@@ -7,7 +7,6 @@
 // Default mode is "failures".
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import nodemailer from "npm:nodemailer@6.9.12";
 import { sendOwnerAlert } from "../_shared/alert.ts";
 
 const corsHeaders = {
@@ -40,21 +39,6 @@ function fmtRow(o: OrderRow): string {
   ].join("\n");
 }
 
-async function sendEmail(subject: string, body: string, gmailPass: string) {
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: { user: "mestar.orders@gmail.com", pass: gmailPass },
-  });
-  await transporter.sendMail({
-    from: "MESTAR Health Check <mestar.orders@gmail.com>",
-    to: ALERT_TO,
-    subject,
-    text: body,
-  });
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -62,7 +46,6 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
 
   // Require Supabase service-role key as bearer (server-to-server only; called by pg_cron).
   // The anon/publishable key is intentionally NOT accepted — it's embedded in the client
@@ -80,7 +63,7 @@ serve(async (req) => {
     });
   }
 
-  if (!SUPABASE_URL || !SERVICE_ROLE || !GMAIL_APP_PASSWORD) {
+  if (!SUPABASE_URL || !SERVICE_ROLE) {
     return new Response(JSON.stringify({ error: "Missing env vars" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -141,11 +124,14 @@ serve(async (req) => {
         lines.push(`No orders in the last 24 hours.`);
       }
 
-      await sendEmail(
-        `MESTAR Daily — ${orders.length} orders, ${failed.length} failed`,
-        lines.join("\n"),
-        GMAIL_APP_PASSWORD,
-      );
+      await sendOwnerAlert({
+        key: `daily_summary:${new Date().toISOString().slice(0, 10)}`,
+        severity: "info",
+        subject: `MESTAR Daily — ${orders.length} orders, ${failed.length} failed`,
+        details: lines.join("\n"),
+        sms: false,
+        throttleMinutes: 0,
+      });
 
       // Daily digest is email-only (no text) unless something actually failed.
       if (failed.length > 0) {
