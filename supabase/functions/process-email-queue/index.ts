@@ -7,30 +7,6 @@ const DEFAULT_SEND_DELAY_MS = 200
 const DEFAULT_AUTH_TTL_MINUTES = 15
 const DEFAULT_TRANSACTIONAL_TTL_MINUTES = 60
 
-function getServerKeys(): string[] {
-  const keys = [Deno.env.get('LOVABLE_API_KEY'), Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')]
-  const secretKeys = Deno.env.get('SUPABASE_SECRET_KEYS')
-
-  if (secretKeys) {
-    try {
-      const parsed = JSON.parse(secretKeys)
-      if (Array.isArray(parsed)) keys.push(...parsed)
-      else if (typeof parsed === 'string') keys.push(parsed)
-      else if (parsed && typeof parsed === 'object') keys.push(...Object.values(parsed).filter((value): value is string => typeof value === 'string'))
-    } catch {
-      keys.push(...secretKeys.split(/[\n,]/))
-    }
-  }
-
-  return keys.map((key) => key?.trim()).filter((key): key is string => Boolean(key))
-}
-
-function isAuthorized(authHeader: string | null): boolean {
-  if (!authHeader?.startsWith('Bearer ')) return false
-  const token = authHeader.slice('Bearer '.length).trim()
-  return getServerKeys().includes(token)
-}
-
 // Check if an error is a rate-limit (429) response.
 // Uses EmailAPIError.status when available (email-js >=0.x with structured errors),
 // falls back to parsing the error message for older versions.
@@ -56,6 +32,24 @@ function getRetryAfterSeconds(error: unknown): number {
     return (error as { retryAfterSeconds: number | null }).retryAfterSeconds ?? 60
   }
   return 60
+}
+
+function parseJwtClaims(token: string): Record<string, unknown> | null {
+  const parts = token.split('.')
+  if (parts.length < 2) {
+    return null
+  }
+
+  try {
+    const payload = parts[1]
+      .replaceAll('-', '+')
+      .replaceAll('_', '/')
+      .padEnd(Math.ceil(parts[1].length / 4) * 4, '=')
+
+    return JSON.parse(atob(payload)) as Record<string, unknown>
+  } catch {
+    return null
+  }
 }
 
 // Move a message to the dead letter queue and log the reason.
@@ -98,10 +92,22 @@ Deno.serve(async (req) => {
   }
 
   const authHeader = req.headers.get('Authorization')
-  if (!isAuthorized(authHeader)) {
+  if (!authHeader?.startsWith('Bearer ')) {
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  // Defense in depth: verify_jwt=true already requires a valid JWT at the
+  // gateway layer. This adds an explicit role check so only service-role
+  // callers can trigger queue processing.
+  const token = authHeader.slice('Bearer '.length).trim()
+  const claims = parseJwtClaims(token)
+  if (claims?.role !== 'service_role') {
+    return new Response(
+      JSON.stringify({ error: 'Forbidden' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
     )
   }
 
