@@ -74,6 +74,10 @@ export async function fulfillAddons(orderId: string) {
       body: JSON.stringify({
         orderId,
         reuseImages: true,
+        // The customer already has a delivered PDF. Flag this as a resume pass so
+        // create-storybook never moves the order out of "complete" while the bonus
+        // pages are added — otherwise the order page shows a fresh progress bar.
+        ...(finalStatus === "complete" ? { resumePass: 1 } : {}),
         title: (order as any).story_title,
         story: (order as any).story_text,
         coloringPrompts: (order as any).coloring_prompts || [],
