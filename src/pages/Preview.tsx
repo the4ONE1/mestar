@@ -235,10 +235,19 @@ export default function Preview() {
   const handleUnlock = async () => {
     if (!draft || unlocking) return;
 
+    if (!draft.photoData) {
+      toast.error("Please add your child's photo first — it's what makes them the hero.", {
+        position: "top-center",
+      });
+      heroFileRef.current?.click();
+      return;
+    }
+
     if (!STRIPE_BASE_PRICE) {
       navigate("/product/personalized-storybook#personalize");
       return;
     }
+
 
     setUnlocking(true);
     try {
