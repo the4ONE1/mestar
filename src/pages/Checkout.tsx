@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { supabase } from "@/integrations/supabase/client";
-import { trackGoogleAdsConversion } from "@/components/Analytics";
+import { trackGoogleAdsConversion, trackEvent } from "@/components/Analytics";
 import { Loader2 } from "lucide-react";
 
 const clientToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined;
