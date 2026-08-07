@@ -69,6 +69,16 @@ export default function Checkout() {
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const conversionFired = useRef(false);
+  const beginCheckoutFired = useRef(false);
+
+  // Funnel signal for Google Ads optimization: the shopper reached checkout.
+  useEffect(() => {
+    if (sessionId || !orderId || priceIds.length === 0) return;
+    if (beginCheckoutFired.current) return;
+    beginCheckoutFired.current = true;
+    trackEvent("begin_checkout", { currency: "USD", items: priceIds.length });
+  }, [sessionId, orderId, priceIds.length]);
+
 
   // If returning from Stripe with session_id, confirm on server (webhook fallback)
   useEffect(() => {
