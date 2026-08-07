@@ -162,6 +162,35 @@ export default function Preview() {
   const [rendering, setRendering] = useState(true);
   const [unlocking, setUnlocking] = useState(false);
 
+  // ── Hero photo (may be missing if the visitor skipped it on the homepage) ──
+  const heroFileRef = useRef<HTMLInputElement>(null);
+
+  const handleHeroPhoto = (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file (JPG, PNG, WEBP).", { position: "top-center" });
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("That photo is too large. Please choose one under 8MB.", { position: "top-center" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setDraft((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev, photoData: dataUrl };
+        try {
+          localStorage.setItem("mestar-preview-draft", JSON.stringify(next));
+        } catch { /* storage full — preview still works in-memory */ }
+        return next;
+      });
+    };
+    reader.onerror = () => toast.error("Could not read that photo. Please try another.", { position: "top-center" });
+    reader.readAsDataURL(file);
+  };
+
   // ── Supporting character add-on (2nd photo) ──
   const [wantsCharacter, setWantsCharacter] = useState(false);
   const [characterName, setCharacterName] = useState("");
@@ -182,6 +211,7 @@ export default function Preview() {
 
   const characterReady = wantsCharacter && !!characterPhoto && characterName.trim().length > 0;
   const total = BASE_PRICE + (characterReady ? CHARACTER_PRICE : 0);
+
 
 
   useEffect(() => {
