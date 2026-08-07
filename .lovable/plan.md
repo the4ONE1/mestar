@@ -1,27 +1,61 @@
-# Fix the false 1:20 a.m. alert (and the Shopify wording)
+# Fix Google Ads conversion tracking + the "1800 clicks, 0 sales" funnel
 
-## What actually happened
+## What I verified just now (facts, not guesses)
 
-I checked the alert log and the payment records. The 1:20 a.m. text/email was a **false alarm**, twice over:
+1. **The Google tag is NOT in the page's HTML.** I downloaded the live homepage
+   (`https://mystarstories.app/`) and searched it: the string `AW-18330852845` appears **0 times**.
+   The tag only gets added by JavaScript *after* the page loads (`src/components/Analytics.tsx`).
+   Real browsers do run it (I confirmed `gtag` exists after load), but Google Ads' tag checker reads
+   the raw HTML — so it reports "snippet not added / not detected". That is exactly the message you got.
 
-1. **The "11 payment/webhook issues" were not issues at all.** All 11 records from the last 24 hours are successes: 9 `pipeline_started` (a story generation kicked off normally) and 2 `addon_fulfillment_started`. The monitor flags anything whose result isn't the literal word `ok`, so normal success records get reported as problems.
-2. **The "Shopify" line is dead leftover text.** The alert email prints a `Shopify:` label for every order, and it's always empty (`—`). Nothing is calling Shopify — it's just a stale word in the alert template and the order table column it reads.
-3. **The 1 failed order is your own old test** (order `b0a6e213`, child "Milo", sent to mestar.orders@gmail.com) from yesterday evening — it timed out. No customer was involved. It keeps re-appearing because the monitor looks back 24 hours, so it re-alerts every ~50 minutes until it ages out.
+2. **Nobody has even started a checkout.** In the orders table, the newest order of any kind is
+   **Aug 5** and the newest `pending_payment` (created the moment someone clicks through to checkout)
+   is **Jul 27**. So of ~1800 ad clicks, **zero people reached the payment step**. This is not a
+   payment bug — visitors are leaving before checkout. The conversion tag has had nothing to fire on.
 
-## The fix
+3. **Two things block a first-time visitor on mobile** (I tested at your phone's screen size):
+   - A **full-screen intro takeover** covers the entire first screen for 8 seconds. No headline,
+     no price, no "Buy" — just two before/after images and a "Skip →" link.
+   - The homepage order form's button is **disabled until a photo is uploaded**. A cold ad visitor
+     must upload their child's photo before they can see anything about the product or price.
 
-- Only treat a payment record as a problem when it actually is one — flag failures/errors explicitly (signature failures, errors, unprocessed) instead of "anything that isn't `ok`".
-- Remove the `Shopify:` line from the alert email entirely.
-- Ignore internal test orders (anything addressed to `mestar.orders@gmail.com`) in the failure alerts, so your own tests stop paging you at 1 a.m. Real customer failures still alert.
+## What I'll change
 
-Result: alerts only when something is genuinely broken for a paying customer, and no Shopify wording anywhere in them.
+### A. Make Google Ads detect the tag (fixes your Ads error)
+- Put the real Google tag snippet (`AW-18330852845`) directly in `index.html` `<head>`, so it's in
+  the served HTML on every page, including the pre-rendered SEO pages.
+- Remove the duplicate JS-injected Google Ads copy from `Analytics.tsx` so the tag isn't loaded twice
+  (double-loading can cause inflated or dropped events).
+- Keep the purchase conversion (`AW-18330852845/iLbSCIKbtN0cEO276qRE`) firing on payment
+  confirmation, and also fire it on the `/order-complete` page as a backup in case a buyer closes
+  the confirmation screen too fast.
+- Add standard funnel events so Ads/Analytics can optimize before you have sales:
+  `begin_checkout` when checkout opens, and a `lead` event when someone submits the homepage form.
 
-## Technical detail
+### B. Remove the two things stopping visitors from buying
+- **Intro takeover:** show it only as part of the normal page (top of the homepage), not as a
+  full-screen blocker. Ad visitors land on the headline, the before/after proof, the price, and the
+  form immediately.
+- **Order form:** let the visitor type the name and pick a theme and continue, with the photo upload
+  moved to the next step where they've already committed. The photo is still required before payment —
+  it's just no longer the first thing a stranger has to do.
 
-Single file: `supabase/functions/order-health-check/index.ts`.
-- Replace the `.neq("result", "ok")` payment_events filter with an allow-list of genuine failure results (e.g. `signature_failed`, `error`, `unprocessed`), so `pipeline_started` / `addon_fulfillment_started` / `ok` are treated as healthy.
-- Drop `shopify_order_id` from the select list, the `OrderRow` interface, and `fmtRow`.
-- Exclude `customer_email = 'mestar.orders@gmail.com'` from the failed/stuck queries.
-- Redeploy the function. No database migration, no other files touched.
+### C. So this never goes unnoticed again
+- Once the above is live I'll re-fetch the published HTML and confirm `AW-18330852845` is present in
+  the source, then tell you exactly where in Google Ads to click "Verify" / re-check the tag.
 
-Cost: one small edit plus one function deploy.
+## One thing I need from you (optional but strongly recommended)
+GA4 is still not connected — there's no Measurement ID in the project, so you have **no data** on
+where those 1800 people dropped off. If you send me your GA4 ID (looks like `G-XXXXXXXXXX`), I'll wire
+it in during the same change and you'll be able to see the drop-off instead of us guessing.
+
+## Technical notes
+- `index.html`: add gtag loader + `gtag('config','AW-18330852845')` in `<head>`.
+- `src/components/Analytics.tsx`: drop the Google Ads injection block; keep GA4/GTM/Meta hooks and
+  `trackGoogleAdsConversion`; add `trackEvent` helper.
+- `src/pages/Checkout.tsx`: fire `begin_checkout`; keep the existing purchase conversion.
+- `src/pages/OrderComplete.tsx`: fire the purchase conversion once, de-duplicated by session/order id.
+- `src/pages/Index.tsx`: remove the `showIntro` full-screen branch (render the showcase inline);
+  change the form's `isValid` so photo isn't required at this step.
+- `src/pages/Preview.tsx`: require the photo there before creating the pending order.
+- No backend, database, or Stripe changes.
