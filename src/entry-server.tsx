@@ -35,6 +35,8 @@ export function render(url: string) {
     <HelmetProvider context={helmetContext}>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          <Toaster />
+          <Sonner />
           <StaticRouter location={url}>
             <div className="flex flex-col min-h-screen">
               <Navbar />
