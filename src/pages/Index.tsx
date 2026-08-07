@@ -158,7 +158,7 @@ const HeroDemo = () => {
       <div className="flex justify-center gap-2 mt-4">
         {DEMO_SLIDES.map((s, i) => (
           <button
-            key={s.childLabel}
+            key={`${s.childLabel}-${i}`}
             onClick={() => { setSlideIdx(i); setPhase("before"); }}
             aria-label={`Show ${s.childLabel}'s demo`}
             className={`rounded-full transition-all ${
