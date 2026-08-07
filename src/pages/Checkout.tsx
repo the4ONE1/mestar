@@ -99,7 +99,11 @@ export default function Checkout() {
   useEffect(() => {
     if (confirmed && sessionId && !conversionFired.current && GOOGLE_ADS_CONVERSION_LABEL) {
       conversionFired.current = true;
-      trackGoogleAdsConversion(GOOGLE_ADS_CONVERSION_LABEL, { transactionId: sessionId });
+      trackGoogleAdsConversion(GOOGLE_ADS_CONVERSION_LABEL, {
+        value: 1.0,
+        currency: "USD",
+        transactionId: sessionId,
+      });
     }
   }, [confirmed, sessionId]);
 
