@@ -63,8 +63,6 @@ verify_jwt = false
 [functions.confirm-checkout-payment]
 verify_jwt = false
 
-[functions.synthetic-live-webhook-test]
-verify_jwt = false
 
 [functions.alert-notify]
 verify_jwt = false
