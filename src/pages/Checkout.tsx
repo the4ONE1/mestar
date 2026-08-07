@@ -8,10 +8,10 @@ import { trackGoogleAdsConversion } from "@/components/Analytics";
 import { Loader2 } from "lucide-react";
 
 const clientToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined;
-// Purchases conversion action label for AW-18330852845 (env var overrides).
+// Purchase conversion action label for AW-18330852845 (env var overrides).
 const GOOGLE_ADS_CONVERSION_LABEL =
   (import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL as string | undefined) ||
-  "NXdoCP3jr9IcEO276qRE";
+  "iLbSCIKbtN0cEO276qRE";
 
 function TestModeBanner() {
   if (!clientToken) {
@@ -99,7 +99,11 @@ export default function Checkout() {
   useEffect(() => {
     if (confirmed && sessionId && !conversionFired.current && GOOGLE_ADS_CONVERSION_LABEL) {
       conversionFired.current = true;
-      trackGoogleAdsConversion(GOOGLE_ADS_CONVERSION_LABEL, { transactionId: sessionId });
+      trackGoogleAdsConversion(GOOGLE_ADS_CONVERSION_LABEL, {
+        value: 1.0,
+        currency: "USD",
+        transactionId: sessionId,
+      });
     }
   }, [confirmed, sessionId]);
 
