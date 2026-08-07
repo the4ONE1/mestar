@@ -216,12 +216,14 @@ const HeroForm = () => {
     if (file) acceptFile(file);
   };
 
-  const isValid = childName.trim().length > 0 && theme.length > 0 && photoPreview !== null;
+  // Photo is optional here on purpose — it's collected on the preview page so
+  // cold visitors can see the magic before committing to an upload.
+  const isValid = childName.trim().length > 0 && theme.length > 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) {
-      toast.error("Please fill in all fields and upload a photo.");
+      toast.error("Please add your child's name and pick a theme.");
       return;
     }
     setSubmitting(true);
@@ -232,8 +234,10 @@ const HeroForm = () => {
       savedAt: Date.now(),
     };
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    trackEvent("lead", { theme });
     navigate("/preview");
   };
+
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5 text-center" noValidate>
