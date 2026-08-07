@@ -280,7 +280,10 @@ const HeroForm = () => {
 
       {/* Photo Upload */}
       <div className="space-y-1.5">
-        <Label className="text-sm font-bold block text-center">Upload Your Child's Photo</Label>
+        <Label className="text-sm font-bold block text-center">
+          Upload Your Child's Photo{" "}
+          <span className="font-normal text-muted-foreground">(optional — you can add it on the next step)</span>
+        </Label>
         <div
           role="button"
           tabIndex={0}
