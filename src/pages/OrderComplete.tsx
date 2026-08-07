@@ -6,6 +6,12 @@ import { toast } from "sonner";
 import SEO from "@/components/SEO";
 import RatingWidget from "@/components/RatingWidget";
 import { supabase } from "@/integrations/supabase/client";
+import { trackGoogleAdsConversion } from "@/components/Analytics";
+
+// Purchase conversion action label for AW-18330852845 (env var overrides).
+const GOOGLE_ADS_CONVERSION_LABEL =
+  (import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL as string | undefined) ||
+  "iLbSCIKbtN0cEO276qRE";
 
 
 const PROGRESS_STAGES = [
