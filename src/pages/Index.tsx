@@ -16,6 +16,7 @@ import jaedanCowboy from "@/assets/jaedan-cowboy.jpg.asset.json";
 import jaedanCowboyStory from "@/assets/jaedan-cowboy-story.jpg";
 import SEO from "@/components/SEO";
 import { toast } from "sonner";
+import { trackEvent } from "@/components/Analytics";
 import type { PreviewDraft } from "./Preview";
 
 const DRAFT_KEY = "mestar-preview-draft";
