@@ -18,6 +18,21 @@ const ALERT_TO = "mestar.orders@gmail.com";
 const STUCK_STATUSES = ["pending_payment", "queued", "generating_images", "assembling_pdf"];
 const STUCK_MINUTES = 30;
 
+// payment_events.result is a free-form outcome label, never the literal "ok" —
+// every writer (stripe-webhook, confirm-checkout-payment, admin-payment-events)
+// uses a specific success label instead. The old `.neq("result", "ok")` filter
+// therefore matched almost every row ever written, including normal successful
+// checkouts, and fired a "critical" SMS+email alert on them roughly hourly.
+// This is the actual allowlist of outcomes every writer produces on success.
+const OK_PAYMENT_RESULTS = new Set([
+  "pipeline_started",
+  "pipeline_complete",
+  "addon_fulfillment_started",
+  "queued",
+  "not_paid_yet",
+  "ignored",
+]);
+
 interface OrderRow {
   id: string;
   status: string;
@@ -171,17 +186,17 @@ serve(async (req) => {
       .order("created_at", { ascending: false });
     if (stuckErr) throw stuckErr;
 
-    // Payment webhook problems (signature failures, unprocessed payments, errors)
-    const { data: badPayments } = await supabase
+    // Payment webhook problems (signature failures, unprocessed payments, errors) —
+    // anything whose result isn't a known-good outcome. See OK_PAYMENT_RESULTS above.
+    const { data: allPayments } = await supabase
       .from("payment_events")
       .select("id, event_type, result, message, created_at")
-      .neq("result", "ok")
       .gte("created_at", lookbackStart)
       .order("created_at", { ascending: false })
-      .limit(50);
-    const paymentProblems = (badPayments || []) as Array<{
+      .limit(200);
+    const paymentProblems = ((allPayments || []) as Array<{
       id: string; event_type: string; result: string; message: string | null; created_at: string;
-    }>;
+    }>).filter((p) => !OK_PAYMENT_RESULTS.has(p.result)).slice(0, 50);
 
     // Email delivery problems: anything still unsent after 10 minutes, or dead-lettered.
     // A single email writes several rows sharing one message_id, so keep only the

@@ -16,7 +16,11 @@ const IMAGE_REQUEST_TIMEOUT_MS = 45000;
 // CPU-time ceiling. Racing a wall-clock budget kept blowing the CPU limit during
 // PDF assembly, so cap each pass to a small batch of images instead and let the
 // resume passes chain until the book is complete.
-const IMAGE_GENERATION_BUDGET_MS = 100000;
+// Budget leaves ~65s of the 150s idle-timeout window for the post-generation tail
+// (PDF assembly, storage uploads, audio seeding) — a real paid order ("Milo",
+// 2026-08-04) was killed by IDLE_TIMEOUT with the old 100s budget, which only left
+// 50s for that tail work.
+const IMAGE_GENERATION_BUDGET_MS = 85000;
 const IMAGES_PER_PASS = 4;
 
 // Set when the gateway refuses a call for billing/quota reasons (HTTP 402). The
@@ -970,32 +974,39 @@ serve(async (req) => {
 
     console.log("Storybook complete!", pdfUrl);
 
-    // Notification email (non-blocking). Resume passes skip it — the customer
-    // already got their link, and the PDF at that link is replaced in place.
+    // Notification email — genuinely fire-and-forget. Resume passes skip it (the
+    // customer already got their link, and the PDF at that link is replaced in
+    // place). This used to be awaited inline, which burned tail time inside the
+    // 150s idle-timeout window; a real paid order ("Milo", 2026-08-04) was killed
+    // by IDLE_TIMEOUT after its PDF was already built. Sending in the background
+    // via EdgeRuntime.waitUntil keeps the customer-facing response fast without
+    // dropping the email — same pattern already used for resume passes below.
     if (!suppressEmail) {
-      try {
-        const notifyRes = await fetch(`${SUPABASE_URL}/functions/v1/send-order-notification`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          },
-          body: JSON.stringify({
-            childName,
-            childAge,
-            theme,
-            strength,
-            customerEmail,
-            supportingCharacterName,
-            pdfUrl,
-            orderId,
-            selectedAddons: addons,
-          }),
-        });
-        if (!notifyRes.ok) console.error("Notification failed:", await notifyRes.text());
-      } catch (notifyErr) {
-        console.error("Failed to send notification:", notifyErr);
-      }
+      const notify = fetch(`${SUPABASE_URL}/functions/v1/send-order-notification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        },
+        body: JSON.stringify({
+          childName,
+          childAge,
+          theme,
+          strength,
+          customerEmail,
+          supportingCharacterName,
+          pdfUrl,
+          orderId,
+          selectedAddons: addons,
+        }),
+      })
+        .then(async (res) => {
+          if (!res.ok) console.error("Notification failed:", await res.text());
+        })
+        .catch((notifyErr) => console.error("Failed to send notification:", notifyErr));
+      // @ts-ignore EdgeRuntime is provided by the Supabase edge runtime
+      if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(notify);
+      else await notify;
     }
 
     // Each pass only makes a small batch of images (IMAGES_PER_PASS) so it always
