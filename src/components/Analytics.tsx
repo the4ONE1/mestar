@@ -65,23 +65,18 @@ export const Analytics = () => {
       );
     }
 
-    // Google Ads (conversion tracking) — shares the gtag()/dataLayer API with GA4
-    if (GOOGLE_ADS_ID && GOOGLE_ADS_ID.startsWith("AW-")) {
-      loadScript(`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`, "google-ads-src");
-      inlineScript(
-        "google-ads-init",
-        `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GOOGLE_ADS_ID}');`
-      );
-    }
+    // Google Ads (conversion tracking) is loaded statically in index.html <head>
+    // so Google's tag checker can detect it in the served HTML. Do not inject
+    // a second copy here — double-loading gtag can drop or duplicate events.
   }, []);
 
   return null;
 };
 
 /**
- * Fire a Google Ads conversion event. No-ops if VITE_GOOGLE_ADS_ID isn't set
- * or gtag hasn't loaded yet. `conversionLabel` is the label portion of a
- * Google Ads conversion action (everything after "AW-XXXXXXXXX/").
+ * Fire a Google Ads conversion event. No-ops if gtag hasn't loaded yet.
+ * `conversionLabel` is the label portion of a Google Ads conversion action
+ * (everything after "AW-XXXXXXXXX/").
  */
 export function trackGoogleAdsConversion(
   conversionLabel: string,
@@ -96,6 +91,14 @@ export function trackGoogleAdsConversion(
     ...(opts?.value !== undefined && { value: opts.value }),
     ...(opts?.transactionId && { transaction_id: opts.transactionId }),
   });
+}
+
+/** Fire a generic gtag event (funnel signals like begin_checkout / lead). */
+export function trackEvent(name: string, params?: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
+  if (typeof gtag !== "function") return;
+  gtag("event", name, params || {});
 }
 
 export default Analytics;
