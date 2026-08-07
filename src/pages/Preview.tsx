@@ -395,6 +395,39 @@ export default function Preview() {
               </p>
             </div>
 
+            {/* Hero photo — required before checkout */}
+            <input
+              ref={heroFileRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              aria-label="Upload your child's photo"
+              onChange={(e) => handleHeroPhoto(e.target.files?.[0])}
+            />
+            {!draft.photoData ? (
+              <div className="bg-primary/10 rounded-2xl border-2 border-dashed border-primary/40 p-5 text-center">
+                <p className="font-display font-bold text-base mb-1">
+                  One last thing — add {draft.childName}'s photo
+                </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  We use it to draw {draft.childName} as the hero on every page. JPG, PNG or WEBP, max 8 MB.
+                </p>
+                <Button type="button" onClick={() => heroFileRef.current?.click()} className="rounded-full">
+                  Upload Photo
+                </Button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => heroFileRef.current?.click()}
+                className="text-xs text-muted-foreground hover:text-foreground underline self-start"
+              >
+                Change {draft.childName}'s photo
+              </button>
+            )}
+
+
+
             {/* What's included card */}
             <div className="bg-card rounded-2xl border border-border p-5 space-y-3">
               <p className="font-display font-bold text-sm uppercase tracking-wider text-muted-foreground">
