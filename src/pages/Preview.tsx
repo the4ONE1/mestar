@@ -162,6 +162,35 @@ export default function Preview() {
   const [rendering, setRendering] = useState(true);
   const [unlocking, setUnlocking] = useState(false);
 
+  // ── Hero photo (may be missing if the visitor skipped it on the homepage) ──
+  const heroFileRef = useRef<HTMLInputElement>(null);
+
+  const handleHeroPhoto = (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file (JPG, PNG, WEBP).", { position: "top-center" });
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("That photo is too large. Please choose one under 8MB.", { position: "top-center" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setDraft((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev, photoData: dataUrl };
+        try {
+          localStorage.setItem("mestar-preview-draft", JSON.stringify(next));
+        } catch { /* storage full — preview still works in-memory */ }
+        return next;
+      });
+    };
+    reader.onerror = () => toast.error("Could not read that photo. Please try another.", { position: "top-center" });
+    reader.readAsDataURL(file);
+  };
+
   // ── Supporting character add-on (2nd photo) ──
   const [wantsCharacter, setWantsCharacter] = useState(false);
   const [characterName, setCharacterName] = useState("");
@@ -182,6 +211,7 @@ export default function Preview() {
 
   const characterReady = wantsCharacter && !!characterPhoto && characterName.trim().length > 0;
   const total = BASE_PRICE + (characterReady ? CHARACTER_PRICE : 0);
+
 
 
   useEffect(() => {
@@ -205,10 +235,19 @@ export default function Preview() {
   const handleUnlock = async () => {
     if (!draft || unlocking) return;
 
+    if (!draft.photoData) {
+      toast.error("Please add your child's photo first — it's what makes them the hero.", {
+        position: "top-center",
+      });
+      heroFileRef.current?.click();
+      return;
+    }
+
     if (!STRIPE_BASE_PRICE) {
       navigate("/product/personalized-storybook#personalize");
       return;
     }
+
 
     setUnlocking(true);
     try {
@@ -355,6 +394,39 @@ export default function Preview() {
                 <strong className="text-foreground">{draft.childName}</strong> as the hero.
               </p>
             </div>
+
+            {/* Hero photo — required before checkout */}
+            <input
+              ref={heroFileRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              aria-label="Upload your child's photo"
+              onChange={(e) => handleHeroPhoto(e.target.files?.[0])}
+            />
+            {!draft.photoData ? (
+              <div className="bg-primary/10 rounded-2xl border-2 border-dashed border-primary/40 p-5 text-center">
+                <p className="font-display font-bold text-base mb-1">
+                  One last thing — add {draft.childName}'s photo
+                </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  We use it to draw {draft.childName} as the hero on every page. JPG, PNG or WEBP, max 8 MB.
+                </p>
+                <Button type="button" onClick={() => heroFileRef.current?.click()} className="rounded-full">
+                  Upload Photo
+                </Button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => heroFileRef.current?.click()}
+                className="text-xs text-muted-foreground hover:text-foreground underline self-start"
+              >
+                Change {draft.childName}'s photo
+              </button>
+            )}
+
+
 
             {/* What's included card */}
             <div className="bg-card rounded-2xl border border-border p-5 space-y-3">

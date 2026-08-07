@@ -6,6 +6,12 @@ import { toast } from "sonner";
 import SEO from "@/components/SEO";
 import RatingWidget from "@/components/RatingWidget";
 import { supabase } from "@/integrations/supabase/client";
+import { trackGoogleAdsConversion } from "@/components/Analytics";
+
+// Purchase conversion action label for AW-18330852845 (env var overrides).
+const GOOGLE_ADS_CONVERSION_LABEL =
+  (import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL as string | undefined) ||
+  "iLbSCIKbtN0cEO276qRE";
 
 
 const PROGRESS_STAGES = [
@@ -42,6 +48,19 @@ const OrderComplete = () => {
   const [confirming, setConfirming] = useState<boolean>(false);
   const pdfOpenedRef = useRef(false);
   const paymentConfirmedRef = useRef(false);
+
+  // Backup Google Ads purchase conversion: fires here in case the shopper
+  // landed on this page directly (deep link / email) instead of /checkout.
+  useEffect(() => {
+    if (!sessionIdFromUrl || paymentConfirmedRef.current) return;
+    paymentConfirmedRef.current = true;
+    trackGoogleAdsConversion(GOOGLE_ADS_CONVERSION_LABEL, {
+      value: 1.0,
+      currency: "USD",
+      transactionId: sessionIdFromUrl,
+    });
+  }, [sessionIdFromUrl]);
+
 
   const handleConfirmReceived = async (extra?: { stars?: number; comment?: string }) => {
     if (!orderId || confirmed) return;
