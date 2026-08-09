@@ -5,6 +5,8 @@ import { Sparkles, Lock, Shield, ArrowLeft, Loader2 } from "lucide-react";
 import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { loadDraft, saveDraft, compressPhoto, type PreviewDraft } from "@/lib/previewDraft";
+export type { PreviewDraft };
 
 // Storybook page 1 images per theme (served from /public)
 const THEME_BG: Record<string, string> = {
@@ -15,30 +17,6 @@ const THEME_BG: Record<string, string> = {
   Dinosaurs: "/images/samples/dino-1.jpg",
 };
 
-export interface PreviewDraft {
-  childName: string;
-  theme: string;
-  photoData: string | null; // base64 data-URL or null
-  savedAt: number;
-}
-
-const DRAFT_KEY = "mestar-preview-draft";
-
-function loadDraft(): PreviewDraft | null {
-  try {
-    const raw = localStorage.getItem(DRAFT_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as PreviewDraft;
-    // Expire drafts older than 5 days
-    if (Date.now() - parsed.savedAt > 5 * 24 * 60 * 60 * 1000) {
-      localStorage.removeItem(DRAFT_KEY);
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
 
 /** Draws a composite canvas: storybook page 1 + child photo circle overlay */
 async function drawComposite(
@@ -165,7 +143,7 @@ export default function Preview() {
   // ── Hero photo (may be missing if the visitor skipped it on the homepage) ──
   const heroFileRef = useRef<HTMLInputElement>(null);
 
-  const handleHeroPhoto = (file: File | undefined) => {
+  const handleHeroPhoto = async (file: File | undefined) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       toast.error("Please choose an image file (JPG, PNG, WEBP).", { position: "top-center" });
@@ -175,20 +153,18 @@ export default function Preview() {
       toast.error("That photo is too large. Please choose one under 8MB.", { position: "top-center" });
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
+    try {
+      const dataUrl = await compressPhoto(file);
       setDraft((prev) => {
-        if (!prev) return prev;
-        const next = { ...prev, photoData: dataUrl };
-        try {
-          localStorage.setItem("mestar-preview-draft", JSON.stringify(next));
-        } catch { /* storage full — preview still works in-memory */ }
+        const next = prev
+          ? { ...prev, photoData: dataUrl }
+          : { childName: "", theme: "Fairy Tale", photoData: dataUrl, savedAt: Date.now() };
+        saveDraft(next);
         return next;
       });
-    };
-    reader.onerror = () => toast.error("Could not read that photo. Please try another.", { position: "top-center" });
-    reader.readAsDataURL(file);
+    } catch {
+      toast.error("Could not read that photo. Please try another.", { position: "top-center" });
+    }
   };
 
   // ── Supporting character add-on (2nd photo) ──
