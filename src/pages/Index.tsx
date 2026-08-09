@@ -17,9 +17,7 @@ import jaedanCowboyStory from "@/assets/jaedan-cowboy-story.jpg";
 import SEO from "@/components/SEO";
 import { toast } from "sonner";
 import { trackEvent } from "@/components/Analytics";
-import type { PreviewDraft } from "./Preview";
-
-const DRAFT_KEY = "mestar-preview-draft";
+import { saveDraft, compressPhoto, type PreviewDraft } from "@/lib/previewDraft";
 
 const STORY_THEMES = [
   "Fairy Tale",
@@ -197,9 +195,9 @@ const HeroForm = () => {
       return;
     }
     setPhotoFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => setPhotoPreview(reader.result as string);
-    reader.readAsDataURL(file);
+    compressPhoto(file)
+      .then((dataUrl) => setPhotoPreview(dataUrl))
+      .catch(() => toast.error("Could not read that photo. Please try another."));
   }, []);
 
   const handleDrop = useCallback(
@@ -234,7 +232,7 @@ const HeroForm = () => {
       photoData: photoPreview,
       savedAt: Date.now(),
     };
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    saveDraft(draft);
     trackEvent("lead", { theme });
     navigate("/preview");
   };
