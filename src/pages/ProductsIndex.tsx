@@ -145,7 +145,7 @@ export default function ProductsIndex() {
                 <p className="text-sm text-muted-foreground mb-5 flex-1">{p.description}</p>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Button asChild variant="outline" className="flex-1">
-                    <Link to={`/products/${p.slug}`}>Learn more</Link>
+                    <Link to={`/products/${p.slug}`}>{`View ${p.title} details`}</Link>
                   </Button>
                   {p.comingSoon ? (
                     <Button disabled className="flex-1">
