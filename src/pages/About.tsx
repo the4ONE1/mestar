@@ -15,7 +15,7 @@ const About = () => {
   return (
     <div className="min-h-screen py-16">
       <SEO
-        title="About MESTAR — Personalized Children's Storybooks"
+        title="About MYSTAR — Personalized Children's Storybooks"
         description="Learn the story behind MESTAR: AI-personalized PDF storybooks where your child is the hero. Safe, age-appropriate, and made to be treasured."
         canonical="/about"
       />

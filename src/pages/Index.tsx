@@ -450,7 +450,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <SEO
-        title="MESTAR — Personalized Storybooks Starring Your Child"
+        title="MYSTAR — Personalized Storybooks Starring Your Child"
         description="Create a personalized children's storybook in minutes. Upload a photo, pick a theme, and download a print-ready PDF starring your child."
         canonical="/"
         jsonLd={{
